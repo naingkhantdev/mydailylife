@@ -37,6 +37,15 @@ class DashboardScreen extends ConsumerWidget {
     final missedCount = todayEntries
         .where((entry) => entry.status == RoutineStatus.missed)
         .length;
+    final overallEntries = historyMap.values.toList();
+    final overallDoneCount = overallEntries
+        .where((entry) => entry.status == RoutineStatus.done)
+        .length;
+    final overallMissedCount = overallEntries.length - overallDoneCount;
+    final trackedDayCount = overallEntries
+        .map((entry) => entry.dateId)
+        .toSet()
+        .length;
     final dateIds = {
       todayId,
       for (final entry in historyMap.values) entry.dateId,
@@ -56,6 +65,12 @@ class DashboardScreen extends ConsumerWidget {
             total: todayTasks.length,
             gymProgress: '$completedGymSets/$targetGymSets',
             onEditWeight: () => _showWeightDialog(context, ref, weight),
+          ),
+          const SizedBox(height: 20),
+          _OverallHistorySummary(
+            trackedDays: trackedDayCount,
+            done: overallDoneCount,
+            missed: overallMissedCount,
           ),
           const SizedBox(height: 20),
           Text(
@@ -95,19 +110,18 @@ class DashboardScreen extends ConsumerWidget {
     WidgetRef ref,
     double currentWeight,
   ) async {
-    final controller = TextEditingController(
-      text: currentWeight.toStringAsFixed(0),
-    );
+    var enteredWeight = currentWeight.toStringAsFixed(0);
 
     final value = await showDialog<double>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Current weight'),
-          content: TextField(
-            controller: controller,
+          content: TextFormField(
+            initialValue: enteredWeight,
             autofocus: true,
             keyboardType: TextInputType.number,
+            onChanged: (value) => enteredWeight = value,
             decoration: const InputDecoration(
               labelText: 'Weight in lb',
               border: OutlineInputBorder(),
@@ -121,7 +135,7 @@ class DashboardScreen extends ConsumerWidget {
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop(
-                  double.tryParse(controller.text.trim()),
+                  double.tryParse(enteredWeight.trim()),
                 );
               },
               child: const Text('Save'),
@@ -131,10 +145,67 @@ class DashboardScreen extends ConsumerWidget {
       },
     );
 
-    controller.dispose();
     if (value != null && value > 0) {
       ref.read(currentWeightLbProvider.notifier).state = value;
     }
+  }
+}
+
+class _OverallHistorySummary extends StatelessWidget {
+  const _OverallHistorySummary({
+    required this.trackedDays,
+    required this.done,
+    required this.missed,
+  });
+
+  final int trackedDays;
+  final int done;
+  final int missed;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = done + missed;
+    final completionRate = total == 0 ? 0 : (done * 100 / total).round();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Overall routine history',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _SummaryValue(
+                    label: 'Tracked days',
+                    value: '$trackedDays',
+                  ),
+                ),
+                Expanded(
+                  child: _SummaryValue(label: 'Done', value: '$done'),
+                ),
+                Expanded(
+                  child: _SummaryValue(label: 'Missed', value: '$missed'),
+                ),
+                Expanded(
+                  child: _SummaryValue(
+                    label: 'Completion',
+                    value: '$completionRate%',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

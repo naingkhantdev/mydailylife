@@ -539,6 +539,102 @@ class _ExerciseTechnique {
 
   factory _ExerciseTechnique.forExercise(String exercise) {
     final name = exercise.toLowerCase();
+    if (name == 'pull-ups or lat pulldown') {
+      return const _ExerciseTechnique(
+        photoUrl:
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Pull_up_%284506464%29.jpg/960px-Pull_up_%284506464%29.jpg',
+        photoTitle: 'Pull-up setup',
+        photoCredit: 'Photo source: Wikimedia Commons',
+        setup:
+            'Use a full grip just outside shoulder width. Start with long arms, set your shoulders down, and pull your chest toward the bar without swinging.',
+        hold: [
+          'Wrap your thumbs around the bar.',
+          'Keep wrists neutral and shoulders away from your ears.',
+          'Brace your ribs and keep your legs quiet.',
+          'Use an assisted pull-up or lat pulldown if needed.',
+        ],
+        steps: [
+          'Start from long arms with your shoulders controlled.',
+          'Drive your elbows down toward your ribs.',
+          'Lift until your chin reaches the bar without craning your neck.',
+          'Lower under control to the starting position.',
+        ],
+        avoid: [
+          'Kicking or swinging to start the rep.',
+          'Shrugging your shoulders toward your ears.',
+          'Dropping quickly into the bottom position.',
+        ],
+        tempo: [
+          'Pull up smoothly.',
+          'Pause briefly at the top.',
+          'Lower for 2-3 seconds.',
+        ],
+      );
+    }
+    if (name == 'barbell rows') {
+      return const _ExerciseTechnique(
+        photoUrl:
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Reverse_grips_bent_over_barbell_rows_1.svg/500px-Reverse_grips_bent_over_barbell_rows_1.svg.png',
+        photoTitle: 'Barbell row setup',
+        photoCredit: 'Illustration source: Wikimedia Commons',
+        setup:
+            'Hinge at the hips, brace your torso, and hold the bar with a full grip before rowing it toward your lower ribs.',
+        hold: [
+          'Grip the bar around shoulder width.',
+          'Keep wrists straight and shoulders away from your ears.',
+          'Maintain a stable hip hinge and neutral spine.',
+          'Keep the bar close to your legs.',
+        ],
+        steps: [
+          'Brace before the first rep.',
+          'Drive your elbows behind you and row toward your lower ribs.',
+          'Squeeze your upper back without lifting your torso.',
+          'Lower the bar until your arms are long.',
+        ],
+        avoid: [
+          'Jerking the bar with your lower back.',
+          'Standing more upright on every rep.',
+          'Letting the bar drift far from your body.',
+        ],
+        tempo: [
+          'Row in 1 second.',
+          'Pause briefly at the top.',
+          'Lower for 2 seconds.',
+        ],
+      );
+    }
+    if (name == 'seated cable rows') {
+      return const _ExerciseTechnique(
+        photoUrl:
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Seated_cable_rows_1.svg/960px-Seated_cable_rows_1.svg.png',
+        photoTitle: 'Seated cable row setup',
+        photoCredit: 'Illustration source: Wikimedia Commons',
+        setup:
+            'Sit tall with feet planted, hold the handle with straight wrists, and keep your torso stable as you row toward your ribs.',
+        hold: [
+          'Use a full grip with neutral wrists.',
+          'Keep your chest tall and shoulders down.',
+          'Plant both feet firmly.',
+          'Start with arms long without rounding your lower back.',
+        ],
+        steps: [
+          'Set your shoulders before pulling.',
+          'Drive your elbows back toward your ribs.',
+          'Pause when the handle reaches your torso.',
+          'Return slowly until your arms are long.',
+        ],
+        avoid: [
+          'Rocking your torso to move the weight.',
+          'Shrugging at the end of the pull.',
+          'Letting the weight stack slam down.',
+        ],
+        tempo: [
+          'Pull in 1 second.',
+          'Pause and squeeze.',
+          'Return for 2 seconds.',
+        ],
+      );
+    }
     if (name.contains('incline')) {
       return const _ExerciseTechnique(
         photoUrl:
@@ -864,10 +960,9 @@ class _ExerciseTechnique {
     if (name.contains('face pull')) {
       return const _ExerciseTechnique(
         photoUrl:
-            'https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/DumbbellBentOverRow.JPG/500px-DumbbellBentOverRow.JPG',
+            'https://www.kovofitness.com/x-media/api/exercise-illustrations/cablefacepull_m.png',
         photoTitle: 'Face pull setup',
-        photoCredit:
-            'Related rear-delt/back photo source: Wikimedia Commons. Use the text cues for cable face pulls.',
+        photoCredit: 'Exercise illustration source: Kovo Fitness',
         setup:
             'Set cable around face height. Hold rope ends with thumbs pointing back and stand tall.',
         hold: [

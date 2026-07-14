@@ -223,17 +223,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     HistoryController controller,
     TaskModel task,
   ) async {
-    final remarkController = TextEditingController();
+    var enteredRemark = '';
     final remark = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Why missed?'),
           content: TextField(
-            controller: remarkController,
             autofocus: true,
             minLines: 3,
             maxLines: 5,
+            onChanged: (value) => enteredRemark = value,
             decoration: const InputDecoration(
               labelText: 'Remark',
               border: OutlineInputBorder(),
@@ -246,7 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(context).pop(remarkController.text.trim());
+                Navigator.of(context).pop(enteredRemark.trim());
               },
               child: const Text('Save'),
             ),
@@ -255,7 +255,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
     );
 
-    remarkController.dispose();
     if (remark != null) {
       controller.markMissed(task, remark);
     }
@@ -266,17 +265,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     HistoryController controller,
     TaskModel task,
   ) async {
-    final remarkController = TextEditingController();
+    var enteredRemark = '';
     final remark = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('What did you do?'),
           content: TextField(
-            controller: remarkController,
             autofocus: true,
             minLines: 3,
             maxLines: 5,
+            onChanged: (value) => enteredRemark = value,
             decoration: const InputDecoration(
               labelText: 'Remark',
               hintText: 'Example: finished API task, studied Riverpod, walked 20 minutes',
@@ -290,7 +289,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(context).pop(remarkController.text.trim());
+                Navigator.of(context).pop(enteredRemark.trim());
               },
               child: const Text('Save'),
             ),
@@ -299,7 +298,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
     );
 
-    remarkController.dispose();
     if (remark != null) {
       controller.markDone(task, remark: remark);
     }

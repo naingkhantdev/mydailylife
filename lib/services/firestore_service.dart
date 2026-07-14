@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/daily_log_model.dart';
+import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
 
 class FirestoreService {
@@ -15,6 +16,13 @@ class FirestoreService {
 
   CollectionReference<Map<String, dynamic>> _tasks(String userId) {
     return _firestore.collection('users').doc(userId).collection('tasks');
+  }
+
+  CollectionReference<Map<String, dynamic>> _routineHistory(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('routine_history');
   }
 
   Future<void> saveDailyLog({
@@ -46,5 +54,31 @@ class FirestoreService {
       batch.set(_tasks(userId).doc(task.id), task.toMap());
     }
     return batch.commit();
+  }
+
+  Future<List<RoutineHistoryEntry>> getRoutineHistory({
+    required String userId,
+  }) async {
+    final snapshot = await _routineHistory(userId)
+        .orderBy('date', descending: true)
+        .get();
+    return snapshot.docs
+        .map((document) => RoutineHistoryEntry.fromMap(document.data()))
+        .where((entry) => entry.taskId.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> saveRoutineHistoryEntry({
+    required String userId,
+    required RoutineHistoryEntry entry,
+  }) {
+    return _routineHistory(userId).doc(entry.key).set(entry.toMap());
+  }
+
+  Future<void> deleteRoutineHistoryEntry({
+    required String userId,
+    required String entryKey,
+  }) {
+    return _routineHistory(userId).doc(entryKey).delete();
   }
 }
