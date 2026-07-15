@@ -45,6 +45,20 @@ class FirestoreService {
     return DailyLogModel.fromMap(date, data);
   }
 
+  Future<List<DailyLogModel>> getDailyLogs({required String userId}) async {
+    final snapshot = await _dailyLogs(userId).get();
+    return snapshot.docs
+        .map((document) {
+          final date = DateTime.tryParse(document.id);
+          if (date == null) {
+            return null;
+          }
+          return DailyLogModel.fromMap(date, document.data());
+        })
+        .whereType<DailyLogModel>()
+        .toList();
+  }
+
   Future<void> saveTasks({
     required String userId,
     required List<TaskModel> tasks,
@@ -54,6 +68,28 @@ class FirestoreService {
       batch.set(_tasks(userId).doc(task.id), task.toMap());
     }
     return batch.commit();
+  }
+
+  Future<List<TaskModel>> getTasks({required String userId}) async {
+    final snapshot = await _tasks(userId).get();
+    return snapshot.docs
+        .map((document) => TaskModel.fromMap(document.id, document.data()))
+        .where((task) => task.title.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> saveTask({
+    required String userId,
+    required TaskModel task,
+  }) {
+    return _tasks(userId).doc(task.id).set(task.toMap());
+  }
+
+  Future<void> deleteTask({
+    required String userId,
+    required String taskId,
+  }) {
+    return _tasks(userId).doc(taskId).delete();
   }
 
   Future<List<RoutineHistoryEntry>> getRoutineHistory({

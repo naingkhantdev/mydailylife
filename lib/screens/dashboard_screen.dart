@@ -8,6 +8,8 @@ import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
+import '../theme/app_colors.dart';
+import 'history_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -19,83 +21,161 @@ class DashboardScreen extends ConsumerWidget {
     final log = ref.watch(dailyLogProvider);
     final todayGym = ref.watch(todayGymProvider);
     ref.watch(gymSessionProvider);
-    final gymSessionController = ref.read(gymSessionProvider.notifier);
-    final completedGymSets =
-        gymSessionController.completedSetCount(todayGym.exercises);
-    final targetGymSets =
-        gymSessionController.targetSetCount(todayGym.exercises);
+    final gymController = ref.read(gymSessionProvider.notifier);
+    final completedGymSets = gymController.completedSetCount(todayGym.exercises);
+    final targetGymSets = gymController.targetSetCount(todayGym.exercises);
     final weight = ref.watch(currentWeightLbProvider);
     final today = DateTime.now();
     final todayId = _dateId(today);
     final todayTasks = tasks.where((task) => task.runsOn(today)).toList();
-    final todayEntries = [
-      for (final task in todayTasks) historyMap['$todayId:${task.id}'],
-    ].whereType<RoutineHistoryEntry>().toList();
-    final doneCount = todayEntries
-        .where((entry) => entry.status == RoutineStatus.done)
+    final todayEntries = {
+      for (final task in todayTasks)
+        task.id: historyMap['$todayId:${task.id}'],
+    };
+    final doneCount = todayEntries.values
+        .where((entry) => entry?.status == RoutineStatus.done)
         .length;
-    final missedCount = todayEntries
-        .where((entry) => entry.status == RoutineStatus.missed)
+    final missedCount = todayEntries.values
+        .where((entry) => entry?.status == RoutineStatus.missed)
         .length;
-    final overallEntries = historyMap.values.toList();
-    final overallDoneCount = overallEntries
-        .where((entry) => entry.status == RoutineStatus.done)
-        .length;
-    final overallMissedCount = overallEntries.length - overallDoneCount;
-    final trackedDayCount = overallEntries
-        .map((entry) => entry.dateId)
-        .toSet()
-        .length;
-    final dateIds = {
-      todayId,
-      for (final entry in historyMap.values) entry.dateId,
-    }.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final pendingCount = todayTasks.length - doneCount - missedCount;
+    final completion = todayTasks.isEmpty ? 0.0 : doneCount / todayTasks.length;
+    final nextTask = _firstPendingTask(todayTasks, todayEntries);
+    final doneRemarks = todayEntries.values
+        .where((entry) =>
+            entry?.status == RoutineStatus.done && entry!.remark.isNotEmpty)
+        .cast<RoutineHistoryEntry>()
+        .toList();
+    final missedRemarks = todayEntries.values
+        .where((entry) =>
+            entry?.status == RoutineStatus.missed && entry!.remark.isNotEmpty)
+        .cast<RoutineHistoryEntry>()
+        .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        actions: [
+          IconButton(
+            tooltip: 'Open history',
+            onPressed: () => _openHistory(context),
+            icon: const Icon(Icons.history_rounded),
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          _TopSummary(
-            weight: weight,
-            calories: log.totalCalories,
+          _TodayHero(
+            date: today,
+            brief: _buildTodayBrief(
+              total: todayTasks.length,
+              done: doneCount,
+              missed: missedCount,
+              pending: pendingCount,
+              calories: log.totalCalories,
+              gymSetsDone: completedGymSets,
+              gymSetsTotal: targetGymSets,
+            ),
+            completion: completion,
             done: doneCount,
-            missed: missedCount,
             total: todayTasks.length,
-            gymProgress: '$completedGymSets/$targetGymSets',
+          ),
+          const SizedBox(height: 18),
+          _FactGrid(
+            calories: log.totalCalories,
+            gymSetsDone: completedGymSets,
+            gymSetsTotal: targetGymSets,
+            weight: weight,
+            done: doneCount,
+            total: todayTasks.length,
             onEditWeight: () => _showWeightDialog(context, ref, weight),
           ),
-          const SizedBox(height: 20),
-          _OverallHistorySummary(
-            trackedDays: trackedDayCount,
-            done: overallDoneCount,
-            missed: overallMissedCount,
+          const SizedBox(height: 26),
+          _SectionHeading(
+            eyebrow: 'TODAY\'S FACTS',
+            title: 'What matters right now',
+            actionLabel: 'View history',
+            onAction: () => _openHistory(context),
           ),
-          const SizedBox(height: 20),
-          Text(
-            'Daily routine by date',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+          const SizedBox(height: 12),
+          _FocusCard(
+            nextTask: nextTask,
+            pendingCount: pendingCount,
+            missedCount: missedCount,
           ),
-          const SizedBox(height: 10),
-          for (final dateId in dateIds) ...[
-            _RoutineDateSection(
-              dateId: dateId,
-              tasks: tasksForDate(tasks, dateId),
-              historyMap: historyMap,
-            ),
+          if (doneRemarks.isNotEmpty) ...[
             const SizedBox(height: 12),
+            _InsightCard(
+              icon: Icons.auto_awesome_rounded,
+              color: AppColors.success,
+              background: AppColors.successSoft,
+              title: 'Wins worth remembering',
+              entries: doneRemarks,
+              emptyMessage: '',
+            ),
+          ],
+          if (missedRemarks.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _InsightCard(
+              icon: Icons.lightbulb_outline_rounded,
+              color: AppColors.warning,
+              background: AppColors.warningSoft,
+              title: 'What got in the way',
+              entries: missedRemarks,
+              emptyMessage: '',
+            ),
+          ],
+          if (doneRemarks.isEmpty && missedRemarks.isEmpty) ...[
+            const SizedBox(height: 12),
+            const _EmptyReflectionCard(),
           ],
         ],
       ),
     );
   }
 
-  List<TaskModel> tasksForDate(List<TaskModel> tasks, String dateId) {
-    final date = DateTime.parse(dateId);
-    return tasks.where((task) => task.runsOn(date)).toList();
+  TaskModel? _firstPendingTask(
+    List<TaskModel> tasks,
+    Map<String, RoutineHistoryEntry?> entries,
+  ) {
+    for (final task in tasks) {
+      if (entries[task.id] == null) {
+        return task;
+      }
+    }
+    return null;
+  }
+
+  String _buildTodayBrief({
+    required int total,
+    required int done,
+    required int missed,
+    required int pending,
+    required int calories,
+    required int gymSetsDone,
+    required int gymSetsTotal,
+  }) {
+    if (total == 0) {
+      return 'Today is intentionally light. Use the space to recover and reset.';
+    }
+    if (done == 0 && missed == 0) {
+      return 'Your day is ready: $total routines, $calories kcal logged, and '
+          '$gymSetsDone of $gymSetsTotal gym sets complete.';
+    }
+    final routineFact = '$done of $total routines completed';
+    final missedFact = missed == 0 ? '' : ', $missed missed';
+    final pendingFact = pending == 0 ? '' : ', and $pending still open';
+    return 'You have $routineFact$missedFact$pendingFact. '
+        'You logged $calories kcal and finished $gymSetsDone of '
+        '$gymSetsTotal gym sets.';
+  }
+
+  void _openHistory(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
+    );
   }
 
   String _dateId(DateTime date) {
@@ -110,312 +190,584 @@ class DashboardScreen extends ConsumerWidget {
     WidgetRef ref,
     double currentWeight,
   ) async {
-    var enteredWeight = currentWeight.toStringAsFixed(0);
-
+    var enteredWeight = currentWeight.toStringAsFixed(1);
     final value = await showDialog<double>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Current weight'),
-          content: TextFormField(
-            initialValue: enteredWeight,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            onChanged: (value) => enteredWeight = value,
-            decoration: const InputDecoration(
-              labelText: 'Weight in lb',
-              border: OutlineInputBorder(),
-            ),
+      builder: (context) => AlertDialog(
+        title: const Text('Update current weight'),
+        content: TextFormField(
+          initialValue: enteredWeight,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (value) => enteredWeight = value,
+          decoration: const InputDecoration(
+            labelText: 'Weight in lb',
+            prefixIcon: Icon(Icons.monitor_weight_outlined),
+            border: OutlineInputBorder(),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(
+              double.tryParse(enteredWeight.trim()),
             ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop(
-                  double.tryParse(enteredWeight.trim()),
-                );
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
-
     if (value != null && value > 0) {
       ref.read(currentWeightLbProvider.notifier).state = value;
     }
   }
 }
 
-class _OverallHistorySummary extends StatelessWidget {
-  const _OverallHistorySummary({
-    required this.trackedDays,
+class _TodayHero extends StatelessWidget {
+  const _TodayHero({
+    required this.date,
+    required this.brief,
+    required this.completion,
     required this.done,
-    required this.missed,
+    required this.total,
   });
 
-  final int trackedDays;
+  final DateTime date;
+  final String brief;
+  final double completion;
   final int done;
-  final int missed;
+  final int total;
 
   @override
   Widget build(BuildContext context) {
-    final total = done + missed;
-    final completionRate = total == 0 ? 0 : (done * 100 / total).round();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Overall routine history',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: AppColors.ink,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.white.withOpacity(0.18)),
+                ),
+                child: Text(
+                  _dateLabel(date).toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _SummaryValue(
-                    label: 'Tracked days',
-                    value: '$trackedDays',
+                    letterSpacing: 0.8,
                   ),
                 ),
-                Expanded(
-                  child: _SummaryValue(label: 'Done', value: '$done'),
+              ),
+              const Spacer(),
+              const Icon(Icons.wb_sunny_outlined, color: AppColors.gold),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Today, in brief',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 25,
+                        height: 1.1,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      brief,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.82),
+                        fontSize: 14,
+                        height: 1.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: _SummaryValue(label: 'Missed', value: '$missed'),
+              ),
+              const SizedBox(width: 18),
+              SizedBox(
+                width: 86,
+                height: 86,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircularProgressIndicator(
+                      value: completion,
+                      strokeWidth: 8,
+                      backgroundColor: Colors.white.withOpacity(0.16),
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(AppColors.gold),
+                      strokeCap: StrokeCap.round,
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${(completion * 100).round()}%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            '$done/$total done',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: _SummaryValue(
-                    label: 'Completion',
-                    value: '$completionRate%',
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
+
+  String _dateLabel(DateTime date) {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
+  }
 }
 
-class _TopSummary extends StatelessWidget {
-  const _TopSummary({
-    required this.weight,
+class _FactGrid extends StatelessWidget {
+  const _FactGrid({
     required this.calories,
+    required this.gymSetsDone,
+    required this.gymSetsTotal,
+    required this.weight,
     required this.done,
-    required this.missed,
     required this.total,
-    required this.gymProgress,
     required this.onEditWeight,
   });
 
-  final double weight;
   final int calories;
+  final int gymSetsDone;
+  final int gymSetsTotal;
+  final double weight;
   final int done;
-  final int missed;
   final int total;
-  final String gymProgress;
   final VoidCallback onEditWeight;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gap = 12.0;
+        final itemWidth = constraints.maxWidth >= 700
+            ? (constraints.maxWidth - gap * 3) / 4
+            : (constraints.maxWidth - gap) / 2;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _SummaryValue(
-                    label: 'Weight',
-                    value: '${weight.toStringAsFixed(1)} lb',
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Edit weight',
-                  onPressed: onEditWeight,
-                  icon: const Icon(Icons.edit_outlined),
-                ),
-              ],
+            _FactTile(
+              width: itemWidth,
+              icon: Icons.local_fire_department_rounded,
+              iconColor: AppColors.coral,
+              iconBackground: AppColors.coralSoft,
+              label: 'CALORIES',
+              value: '$calories',
+              suffix: 'kcal',
             ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _SummaryValue(label: 'Done', value: '$done/$total'),
-                ),
-                Expanded(
-                  child: _SummaryValue(label: 'Missed', value: '$missed'),
-                ),
-                Expanded(
-                  child: _SummaryValue(label: 'Calories', value: '$calories'),
-                ),
-                Expanded(
-                  child: _SummaryValue(label: 'Gym sets', value: gymProgress),
-                ),
-              ],
+            _FactTile(
+              width: itemWidth,
+              icon: Icons.fitness_center_rounded,
+              iconColor: AppColors.violet,
+              iconBackground: AppColors.violetSoft,
+              label: 'GYM SETS',
+              value: '$gymSetsDone/$gymSetsTotal',
+              suffix: 'today',
+            ),
+            _FactTile(
+              width: itemWidth,
+              icon: Icons.task_alt_rounded,
+              iconColor: AppColors.success,
+              iconBackground: AppColors.successSoft,
+              label: 'ROUTINES',
+              value: '$done/$total',
+              suffix: 'done',
+            ),
+            _FactTile(
+              width: itemWidth,
+              icon: Icons.monitor_weight_outlined,
+              iconColor: AppColors.blue,
+              iconBackground: AppColors.blueSoft,
+              label: 'WEIGHT',
+              value: weight.toStringAsFixed(1),
+              suffix: 'lb',
+              onTap: onEditWeight,
             ),
           ],
+        );
+      },
+    );
+  }
+}
+
+class _FactTile extends StatelessWidget {
+  const _FactTile({
+    required this.width,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackground,
+    required this.label,
+    required this.value,
+    required this.suffix,
+    this.onTap,
+  });
+
+  final double width;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackground;
+  final String label;
+  final String value;
+  final String suffix;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: iconBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.mutedText,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        value,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 21,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(
+                        suffix,
+                        style: const TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _SummaryValue extends StatelessWidget {
-  const _SummaryValue({
-    required this.label,
-    required this.value,
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({
+    required this.eyebrow,
+    required this.title,
+    required this.actionLabel,
+    required this.onAction,
   });
 
-  final String label;
-  final String value;
+  final String eyebrow;
+  final String title;
+  final String actionLabel;
+  final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(label, style: const TextStyle(color: Color(0xFF6B7280))),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eyebrow,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+            ],
+          ),
         ),
+        TextButton(onPressed: onAction, child: Text(actionLabel)),
       ],
     );
   }
 }
 
-class _RoutineDateSection extends StatelessWidget {
-  const _RoutineDateSection({
-    required this.dateId,
-    required this.tasks,
-    required this.historyMap,
+class _FocusCard extends StatelessWidget {
+  const _FocusCard({
+    required this.nextTask,
+    required this.pendingCount,
+    required this.missedCount,
   });
 
-  final String dateId;
-  final List<TaskModel> tasks;
-  final Map<String, RoutineHistoryEntry> historyMap;
+  final TaskModel? nextTask;
+  final int pendingCount;
+  final int missedCount;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _prettyDate(dateId),
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 10),
-            for (final task in tasks) _RoutineStatusRow(
-              task: task,
-              entry: historyMap['$dateId:${task.id}'],
-            ),
-          ],
+    final isComplete = nextTask == null && pendingCount == 0;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isComplete ? AppColors.successSoft : AppColors.blueSoft,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isComplete
+              ? AppColors.success.withOpacity(0.16)
+              : AppColors.blue.withOpacity(0.16),
         ),
       ),
-    );
-  }
-
-  String _prettyDate(String dateId) {
-    final date = DateTime.parse(dateId);
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
-}
-
-class _RoutineStatusRow extends StatelessWidget {
-  const _RoutineStatusRow({
-    required this.task,
-    required this.entry,
-  });
-
-  final TaskModel task;
-  final RoutineHistoryEntry? entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final status = entry?.status;
-    final statusText = switch (status) {
-      RoutineStatus.done => 'Done',
-      RoutineStatus.missed => 'Missed',
-      null => 'Pending',
-    };
-    final icon = switch (status) {
-      RoutineStatus.done => Icons.check_circle_outline,
-      RoutineStatus.missed => Icons.cancel_outlined,
-      null => Icons.radio_button_unchecked,
-    };
-    final color = switch (status) {
-      RoutineStatus.done => const Color(0xFF166534),
-      RoutineStatus.missed => const Color(0xFF991B1B),
-      null => const Color(0xFF9CA3AF),
-    };
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 10),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isComplete ? AppColors.success : AppColors.blue,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(
+              isComplete ? Icons.celebration_rounded : Icons.near_me_rounded,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(task.title),
                 Text(
-                  '${task.startTime} - ${task.endTime}',
+                  isComplete ? 'Day reviewed' : 'Next clear step',
                   style: const TextStyle(
-                    color: Color(0xFF6B7280),
+                    color: AppColors.ink,
                     fontSize: 12,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                if (entry?.remark.isNotEmpty ?? false)
+                const SizedBox(height: 4),
+                Text(
+                  isComplete
+                      ? 'Everything scheduled has a status. Take a moment to notice the progress.'
+                      : '${nextTask?.title ?? 'Review your remaining routines'} · '
+                          '${nextTask?.startTime ?? '$pendingCount open'}',
+                  style: const TextStyle(
+                    color: AppColors.bodyText,
+                    fontSize: 14,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (missedCount > 0) ...[
+                  const SizedBox(height: 5),
                   Text(
-                    entry!.remark,
-                    style: TextStyle(
-                      color: entry!.status == RoutineStatus.missed
-                          ? const Color(0xFF991B1B)
-                          : const Color(0xFF475569),
-                      fontSize: 12,
+                    '$missedCount missed ${missedCount == 1 ? 'routine' : 'routines'} — use the note as information, not judgment.',
+                    style: const TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 11,
+                      height: 1.35,
                     ),
                   ),
+                ],
               ],
             ),
           ),
-          Text(
-            statusText,
-            style: TextStyle(color: color, fontWeight: FontWeight.w700),
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightCard extends StatelessWidget {
+  const _InsightCard({
+    required this.icon,
+    required this.color,
+    required this.background,
+    required this.title,
+    required this.entries,
+    required this.emptyMessage,
+  });
+
+  final IconData icon;
+  final Color color;
+  final Color background;
+  final String title;
+  final List<RoutineHistoryEntry> entries;
+  final String emptyMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          if (entries.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(emptyMessage),
+            )
+          else
+            for (final entry in entries.take(3))
+              Padding(
+                padding: const EdgeInsets.only(top: 11),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      margin: const EdgeInsets.only(top: 7),
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Text(
+                        '${entry.taskTitle}: ${entry.remark}',
+                        style: const TextStyle(
+                          color: AppColors.bodyText,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyReflectionCard extends StatelessWidget {
+  const _EmptyReflectionCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.violetSoft,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.edit_note_rounded, color: AppColors.violet),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Add a short remark when you complete or miss a routine. Those small facts make your history genuinely useful.',
+              style: TextStyle(
+                color: AppColors.bodyText,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),

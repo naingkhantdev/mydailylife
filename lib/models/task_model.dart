@@ -17,6 +17,24 @@ class TaskModel {
 
   bool runsOn(DateTime date) => recurringDays.contains(date.weekday);
 
+  TaskModel copyWith({
+    String? id,
+    String? title,
+    String? startTime,
+    String? endTime,
+    List<int>? recurringDays,
+    RoutineCategory? category,
+  }) {
+    return TaskModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      recurringDays: recurringDays ?? this.recurringDays,
+      category: category ?? this.category,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'title': title,

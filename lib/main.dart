@@ -37,6 +37,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: AppColors.background,
           elevation: 0,
           centerTitle: false,
+          surfaceTintColor: Colors.transparent,
           titleTextStyle: AppTextStyles.appBarTitle,
         ),
         listTileTheme: const ListTileThemeData(
@@ -44,7 +45,7 @@ class MyApp extends StatelessWidget {
             fontFamily: AppTextStyles.fontFamily,
             color: Color(0xFF111827),
             fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             height: 1.25,
           ),
         ),
@@ -72,7 +73,7 @@ class MyApp extends StatelessWidget {
           elevation: 0,
           color: AppColors.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
             side: const BorderSide(color: AppColors.border),
           ),
         ),

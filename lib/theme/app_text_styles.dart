@@ -10,25 +10,25 @@ class AppTextStyles {
   static const textTheme = TextTheme(
     headlineMedium: TextStyle(
       fontFamily: fontFamily,
-      color: AppColors.primary,
-      fontSize: 28,
-      fontWeight: FontWeight.w800,
-      height: 1.15,
-      letterSpacing: 0,
+      color: AppColors.ink,
+      fontSize: 26,
+      fontWeight: FontWeight.w700,
+      height: 1.18,
+      letterSpacing: -0.5,
     ),
     titleLarge: TextStyle(
       fontFamily: fontFamily,
       color: Color(0xFF111827),
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
+      fontSize: 19,
+      fontWeight: FontWeight.w700,
       height: 1.2,
-      letterSpacing: 0,
+      letterSpacing: -0.2,
     ),
     titleMedium: TextStyle(
       fontFamily: fontFamily,
       color: Color(0xFF111827),
       fontSize: 16,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
       height: 1.25,
       letterSpacing: 0,
     ),
@@ -67,10 +67,10 @@ class AppTextStyles {
 
   static const appBarTitle = TextStyle(
     fontFamily: fontFamily,
-    color: Color(0xFF111827),
-    fontSize: 20,
-    fontWeight: FontWeight.w800,
+    color: AppColors.ink,
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
     height: 1.2,
-    letterSpacing: 0,
+    letterSpacing: -0.2,
   );
 }

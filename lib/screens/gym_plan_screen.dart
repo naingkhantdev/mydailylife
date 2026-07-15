@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
+import '../theme/app_colors.dart';
 import '../widgets/gym_technique_card.dart';
 
 class GymPlanScreen extends ConsumerWidget {
@@ -18,40 +19,45 @@ class GymPlanScreen extends ConsumerWidget {
     final target = sessionController.targetSetCount(todayGym.exercises);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Gym')),
+      appBar: AppBar(title: const Text('Gym technique')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.ink,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                   Text(
                     todayGym.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     todayGym.focus,
-                    style: const TextStyle(color: Color(0xFF6B7280)),
+                    style: const TextStyle(color: Color(0xFFCBD5E1)),
                   ),
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
                     value: target == 0 ? 0 : completed / target,
                     minHeight: 8,
                     borderRadius: BorderRadius.circular(999),
+                    backgroundColor: const Color(0xFF334155),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '$completed / $target sets finished',
-                    style: const TextStyle(color: Color(0xFF6B7280)),
+                    style: const TextStyle(color: Color(0xFFCBD5E1)),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -60,12 +66,15 @@ class GymPlanScreen extends ConsumerWidget {
           Text(
             'Weekly plan',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
           ),
           const SizedBox(height: 10),
           for (final day in plan) ...[
-            _GymDaySummary(day: day, isToday: day.weekday == DateTime.now().weekday),
+            _GymDaySummary(
+              day: day,
+              isToday: day.weekday == DateTime.now().weekday,
+            ),
             const SizedBox(height: 10),
           ],
         ],
@@ -89,9 +98,9 @@ class _GymDaySummary extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isToday ? const Color(0xFF111827) : const Color(0xFFE5E7EB),
+          color: isToday ? AppColors.primary : AppColors.border,
         ),
       ),
       child: Row(
@@ -102,7 +111,7 @@ class _GymDaySummary extends StatelessWidget {
               children: [
                 Text(
                   day.title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -115,7 +124,10 @@ class _GymDaySummary extends StatelessWidget {
           if (isToday)
             const Text(
               'Today',
-              style: TextStyle(fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
+import '../theme/app_colors.dart';
 
 class GymTechniqueCard extends ConsumerStatefulWidget {
   const GymTechniqueCard({
@@ -25,18 +26,22 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
         sessionController.isWorkoutComplete(widget.gymDay.exercises);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(Icons.fitness_center, size: 20),
+              const Icon(
+                Icons.fitness_center,
+                size: 20,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
