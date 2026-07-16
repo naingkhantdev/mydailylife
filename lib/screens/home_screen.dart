@@ -12,6 +12,7 @@ import '../theme/app_colors.dart';
 import '../widgets/quick_meal_entry_card.dart';
 import 'dashboard_screen.dart';
 import 'gym_plan_screen.dart';
+import 'gym_technique_manager_screen.dart';
 import 'history_screen.dart';
 import 'routine_manager_screen.dart';
 
@@ -30,8 +31,7 @@ class HomeScreen extends ConsumerWidget {
     final todayId = _dateId(today);
     final todayTasks = tasks.where((task) => task.runsOn(today)).toList();
     final entries = {
-      for (final task in todayTasks)
-        task.id: historyMap['$todayId:${task.id}'],
+      for (final task in todayTasks) task.id: historyMap['$todayId:${task.id}'],
     };
     final doneCount = entries.values
         .where((entry) => entry?.status == RoutineStatus.done)
@@ -247,7 +247,10 @@ class HomeScreen extends ConsumerWidget {
     for (final task in tasks) {
       final start = _minutes(task.startTime);
       final end = _minutes(task.endTime);
-      if (start != null && end != null && nowMinutes >= start && nowMinutes < end) {
+      if (start != null &&
+          end != null &&
+          nowMinutes >= start &&
+          nowMinutes < end) {
         return task.id;
       }
     }
@@ -336,16 +339,31 @@ class _TodayHeader extends StatelessWidget {
 
   String _weekday(DateTime date) {
     const values = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
     return values[date.weekday - 1];
   }
 
   String _date(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -385,7 +403,8 @@ class _GymFocusCard extends StatelessWidget {
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Icon(Icons.fitness_center_rounded, color: Colors.white),
+                child: const Icon(Icons.fitness_center_rounded,
+                    color: Colors.white),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -415,7 +434,8 @@ class _GymFocusCard extends StatelessWidget {
                       focus,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 12),
+                      style: const TextStyle(
+                          color: Color(0xFFCBD5E1), fontSize: 12),
                     ),
                     const SizedBox(height: 7),
                     Text(
@@ -536,14 +556,16 @@ class _RoutineRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'Until ${task.endTime}',
-                    style: const TextStyle(color: AppColors.mutedText, fontSize: 10),
+                    style: const TextStyle(
+                        color: AppColors.mutedText, fontSize: 10),
                   ),
                 ],
               ),
             ),
             Icon(statusIcon, color: statusColor, size: 21),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.mutedText, size: 19),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.mutedText, size: 19),
           ],
         ),
       ),
@@ -621,7 +643,8 @@ class _TaskActionSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: entry?.status == RoutineStatus.done ? null : onDone,
+                  onPressed:
+                      entry?.status == RoutineStatus.done ? null : onDone,
                   icon: const Icon(Icons.check_rounded),
                   label: const Text('Done'),
                 ),
@@ -629,7 +652,8 @@ class _TaskActionSheet extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: entry?.status == RoutineStatus.missed ? null : onMissed,
+                  onPressed:
+                      entry?.status == RoutineStatus.missed ? null : onMissed,
                   icon: const Icon(Icons.close_rounded),
                   label: const Text('Missed'),
                 ),
@@ -697,11 +721,13 @@ class _AppDrawer extends StatelessWidget {
                     children: [
                       Text(
                         'RoutineSync',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.w700),
                       ),
                       Text(
                         'Routine and training',
-                        style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+                        style:
+                            TextStyle(color: AppColors.mutedText, fontSize: 11),
                       ),
                     ],
                   ),
@@ -718,6 +744,14 @@ class _AppDrawer extends StatelessWidget {
               icon: Icons.fitness_center_rounded,
               title: 'Gym technique',
               onTap: () => _openFromDrawer(context, const GymPlanScreen()),
+            ),
+            _DrawerItem(
+              icon: Icons.edit_note_rounded,
+              title: 'Manage gym techniques',
+              onTap: () => _openFromDrawer(
+                context,
+                const GymTechniqueManagerScreen(),
+              ),
             ),
             _DrawerItem(
               icon: Icons.history_rounded,

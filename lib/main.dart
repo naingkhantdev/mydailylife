@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text_styles.dart';
 
@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
           fillColor: AppColors.surface,
         ),
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }

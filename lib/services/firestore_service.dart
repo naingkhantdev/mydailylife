@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/daily_log_model.dart';
+import '../models/gym_technique_model.dart';
 import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
 
@@ -23,6 +24,13 @@ class FirestoreService {
         .collection('users')
         .doc(userId)
         .collection('routine_history');
+  }
+
+  CollectionReference<Map<String, dynamic>> _gymTechniques(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('gym_techniques');
   }
 
   Future<void> saveDailyLog({
@@ -92,12 +100,54 @@ class FirestoreService {
     return _tasks(userId).doc(taskId).delete();
   }
 
+  Future<void> saveGymTechniques({
+    required String userId,
+    required List<GymTechniqueModel> techniques,
+  }) async {
+    final batch = _firestore.batch();
+    for (final technique in techniques) {
+      batch.set(
+        _gymTechniques(userId).doc(technique.id),
+        technique.toMap(),
+      );
+    }
+    return batch.commit();
+  }
+
+  Future<List<GymTechniqueModel>> getGymTechniques({
+    required String userId,
+  }) async {
+    final snapshot = await _gymTechniques(userId).get();
+    return snapshot.docs
+        .map(
+          (document) => GymTechniqueModel.fromMap(
+            document.id,
+            document.data(),
+          ),
+        )
+        .where((technique) => technique.name.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> saveGymTechnique({
+    required String userId,
+    required GymTechniqueModel technique,
+  }) {
+    return _gymTechniques(userId).doc(technique.id).set(technique.toMap());
+  }
+
+  Future<void> deleteGymTechnique({
+    required String userId,
+    required String techniqueId,
+  }) {
+    return _gymTechniques(userId).doc(techniqueId).delete();
+  }
+
   Future<List<RoutineHistoryEntry>> getRoutineHistory({
     required String userId,
   }) async {
-    final snapshot = await _routineHistory(userId)
-        .orderBy('date', descending: true)
-        .get();
+    final snapshot =
+        await _routineHistory(userId).orderBy('date', descending: true).get();
     return snapshot.docs
         .map((document) => RoutineHistoryEntry.fromMap(document.data()))
         .where((entry) => entry.taskId.isNotEmpty)

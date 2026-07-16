@@ -5,6 +5,7 @@ import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/gym_technique_card.dart';
+import 'gym_technique_manager_screen.dart';
 
 class GymPlanScreen extends ConsumerWidget {
   const GymPlanScreen({super.key});
@@ -19,7 +20,20 @@ class GymPlanScreen extends ConsumerWidget {
     final target = sessionController.targetSetCount(todayGym.exercises);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Gym technique')),
+      appBar: AppBar(
+        title: const Text('Gym technique'),
+        actions: [
+          IconButton(
+            tooltip: 'Manage techniques',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const GymTechniqueManagerScreen(),
+              ),
+            ),
+            icon: const Icon(Icons.edit_note_rounded),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -32,31 +46,31 @@ class GymPlanScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  Text(
-                    todayGym.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+                Text(
+                  todayGym.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    todayGym.focus,
-                    style: const TextStyle(color: Color(0xFFCBD5E1)),
-                  ),
-                  const SizedBox(height: 12),
-                  LinearProgressIndicator(
-                    value: target == 0 ? 0 : completed / target,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(999),
-                    backgroundColor: const Color(0xFF334155),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$completed / $target sets finished',
-                    style: const TextStyle(color: Color(0xFFCBD5E1)),
-                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  todayGym.focus,
+                  style: const TextStyle(color: Color(0xFFCBD5E1)),
+                ),
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: target == 0 ? 0 : completed / target,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(999),
+                  backgroundColor: const Color(0xFF334155),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$completed / $target sets finished',
+                  style: const TextStyle(color: Color(0xFFCBD5E1)),
+                ),
               ],
             ),
           ),

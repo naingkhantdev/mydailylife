@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
+
+GymTechniqueModel? _findTechnique(
+  List<GymTechniqueModel> techniques,
+  int weekday,
+  String exercise,
+) {
+  for (final technique in techniques) {
+    if (technique.weekday == weekday && technique.name == exercise) {
+      return technique;
+    }
+  }
+  return null;
+}
 
 class GymTechniqueCard extends ConsumerStatefulWidget {
   const GymTechniqueCard({
@@ -21,6 +35,7 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(gymSessionProvider);
+    final techniques = ref.watch(gymTechniqueProvider);
     final sessionController = ref.read(gymSessionProvider.notifier);
     final isWorkoutDone =
         sessionController.isWorkoutComplete(widget.gymDay.exercises);
@@ -68,6 +83,11 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
           for (final exercise in widget.gymDay.exercises) ...[
             _TechniqueRow(
               exercise: exercise,
+              technique: _findTechnique(
+                techniques,
+                widget.gymDay.weekday,
+                exercise,
+              ),
               session: session[exercise] ??
                   sessionController.sessionFor(exercise),
               onToggleSet: (setNumber) {
@@ -99,6 +119,7 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
 class _TechniqueRow extends StatelessWidget {
   const _TechniqueRow({
     required this.exercise,
+    required this.technique,
     required this.session,
     required this.onToggleSet,
     required this.onSetTarget,
@@ -106,6 +127,7 @@ class _TechniqueRow extends StatelessWidget {
   });
 
   final String exercise;
+  final GymTechniqueModel? technique;
   final GymExerciseSession session;
   final ValueChanged<int> onToggleSet;
   final void Function(int sets, int reps) onSetTarget;
@@ -114,7 +136,10 @@ class _TechniqueRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDone = session.completedSets.length >= session.targetSets;
-    final technique = _ExerciseTechnique.forExercise(exercise);
+    final guide = _ExerciseTechnique.forExercise(
+      exercise,
+      custom: technique,
+    );
 
     return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,14 +149,14 @@ class _TechniqueRow extends StatelessWidget {
             child: SizedBox(
               width: 44,
               height: 44,
-              child: technique.photoUrl == null
+              child: guide.photoUrl == null
                   ? Container(
                       color: const Color(0xFFF3F4F6),
                       alignment: Alignment.center,
                       child: const Icon(Icons.fitness_center, size: 18),
                     )
                   : Image.network(
-                      technique.photoUrl!,
+                      guide.photoUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
@@ -167,7 +192,9 @@ class _TechniqueRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _cueFor(exercise),
+                  technique?.cue.isNotEmpty ?? false
+                      ? technique!.cue
+                      : _cueFor(exercise),
                   style: const TextStyle(
                     color: Color(0xFF6B7280),
                     fontSize: 12,
@@ -232,7 +259,10 @@ class _TechniqueRow extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) => _TechniqueDetailSheet(exercise: exercise),
+      builder: (context) => _TechniqueDetailSheet(
+        exercise: exercise,
+        technique: technique,
+      ),
     );
   }
 
@@ -332,9 +362,13 @@ class _TechniqueRow extends StatelessWidget {
 }
 
 class _TechniqueDetailSheet extends StatefulWidget {
-  const _TechniqueDetailSheet({required this.exercise});
+  const _TechniqueDetailSheet({
+    required this.exercise,
+    required this.technique,
+  });
 
   final String exercise;
+  final GymTechniqueModel? technique;
 
   @override
   State<_TechniqueDetailSheet> createState() => _TechniqueDetailSheetState();
@@ -343,7 +377,10 @@ class _TechniqueDetailSheet extends StatefulWidget {
 class _TechniqueDetailSheetState extends State<_TechniqueDetailSheet> {
   @override
   Widget build(BuildContext context) {
-    final type = _ExerciseTechnique.forExercise(widget.exercise);
+    final type = _ExerciseTechnique.forExercise(
+      widget.exercise,
+      custom: widget.technique,
+    );
 
     return Padding(
       padding: EdgeInsets.only(
@@ -542,7 +579,43 @@ class _ExerciseTechnique {
   final List<String> tempo;
   final String? benchAngle;
 
-  factory _ExerciseTechnique.forExercise(String exercise) {
+  factory _ExerciseTechnique.forExercise(
+    String exercise, {
+    GymTechniqueModel? custom,
+  }) {
+    if (custom?.hasCustomGuide ?? false) {
+      final customSteps = custom!.instructions
+          .split('\n')
+          .map((step) => step.trim())
+          .where((step) => step.isNotEmpty)
+          .toList();
+      return _ExerciseTechnique(
+        photoUrl: custom.imageUrl.isEmpty ? null : custom.imageUrl,
+        photoTitle: '${custom.name} guide',
+        photoCredit: 'Custom RoutineSync technique',
+        setup: custom.cue.isEmpty
+            ? 'Set up in a stable position and choose a load you can control.'
+            : custom.cue,
+        hold: const [
+          'Keep a stable base and brace before each repetition.',
+          'Use a comfortable grip and controlled range of motion.',
+        ],
+        steps: customSteps.isEmpty
+            ? const [
+                'Move through a controlled range without using momentum.',
+                'Pause briefly, then return to the start under control.',
+              ]
+            : customSteps,
+        avoid: const [
+          'Rushing repetitions or losing your setup.',
+          'Continuing through sharp pain or joint discomfort.',
+        ],
+        tempo: const [
+          'Use a smooth, controlled lowering phase.',
+          'Keep the lifting phase strong without bouncing.',
+        ],
+      );
+    }
     final name = exercise.toLowerCase();
     if (name == 'pull-ups or lat pulldown') {
       return const _ExerciseTechnique(
