@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/gym_technique_card.dart';
-import 'gym_technique_manager_screen.dart';
 
 class GymPlanScreen extends ConsumerWidget {
   const GymPlanScreen({super.key});
@@ -20,16 +20,14 @@ class GymPlanScreen extends ConsumerWidget {
     final target = sessionController.targetSetCount(todayGym.exercises);
 
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.gym),
       appBar: AppBar(
         title: const Text('Gym technique'),
         actions: [
           IconButton(
             tooltip: 'Manage techniques',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const GymTechniqueManagerScreen(),
-              ),
-            ),
+            onPressed: () => Navigator.of(context)
+                .pushReplacementNamed(AppRoutes.gymTechniques),
             icon: const Icon(Icons.edit_note_rounded),
           ),
         ],

@@ -8,6 +8,7 @@ import '../providers/diet_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_drawer.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -46,6 +47,7 @@ class HistoryScreen extends ConsumerWidget {
         : (doneCount * 100 / scheduledRoutineCount).round();
 
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.history),
       appBar: AppBar(title: const Text('History')),
       body: dateIds.isEmpty && dailyLogHistory.isLoading
           ? const Center(child: CircularProgressIndicator())

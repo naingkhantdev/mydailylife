@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/task_model.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_drawer.dart';
 
 class RoutineManagerScreen extends ConsumerWidget {
   const RoutineManagerScreen({super.key});
@@ -13,6 +14,7 @@ class RoutineManagerScreen extends ConsumerWidget {
     final tasks = ref.watch(routineProvider);
 
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.routines),
       appBar: AppBar(title: const Text('Manage routines')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context),

@@ -9,12 +9,8 @@ import '../providers/gym_session_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/quick_meal_entry_card.dart';
-import 'dashboard_screen.dart';
-import 'gym_plan_screen.dart';
-import 'gym_technique_manager_screen.dart';
-import 'history_screen.dart';
-import 'routine_manager_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -46,13 +42,13 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Manage routines',
-            onPressed: () => _open(context, const RoutineManagerScreen()),
+            onPressed: () => _openRoute(context, AppRoutes.routines),
             icon: const Icon(Icons.edit_calendar_outlined),
           ),
           const SizedBox(width: 4),
         ],
       ),
-      drawer: _AppDrawer(onOpen: (screen) => _open(context, screen)),
+      drawer: const AppDrawer(currentRoute: AppRoutes.home),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
         children: [
@@ -67,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
             focus: todayGym.focus,
             completedSets: completedSets,
             targetSets: targetSets,
-            onOpen: () => _open(context, const GymPlanScreen()),
+            onOpen: () => _openRoute(context, AppRoutes.gym),
           ),
           const SizedBox(height: 26),
           Row(
@@ -79,7 +75,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               TextButton.icon(
-                onPressed: () => _open(context, const RoutineManagerScreen()),
+                onPressed: () => _openRoute(context, AppRoutes.routines),
                 icon: const Icon(Icons.tune_rounded, size: 17),
                 label: const Text('Edit'),
               ),
@@ -124,10 +120,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _open(BuildContext context, Widget screen) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => screen),
-    );
+  void _openRoute(BuildContext context, String route) {
+    Navigator.of(context).pushReplacementNamed(route);
   }
 
   Future<void> _showTaskActions(
@@ -691,112 +685,6 @@ class _EmptyToday extends StatelessWidget {
           Text('No routines scheduled today.'),
         ],
       ),
-    );
-  }
-}
-
-class _AppDrawer extends StatelessWidget {
-  const _AppDrawer({required this.onOpen});
-
-  final ValueChanged<Widget> onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 22, 20, 18),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: AppColors.ink,
-                    child: Icon(Icons.schedule_rounded, color: Colors.white),
-                  ),
-                  SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'RoutineSync',
-                        style: TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        'Routine and training',
-                        style:
-                            TextStyle(color: AppColors.mutedText, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            _DrawerItem(
-              icon: Icons.dashboard_outlined,
-              title: 'Dashboard',
-              onTap: () => _openFromDrawer(context, const DashboardScreen()),
-            ),
-            _DrawerItem(
-              icon: Icons.fitness_center_rounded,
-              title: 'Gym technique',
-              onTap: () => _openFromDrawer(context, const GymPlanScreen()),
-            ),
-            _DrawerItem(
-              icon: Icons.edit_note_rounded,
-              title: 'Manage gym techniques',
-              onTap: () => _openFromDrawer(
-                context,
-                const GymTechniqueManagerScreen(),
-              ),
-            ),
-            _DrawerItem(
-              icon: Icons.history_rounded,
-              title: 'History',
-              onTap: () => _openFromDrawer(context, const HistoryScreen()),
-            ),
-            _DrawerItem(
-              icon: Icons.edit_calendar_outlined,
-              title: 'Manage routines',
-              onTap: () => _openFromDrawer(
-                context,
-                const RoutineManagerScreen(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _openFromDrawer(BuildContext context, Widget screen) {
-    Navigator.of(context).pop();
-    onOpen(screen);
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  const _DrawerItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-      leading: Icon(icon, color: AppColors.bodyText, size: 21),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right_rounded, size: 18),
-      onTap: onTap,
     );
   }
 }

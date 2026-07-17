@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_drawer.dart';
 
 class GymTechniqueManagerScreen extends ConsumerWidget {
   const GymTechniqueManagerScreen({super.key});
@@ -13,6 +14,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     final techniques = ref.watch(gymTechniqueProvider);
 
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.gymTechniques),
       appBar: AppBar(title: const Text('Manage gym techniques')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context, ref),

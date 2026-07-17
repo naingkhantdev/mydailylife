@@ -3,9 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/gym_plan_screen.dart';
+import 'screens/gym_technique_manager_screen.dart';
+import 'screens/history_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/routine_manager_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text_styles.dart';
+import 'widgets/app_drawer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +22,36 @@ void main() async {
   );
 
   runApp(const ProviderScope(child: MyApp()));
+}
+
+Route<void>? _buildAppRoute(RouteSettings settings) {
+  final Widget? page = switch (settings.name) {
+    AppRoutes.home => const HomeScreen(),
+    AppRoutes.dashboard => const DashboardScreen(),
+    AppRoutes.gym => const GymPlanScreen(),
+    AppRoutes.gymTechniques => const GymTechniqueManagerScreen(),
+    AppRoutes.history => const HistoryScreen(),
+    AppRoutes.routines => const RoutineManagerScreen(),
+    _ => null,
+  };
+
+  if (page == null) {
+    return null;
+  }
+
+  return PageRouteBuilder<void>(
+    settings: settings,
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    pageBuilder: (_, animation, secondaryAnimation) => page,
+    transitionsBuilder: (_, animation, secondaryAnimation, child) {
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      return FadeTransition(opacity: curvedAnimation, child: child);
+    },
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -43,7 +80,7 @@ class MyApp extends StatelessWidget {
         listTileTheme: const ListTileThemeData(
           titleTextStyle: TextStyle(
             fontFamily: AppTextStyles.fontFamily,
-            color: Color(0xFF111827),
+            color: AppColors.ink,
             fontSize: 15,
             fontWeight: FontWeight.w600,
             height: 1.25,
@@ -82,6 +119,7 @@ class MyApp extends StatelessWidget {
           fillColor: AppColors.surface,
         ),
       ),
+      onGenerateRoute: _buildAppRoute,
       home: const SplashScreen(),
     );
   }

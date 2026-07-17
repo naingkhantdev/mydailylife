@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'home_screen.dart';
+import '../widgets/app_drawer.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,6 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
+        settings: const RouteSettings(name: AppRoutes.home),
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (_, animation, secondaryAnimation) => const HomeScreen(),
         transitionsBuilder: (_, animation, secondaryAnimation, child) {
@@ -53,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071328),
+      backgroundColor: const Color(0xFF101229),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -89,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 const Text(
                                   'Your day, in rhythm.',
                                   style: TextStyle(
-                                    color: Color(0xFFB8CAE2),
+                                    color: Color(0xFFC7CBE7),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
                                     letterSpacing: 0.4,
@@ -129,12 +131,12 @@ class _RoutineBadge extends StatelessWidget {
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.wb_twilight_rounded, color: Color(0xFF7DD3FC), size: 16),
+          Icon(Icons.wb_twilight_rounded, color: Color(0xFFA5B4FC), size: 16),
           SizedBox(width: 8),
           Text(
             'A BETTER DAILY RHYTHM',
             style: TextStyle(
-              color: Color(0xFFD8E7F8),
+              color: Color(0xFFE4E7F7),
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
@@ -170,11 +172,11 @@ class _OrbitLogo extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF8BE4FF), Color(0xFF2563EB)],
+                colors: [Color(0xFFC4B5FD), Color(0xFF5B5BD6)],
               ),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x662563EB),
+                  color: Color(0x665B5BD6),
                   blurRadius: 44,
                   spreadRadius: 5,
                 ),
@@ -205,7 +207,7 @@ class _AppTitle extends StatelessWidget {
           TextSpan(text: 'Routine'),
           TextSpan(
             text: 'Sync',
-            style: TextStyle(color: Color(0xFF55C8FF)),
+            style: TextStyle(color: Color(0xFF8B8CF8)),
           ),
         ],
       ),
@@ -236,7 +238,7 @@ class _LoadingStatus extends StatelessWidget {
               const Text(
                 'Preparing your day',
                 style: TextStyle(
-                  color: Color(0xFF91A8C5),
+                  color: Color(0xFF9AA1BD),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -245,7 +247,7 @@ class _LoadingStatus extends StatelessWidget {
                 progress > 0.78
                     ? Icons.check_circle_rounded
                     : Icons.auto_awesome_rounded,
-                color: const Color(0xFF55C8FF),
+                color: const Color(0xFF8B8CF8),
                 size: 16,
               ),
             ],
@@ -256,8 +258,8 @@ class _LoadingStatus extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 5,
-              backgroundColor: const Color(0xFF1B2B45),
-              valueColor: const AlwaysStoppedAnimation(Color(0xFF55C8FF)),
+              backgroundColor: const Color(0xFF252848),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFF8B8CF8)),
             ),
           ),
         ],
@@ -280,9 +282,9 @@ class _DayCycleBackground extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF071328),
-                Color(0xFF0B2852),
-                Color(0xFF101B3D),
+                Color(0xFF101229),
+                Color(0xFF202556),
+                Color(0xFF191D40),
               ],
             ),
           ),
@@ -308,7 +310,7 @@ class _OrbitPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 1.5;
 
-    linePaint.color = const Color(0x3355C8FF);
+    linePaint.color = const Color(0x338B8CF8);
     canvas.drawCircle(center, outerRadius, linePaint);
     linePaint.color = const Color(0x22FFFFFF);
     canvas.drawCircle(center, innerRadius, linePaint);
@@ -322,16 +324,16 @@ class _OrbitPainter extends CustomPainter {
       movingPoint,
       7,
       Paint()
-        ..color = const Color(0xFF55C8FF)
+        ..color = const Color(0xFF8B8CF8)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
     canvas.drawCircle(movingPoint, 4, Paint()..color = Colors.white);
 
     const nodeColors = [
       Color(0xFFFFC857),
-      Color(0xFF55C8FF),
-      Color(0xFF8B9DFF),
-      Color(0xFFE8F4FF),
+      Color(0xFF8B8CF8),
+      Color(0xFFA5B4FC),
+      Color(0xFFF2F1FF),
     ];
     for (var index = 0; index < nodeColors.length; index++) {
       final angle = (-math.pi / 2) + (index * math.pi / 2);
@@ -353,7 +355,7 @@ class _RhythmLinesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0x0C8EDBFF)
+      ..color = const Color(0x0C8B8CF8)
       ..strokeWidth = 1;
     const gap = 46.0;
 

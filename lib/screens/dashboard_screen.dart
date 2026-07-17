@@ -9,7 +9,7 @@ import '../providers/gym_session_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
-import 'history_screen.dart';
+import '../widgets/app_drawer.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -53,6 +53,7 @@ class DashboardScreen extends ConsumerWidget {
         .toList();
 
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.dashboard),
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
@@ -173,9 +174,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   void _openHistory(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
-    );
+    Navigator.of(context).pushReplacementNamed(AppRoutes.history);
   }
 
   String _dateId(DateTime date) {
