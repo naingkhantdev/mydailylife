@@ -1,63 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
 class AppTextStyles {
   const AppTextStyles._();
 
-  static const fontFamily = 'Roboto';
+  static final fontFamily = GoogleFonts.inter().fontFamily;
 
-  static const textTheme = TextTheme(
-    headlineMedium: TextStyle(
-      fontFamily: fontFamily,
+  static final textTheme = TextTheme(
+    headlineMedium: GoogleFonts.inter(
       color: AppColors.ink,
       fontSize: 26,
       fontWeight: FontWeight.w700,
       height: 1.18,
       letterSpacing: -0.5,
     ),
-    titleLarge: TextStyle(
-      fontFamily: fontFamily,
+    titleLarge: GoogleFonts.inter(
       color: AppColors.ink,
       fontSize: 19,
       fontWeight: FontWeight.w700,
       height: 1.2,
       letterSpacing: -0.2,
     ),
-    titleMedium: TextStyle(
-      fontFamily: fontFamily,
+    titleMedium: GoogleFonts.inter(
       color: AppColors.ink,
       fontSize: 16,
       fontWeight: FontWeight.w600,
       height: 1.25,
       letterSpacing: 0,
     ),
-    bodyLarge: TextStyle(
-      fontFamily: fontFamily,
+    bodyLarge: GoogleFonts.inter(
       color: AppColors.ink,
       fontSize: 16,
       fontWeight: FontWeight.w400,
       height: 1.45,
       letterSpacing: 0,
     ),
-    bodyMedium: TextStyle(
-      fontFamily: fontFamily,
+    bodyMedium: GoogleFonts.inter(
       color: AppColors.ink,
       fontSize: 14,
       fontWeight: FontWeight.w400,
       height: 1.4,
       letterSpacing: 0,
     ),
-    bodySmall: TextStyle(
-      fontFamily: fontFamily,
+    bodySmall: GoogleFonts.inter(
       color: AppColors.mutedText,
       fontSize: 12,
       fontWeight: FontWeight.w500,
       height: 1.35,
       letterSpacing: 0,
     ),
-    labelLarge: TextStyle(
-      fontFamily: fontFamily,
+    labelLarge: GoogleFonts.inter(
       fontSize: 14,
       fontWeight: FontWeight.w700,
       height: 1.2,
@@ -65,8 +59,7 @@ class AppTextStyles {
     ),
   );
 
-  static const appBarTitle = TextStyle(
-    fontFamily: fontFamily,
+  static final appBarTitle = GoogleFonts.inter(
     color: AppColors.ink,
     fontSize: 18,
     fontWeight: FontWeight.w700,

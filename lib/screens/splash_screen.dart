@@ -1,18 +1,24 @@
 import 'dart:math' as math;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'home_screen.dart';
+import 'login_screen.dart';
+import '../providers/firestore_provider.dart';
+import '../theme/app_colors.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/dark_hero_card.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _entranceAnimation;
@@ -34,11 +40,18 @@ class _SplashScreenState extends State<SplashScreen>
   void _handleAnimationStatus(AnimationStatus status) {
     if (status != AnimationStatus.completed || !mounted) return;
 
+    final isSignedIn = FirebaseAuth.instance.currentUser != null;
+    if (isSignedIn) {
+      ref.read(currentUserIdProvider.notifier).state = 'local-user';
+    }
+
+    final destinationRoute = isSignedIn ? AppRoutes.home : AppRoutes.login;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
-        settings: const RouteSettings(name: AppRoutes.home),
+        settings: RouteSettings(name: destinationRoute),
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, animation, secondaryAnimation) => const HomeScreen(),
+        pageBuilder: (_, animation, secondaryAnimation) =>
+            isSignedIn ? const HomeScreen() : const LoginScreen(),
         transitionsBuilder: (_, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -72,7 +85,10 @@ class _SplashScreenState extends State<SplashScreen>
                       children: [
                         FadeTransition(
                           opacity: _entranceAnimation,
-                          child: const _RoutineBadge(),
+                          child: const DarkHeroBadge(
+                            icon: Icons.wb_twilight_rounded,
+                            label: 'A BETTER DAILY RHYTHM',
+                          ),
                         ),
                         const Spacer(),
                         FadeTransition(
@@ -91,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 const Text(
                                   'Your day, in rhythm.',
                                   style: TextStyle(
-                                    color: Color(0xFFC7CBE7),
+                                    color: AppColors.onInkMuted,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
                                     letterSpacing: 0.4,
@@ -108,38 +124,6 @@ class _SplashScreenState extends State<SplashScreen>
                   );
                 },
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoutineBadge extends StatelessWidget {
-  const _RoutineBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.wb_twilight_rounded, color: Color(0xFFA5B4FC), size: 16),
-          SizedBox(width: 8),
-          Text(
-            'A BETTER DAILY RHYTHM',
-            style: TextStyle(
-              color: Color(0xFFE4E7F7),
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
             ),
           ),
         ],
@@ -172,11 +156,11 @@ class _OrbitLogo extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFC4B5FD), Color(0xFF5B5BD6)],
+                colors: [Color(0xFFC4B5FD), AppColors.primary],
               ),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x665B5BD6),
+                  color: AppColors.primary.withOpacity(0.4),
                   blurRadius: 44,
                   spreadRadius: 5,
                 ),
@@ -238,7 +222,7 @@ class _LoadingStatus extends StatelessWidget {
               const Text(
                 'Preparing your day',
                 style: TextStyle(
-                  color: Color(0xFF9AA1BD),
+                  color: AppColors.onInkFaint,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -332,7 +316,7 @@ class _OrbitPainter extends CustomPainter {
     const nodeColors = [
       Color(0xFFFFC857),
       Color(0xFF8B8CF8),
-      Color(0xFFA5B4FC),
+      AppColors.onInkAccent,
       Color(0xFFF2F1FF),
     ];
     for (var index = 0; index < nodeColors.length; index++) {

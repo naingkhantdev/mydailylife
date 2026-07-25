@@ -5,6 +5,7 @@ import '../models/daily_log_model.dart';
 import '../providers/diet_provider.dart';
 import '../widgets/calorie_summary.dart';
 import '../widgets/meal_input_card.dart';
+1import '../widgets/section_heading.dart';
 
 class DietScreen extends ConsumerWidget {
   const DietScreen({super.key});
@@ -17,10 +18,15 @@ class DietScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Diet & Calories')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           CalorieSummary(totalCalories: log.totalCalories),
-          const SizedBox(height: 16),
+          const SizedBox(height: 26),
+          const SectionHeading(
+            eyebrow: 'TODAY\'S MEALS',
+            title: 'What you\'ve logged',
+          ),
+          const SizedBox(height: 14),
           MealInputCard(
             title: 'Breakfast',
             items: log.breakfast,

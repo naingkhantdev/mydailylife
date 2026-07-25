@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/diet_provider.dart';
+import '../theme/app_colors.dart';
+import '../widgets/section_heading.dart';
 
 class WorkLogScreen extends ConsumerStatefulWidget {
   const WorkLogScreen({super.key});
@@ -32,10 +34,20 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Work Log')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SectionHeading(
+              eyebrow: 'END OF DAY',
+              title: 'Accomplishments & notes',
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'What did you get done today? Future you will thank you for the detail.',
+              style: TextStyle(color: AppColors.mutedText, height: 1.4),
+            ),
+            const SizedBox(height: 18),
             Expanded(
               child: TextField(
                 controller: _controller,
@@ -45,11 +57,10 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Accomplishments and notes',
                   alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             FilledButton.icon(
               onPressed: () {
                 ref
@@ -57,8 +68,11 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                     .updateNotes(workNotes: _controller.text.trim());
                 Navigator.of(context).pop();
               },
-              icon: const Icon(Icons.save),
-              label: const Text('Save'),
+              icon: const Icon(Icons.save_outlined),
+              label: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 2),
+                child: Text('Save'),
+              ),
             ),
           ],
         ),

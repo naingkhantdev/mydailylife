@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/firestore_provider.dart';
 import '../theme/app_colors.dart';
 
 class AppRoutes {
@@ -11,15 +14,19 @@ class AppRoutes {
   static const gymTechniques = '/gym-techniques';
   static const history = '/history';
   static const routines = '/routines';
+  static const login = '/login';
 }
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   const AppDrawer({required this.currentRoute, super.key});
 
   final String currentRoute;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userId = ref.watch(currentUserIdProvider);
+    final displayId = FirebaseAuth.instance.currentUser?.email ?? userId;
+
     return Drawer(
       width: 312,
       elevation: 0,
@@ -72,11 +79,11 @@ class AppDrawer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'RoutineSync',
                             style: TextStyle(
                               color: AppColors.ink,
@@ -85,10 +92,11 @@ class AppDrawer extends StatelessWidget {
                               letterSpacing: -0.2,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            'Personal daily system',
-                            style: TextStyle(
+                            displayId,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
                               color: AppColors.mutedText,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
@@ -153,6 +161,25 @@ class AppDrawer extends StatelessWidget {
                       currentRoute: currentRoute,
                     ),
                   ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    await FirebaseAuth.instance.signOut();
+                    ref.read(currentUserIdProvider.notifier).state =
+                        'local-user';
+                    navigator.pop();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (navigator.mounted) {
+                        navigator.pushReplacementNamed(AppRoutes.login);
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: const Text('Sign out'),
                 ),
               ),
               const _SyncStatus(),

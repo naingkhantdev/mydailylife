@@ -1,15 +1,21 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'routine_history_model.g.dart';
+
+@JsonSerializable(fieldRename: FieldRename.snake)
 class RoutineHistoryEntry {
   const RoutineHistoryEntry({
     required this.taskId,
     required this.taskTitle,
     required this.date,
-    required this.status,
+    this.status = RoutineStatus.missed,
     this.remark = '',
   });
 
   final String taskId;
   final String taskTitle;
   final DateTime date;
+  @JsonKey(unknownEnumValue: RoutineStatus.missed)
   final RoutineStatus status;
   final String remark;
 
@@ -22,28 +28,24 @@ class RoutineHistoryEntry {
 
   String get key => '$dateId:$taskId';
 
-  Map<String, dynamic> toMap() {
-    return {
-      'task_id': taskId,
-      'task_title': taskTitle,
-      'date': date.toIso8601String(),
-      'status': status.name,
-      'remark': remark,
-    };
-  }
+  Map<String, dynamic> toJson() => _$RoutineHistoryEntryToJson(this);
 
-  factory RoutineHistoryEntry.fromMap(Map<String, dynamic> map) {
-    return RoutineHistoryEntry(
-      taskId: map['task_id'] as String? ?? '',
-      taskTitle: map['task_title'] as String? ?? '',
-      date: DateTime.tryParse(map['date'] as String? ?? '') ?? DateTime.now(),
-      status: RoutineStatus.values.firstWhere(
-        (status) => status.name == map['status'],
-        orElse: () => RoutineStatus.missed,
-      ),
-      remark: map['remark'] as String? ?? '',
-    );
-  }
+  Map<String, dynamic> toMap() => toJson();
+
+  factory RoutineHistoryEntry.fromJson(Map<String, dynamic> json) =>
+      _$RoutineHistoryEntryFromJson(json);
+
+  factory RoutineHistoryEntry.fromMap(Map<String, dynamic> map) =>
+      RoutineHistoryEntry.fromJson({
+        ...map,
+        'task_id': map['task_id'] as String? ?? '',
+        'task_title': map['task_title'] as String? ?? '',
+        'date': DateTime.tryParse(map['date'] as String? ?? '')
+                ?.toIso8601String() ??
+            DateTime.now().toIso8601String(),
+        'status': map['status'] as String? ?? RoutineStatus.missed.name,
+        'remark': map['remark'] as String? ?? '',
+      });
 }
 
 enum RoutineStatus {

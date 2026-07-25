@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/daily_log_model.dart';
 import '../providers/diet_provider.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radii.dart';
 import 'food_manager_modal.dart';
 
 class QuickMealEntryCard extends ConsumerWidget {
@@ -23,11 +25,11 @@ class QuickMealEntryCard extends ConsumerWidget {
     );
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,40 +39,70 @@ class QuickMealEntryCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   '${_slotLabel(slot)} food',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              Text('$mealTotal kcal'),
+              Text(
+                '$mealTotal kcal',
+                style: const TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () => _openFoodModal(context, ref),
-            icon: const Icon(Icons.add),
-            label: const Text('Food'),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add food'),
           ),
           if (mealItems.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             for (var i = 0; i < mealItems.length; i++)
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${mealItems[i].name} x${mealItems[i].quantity}',
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${mealItems[i].name} x${mealItems[i].quantity}',
+                        style: const TextStyle(
+                          color: AppColors.bodyText,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                  Text('${mealItems[i].totalCalories} kcal'),
-                  IconButton(
-                    tooltip: 'Remove food',
-                    onPressed: () {
-                      ref.read(dailyLogProvider.notifier).removeMealItem(
-                            slot,
-                            i,
-                          );
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
+                    Text(
+                      '${mealItems[i].totalCalories} kcal',
+                      style: const TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Remove food',
+                      onPressed: () {
+                        ref.read(dailyLogProvider.notifier).removeMealItem(
+                              slot,
+                              i,
+                            );
+                      },
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: AppColors.mutedText,
+                        size: 18,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
               ),
           ],
         ],

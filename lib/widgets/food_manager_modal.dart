@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/daily_log_model.dart';
 import '../providers/food_dictionary_provider.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radii.dart';
 
 class FoodManagerModal extends ConsumerStatefulWidget {
   const FoodManagerModal({
@@ -80,9 +82,8 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
                 controller: _searchController,
                 onChanged: (value) => setState(() => _query = value),
                 decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
+                  prefixIcon: Icon(Icons.search_rounded),
                   labelText: 'Search existing food',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 14),
@@ -156,7 +157,6 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               labelText: 'Quantity',
-              border: OutlineInputBorder(),
             ),
           ),
           actions: [
@@ -229,18 +229,21 @@ class _FoodEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             editingFood == null ? 'Create food' : 'Edit food',
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -252,7 +255,6 @@ class _FoodEditor extends StatelessWidget {
                   onChanged: _fillCaloriesFromSavedFood,
                   decoration: const InputDecoration(
                     labelText: 'Food',
-                    border: OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),
@@ -265,7 +267,6 @@ class _FoodEditor extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'kcal auto-filled',
-                    border: OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),

@@ -10,6 +10,7 @@ import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/dark_hero_card.dart';
 import '../widgets/quick_meal_entry_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -173,7 +174,6 @@ class HomeScreen extends ConsumerWidget {
           decoration: const InputDecoration(
             labelText: 'What got in the way?',
             hintText: 'Optional note for your history',
-            border: OutlineInputBorder(),
           ),
         ),
         actions: [
@@ -209,7 +209,6 @@ class HomeScreen extends ConsumerWidget {
           decoration: const InputDecoration(
             labelText: 'Short note',
             hintText: 'Optional: what did you accomplish?',
-            border: OutlineInputBorder(),
           ),
         ),
         actions: [
@@ -380,73 +379,70 @@ class _GymFocusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.ink,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onOpen,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(Icons.fitness_center_rounded,
-                    color: Colors.white),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'TODAY\'S TRAINING',
-                      style: TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      focus,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          color: Color(0xFFCBD5E1), fontSize: 12),
-                    ),
-                    const SizedBox(height: 7),
-                    Text(
-                      '$completedSets/$targetSets sets · View technique',
-                      style: const TextStyle(
-                        color: Color(0xFFA5B4FC),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.white),
-            ],
+    return DarkHeroCard(
+      onTap: onOpen,
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: const BoxDecoration(
+              color: AppColors.onInkSurface,
+              borderRadius: BorderRadius.all(Radius.circular(13)),
+            ),
+            child: const Icon(
+              Icons.fitness_center_rounded,
+              color: AppColors.onInk,
+            ),
           ),
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'TODAY\'S TRAINING',
+                  style: TextStyle(
+                    color: AppColors.onInkFaint,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.onInk,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  focus,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.onInkMuted,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  '$completedSets/$targetSets sets · View technique',
+                  style: const TextStyle(
+                    color: AppColors.onInkAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: AppColors.onInk),
+        ],
       ),
     );
   }

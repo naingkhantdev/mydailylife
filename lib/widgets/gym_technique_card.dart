@@ -5,6 +5,7 @@ import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_radii.dart';
 
 GymTechniqueModel? _findTechnique(
   List<GymTechniqueModel> techniques,
@@ -43,8 +44,8 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -53,7 +54,7 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
           Row(
             children: [
               const Icon(
-                Icons.fitness_center,
+                Icons.fitness_center_rounded,
                 size: 20,
                 color: AppColors.primary,
               ),
@@ -61,23 +62,24 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
               Expanded(
                 child: Text(
                   '${widget.gymDay.title} technique',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               Icon(
                 isWorkoutDone
-                    ? Icons.check_circle
-                    : Icons.check_circle_outline,
-                color: isWorkoutDone
-                    ? const Color(0xFF166534)
-                    : const Color(0xFF9CA3AF),
+                    ? Icons.check_circle_rounded
+                    : Icons.check_circle_outline_rounded,
+                color: isWorkoutDone ? AppColors.success : AppColors.mutedText,
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             widget.gymDay.focus,
-            style: const TextStyle(color: Color(0xFF6B7280)),
+            style: const TextStyle(color: AppColors.mutedText),
           ),
           const SizedBox(height: 12),
           for (final exercise in widget.gymDay.exercises) ...[
@@ -145,26 +147,31 @@ class _TechniqueRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadii.sm),
             child: SizedBox(
               width: 44,
               height: 44,
               child: guide.photoUrl == null
                   ? Container(
-                      color: const Color(0xFFF3F4F6),
+                      color: AppColors.blueSoft,
                       alignment: Alignment.center,
-                      child: const Icon(Icons.fitness_center, size: 18),
+                      child: const Icon(
+                        Icons.fitness_center_rounded,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                     )
                   : Image.network(
                       guide.photoUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: const Color(0xFFF3F4F6),
+                          color: AppColors.blueSoft,
                           alignment: Alignment.center,
                           child: const Icon(
                             Icons.image_not_supported_outlined,
                             size: 18,
+                            color: AppColors.primary,
                           ),
                         );
                       },
@@ -183,10 +190,17 @@ class _TechniqueRow extends StatelessWidget {
                       Expanded(
                         child: Text(
                           exercise,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      const Icon(Icons.expand_more, size: 18),
+                      const Icon(
+                        Icons.expand_more_rounded,
+                        size: 18,
+                        color: AppColors.mutedText,
+                      ),
                     ],
                   ),
                 ),
@@ -196,7 +210,7 @@ class _TechniqueRow extends StatelessWidget {
                       ? technique!.cue
                       : _cueFor(exercise),
                   style: const TextStyle(
-                    color: Color(0xFF6B7280),
+                    color: AppColors.mutedText,
                     fontSize: 12,
                   ),
                 ),
@@ -210,13 +224,17 @@ class _TechniqueRow extends StatelessWidget {
                           Text(
                             '${session.targetSets} x ${session.targetReps}',
                             style: const TextStyle(
-                              color: Color(0xFF6B7280),
+                              color: AppColors.bodyText,
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.edit_outlined, size: 15),
+                          const Icon(
+                            Icons.edit_outlined,
+                            size: 15,
+                            color: AppColors.mutedText,
+                          ),
                         ],
                       ),
                     ),
@@ -227,16 +245,16 @@ class _TechniqueRow extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(right: 4),
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
                           onTap: () => onToggleSet(setNumber),
                           child: Icon(
                             session.completedSets.contains(setNumber)
-                                ? Icons.check_circle
-                                : Icons.radio_button_unchecked,
+                                ? Icons.check_circle_rounded
+                                : Icons.radio_button_unchecked_rounded,
                             size: 22,
                             color: session.completedSets.contains(setNumber)
-                                ? const Color(0xFF166534)
-                                : const Color(0xFF9CA3AF),
+                                ? AppColors.success
+                                : AppColors.mutedText,
                           ),
                         ),
                       ),
@@ -287,7 +305,6 @@ class _TechniqueRow extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Sets',
-                    border: OutlineInputBorder(),
                   ),
                 ),
               ),
@@ -298,7 +315,6 @@ class _TechniqueRow extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Reps',
-                    border: OutlineInputBorder(),
                   ),
                 ),
               ),
@@ -452,24 +468,53 @@ class _DetailBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
           for (var i = 0; i < items.length; i++) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${i + 1}. '),
-                Expanded(child: Text(items[i])),
+                Container(
+                  width: 18,
+                  height: 18,
+                  margin: const EdgeInsets.only(top: 1),
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.blueSoft,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${i + 1}',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    items[i],
+                    style: const TextStyle(color: AppColors.bodyText),
+                  ),
+                ),
               ],
             ),
-            if (i != items.length - 1) const SizedBox(height: 6),
+            if (i != items.length - 1) const SizedBox(height: 8),
           ],
         ],
       ),
@@ -485,17 +530,17 @@ class _PhotoGuide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadii.sm),
             child: AspectRatio(
               aspectRatio: 16 / 10,
               child: Image.network(
@@ -503,9 +548,12 @@ class _PhotoGuide extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    color: const Color(0xFFF3F4F6),
+                    color: AppColors.blueSoft,
                     alignment: Alignment.center,
-                    child: const Icon(Icons.image_not_supported_outlined),
+                    child: const Icon(
+                      Icons.image_not_supported_outlined,
+                      color: AppColors.primary,
+                    ),
                   );
                 },
               ),
@@ -514,20 +562,33 @@ class _PhotoGuide extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             technique.photoTitle,
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 6),
-          Text(technique.setup),
+          Text(
+            technique.setup,
+            style: const TextStyle(color: AppColors.bodyText),
+          ),
           if (technique.benchAngle != null) ...[
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.straighten, size: 18),
+                const Icon(
+                  Icons.straighten_rounded,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Bench angle: ${technique.benchAngle}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -536,7 +597,7 @@ class _PhotoGuide extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             technique.photoCredit,
-            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+            style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
           ),
         ],
       ),
@@ -551,7 +612,7 @@ class _SafetyNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Text(
       'Use a weight you can control for your chosen sets and reps. Stop if pain, dizziness, numbness, or joint pinching happens. For heavy bench, squat, or overhead work, use safety pins or a spotter.',
-      style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+      style: TextStyle(color: AppColors.mutedText, fontSize: 12, height: 1.4),
     );
   }
 }

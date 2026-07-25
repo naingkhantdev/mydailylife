@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/daily_log_model.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radii.dart';
 
 class MealInputCard extends StatefulWidget {
   const MealInputCard({
@@ -43,28 +45,52 @@ class _MealInputCardState extends State<MealInputCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.coralSoft,
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
+                ),
+                child: Icon(
+                  _iconForMeal(widget.title),
+                  color: AppColors.coral,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
               Text(
-                widget.title,
+                '$mealTotal kcal',
                 style: const TextStyle(
-                  fontSize: 16,
+                  color: AppColors.mutedText,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text('$mealTotal kcal'),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 flex: 3,
@@ -72,7 +98,6 @@ class _MealInputCardState extends State<MealInputCard> {
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Food',
-                    border: OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),
@@ -85,7 +110,6 @@ class _MealInputCardState extends State<MealInputCard> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'kcal',
-                    border: OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),
@@ -98,7 +122,6 @@ class _MealInputCardState extends State<MealInputCard> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Qty',
-                    border: OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),
@@ -107,27 +130,53 @@ class _MealInputCardState extends State<MealInputCard> {
               IconButton.filled(
                 tooltip: 'Add food',
                 onPressed: _addItem,
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add_rounded),
               ),
             ],
           ),
           if (widget.items.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
             for (var i = 0; i < widget.items.length; i++)
-              ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(widget.items[i].name),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Row(
                   children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.coral,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.items[i].name,
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                     Text(
-                      '${widget.items[i].quantity}x ${widget.items[i].totalCalories} kcal',
+                      '${widget.items[i].quantity}x · ${widget.items[i].totalCalories} kcal',
+                      style: const TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Remove food',
                       onPressed: () => widget.onRemove(i),
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: AppColors.mutedText,
+                        size: 18,
+                      ),
+                      visualDensity: VisualDensity.compact,
                     ),
                   ],
                 ),
@@ -136,6 +185,14 @@ class _MealInputCardState extends State<MealInputCard> {
         ],
       ),
     );
+  }
+
+  IconData _iconForMeal(String title) {
+    final name = title.toLowerCase();
+    if (name.contains('breakfast')) return Icons.free_breakfast_rounded;
+    if (name.contains('lunch')) return Icons.lunch_dining_rounded;
+    if (name.contains('dinner')) return Icons.dinner_dining_rounded;
+    return Icons.restaurant_rounded;
   }
 
   void _addItem() {

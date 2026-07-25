@@ -1,7 +1,12 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'daily_log_model.g.dart';
+
+@JsonSerializable()
 class MealItem {
   const MealItem({
-    required this.name,
-    required this.calories,
+    this.name = '',
+    this.calories = 0,
     this.quantity = 1,
   });
 
@@ -23,23 +28,17 @@ class MealItem {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'calories': calories,
-      'quantity': quantity,
-    };
-  }
+  Map<String, dynamic> toJson() => _$MealItemToJson(this);
 
-  factory MealItem.fromMap(Map<String, dynamic> map) {
-    return MealItem(
-      name: map['name'] as String? ?? '',
-      calories: (map['calories'] as num?)?.toInt() ?? 0,
-      quantity: (map['quantity'] as num?)?.toInt() ?? 1,
-    );
-  }
+  Map<String, dynamic> toMap() => toJson();
+
+  factory MealItem.fromJson(Map<String, dynamic> json) =>
+      _$MealItemFromJson(json);
+
+  factory MealItem.fromMap(Map<String, dynamic> map) => MealItem.fromJson(map);
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
 class DailyLogModel {
   const DailyLogModel({
     required this.date,
@@ -51,6 +50,7 @@ class DailyLogModel {
     this.dinner = const [],
   });
 
+  @JsonKey(includeToJson: false)
   final DateTime date;
   final String workNotes;
   final String studyNotes;
@@ -93,36 +93,33 @@ class DailyLogModel {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'work_notes': workNotes,
-      'study_notes': studyNotes,
-      'gaming_notes': gamingNotes,
-      'breakfast': breakfast.map((item) => item.toMap()).toList(),
-      'lunch': lunch.map((item) => item.toMap()).toList(),
-      'dinner': dinner.map((item) => item.toMap()).toList(),
-      'total_calories': totalCalories,
-    };
-  }
+  Map<String, dynamic> toJson() => _$DailyLogModelToJson(this);
 
-  factory DailyLogModel.fromMap(DateTime date, Map<String, dynamic> map) {
-    List<MealItem> readMeal(String key) {
-      return (map[key] as List? ?? const [])
-          .whereType<Map>()
-          .map((item) => MealItem.fromMap(Map<String, dynamic>.from(item)))
-          .toList();
-    }
+  Map<String, dynamic> toMap() => {
+        ...toJson(),
+        'total_calories': totalCalories,
+      };
 
-    return DailyLogModel(
-      date: date,
-      workNotes: map['work_notes'] as String? ?? '',
-      studyNotes: map['study_notes'] as String? ?? '',
-      gamingNotes: map['gaming_notes'] as String? ?? '',
-      breakfast: readMeal('breakfast'),
-      lunch: readMeal('lunch'),
-      dinner: readMeal('dinner'),
-    );
-  }
+  factory DailyLogModel.fromJson(Map<String, dynamic> json) =>
+      _$DailyLogModelFromJson(json);
+
+  factory DailyLogModel.fromMap(DateTime date, Map<String, dynamic> map) =>
+      DailyLogModel.fromJson({
+        'date': date.toIso8601String(),
+        'work_notes': map['work_notes'] as String? ?? '',
+        'study_notes': map['study_notes'] as String? ?? '',
+        'gaming_notes': map['gaming_notes'] as String? ?? '',
+        'breakfast': _readMealJson(map['breakfast']),
+        'lunch': _readMealJson(map['lunch']),
+        'dinner': _readMealJson(map['dinner']),
+      });
+}
+
+List<Map<String, dynamic>> _readMealJson(Object? value) {
+  return (value as List? ?? const [])
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 }
 
 enum MealSlot {

@@ -10,6 +10,8 @@ import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/dark_hero_card.dart';
+import '../widgets/section_heading.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -94,7 +96,7 @@ class DashboardScreen extends ConsumerWidget {
             onEditWeight: () => _showWeightDialog(context, ref, weight),
           ),
           const SizedBox(height: 26),
-          _SectionHeading(
+          SectionHeading(
             eyebrow: 'TODAY\'S FACTS',
             title: 'What matters right now',
             actionLabel: 'View history',
@@ -202,7 +204,6 @@ class DashboardScreen extends ConsumerWidget {
           decoration: const InputDecoration(
             labelText: 'Weight in lb',
             prefixIcon: Icon(Icons.monitor_weight_outlined),
-            border: OutlineInputBorder(),
           ),
         ),
         actions: [
@@ -242,34 +243,13 @@ class _TodayHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: AppColors.ink,
-      ),
+    return DarkHeroCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.white.withOpacity(0.18)),
-                ),
-                child: Text(
-                  _dateLabel(date).toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ),
+              DarkHeroBadge(label: _dateLabel(date).toUpperCase()),
               const Spacer(),
               const Icon(Icons.wb_sunny_outlined, color: AppColors.gold),
             ],
@@ -285,7 +265,7 @@ class _TodayHero extends StatelessWidget {
                     const Text(
                       'Today, in brief',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.onInk,
                         fontSize: 25,
                         height: 1.1,
                         fontWeight: FontWeight.w900,
@@ -294,8 +274,8 @@ class _TodayHero extends StatelessWidget {
                     const SizedBox(height: 10),
                     Text(
                       brief,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.82),
+                      style: const TextStyle(
+                        color: AppColors.onInkMuted,
                         fontSize: 14,
                         height: 1.5,
                         fontWeight: FontWeight.w500,
@@ -314,7 +294,7 @@ class _TodayHero extends StatelessWidget {
                     CircularProgressIndicator(
                       value: completion,
                       strokeWidth: 8,
-                      backgroundColor: Colors.white.withOpacity(0.16),
+                      backgroundColor: AppColors.onInkSurface,
                       valueColor:
                           const AlwaysStoppedAnimation<Color>(AppColors.gold),
                       strokeCap: StrokeCap.round,
@@ -326,15 +306,15 @@ class _TodayHero extends StatelessWidget {
                           Text(
                             '${(completion * 100).round()}%',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.onInk,
                               fontSize: 19,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
                           Text(
                             '$done/$total done',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                            style: const TextStyle(
+                              color: AppColors.onInkMuted,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                             ),
@@ -385,7 +365,7 @@ class _FactGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final gap = 12.0;
+        const gap = 12.0;
         final itemWidth = constraints.maxWidth >= 700
             ? (constraints.maxWidth - gap * 3) / 4
             : (constraints.maxWidth - gap) / 2;
@@ -530,48 +510,6 @@ class _FactTile extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({
-    required this.eyebrow,
-    required this.title,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  final String eyebrow;
-  final String title;
-  final String actionLabel;
-  final VoidCallback onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                eyebrow,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-            ],
-          ),
-        ),
-        TextButton(onPressed: onAction, child: Text(actionLabel)),
-      ],
     );
   }
 }

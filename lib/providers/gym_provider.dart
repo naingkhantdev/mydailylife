@@ -104,10 +104,84 @@ class GymTechniqueController extends StateNotifier<List<GymTechniqueModel>> {
         );
         return;
       }
-      state = _sorted(saved);
+      final migrated = _withMissingDefaults(_withCurrentDefaultSchedule(saved));
+      state = _sorted(migrated);
+      if (!_hasSameTechniques(saved, migrated)) {
+        await _firestoreService.saveGymTechniques(
+          userId: _userId,
+          techniques: migrated,
+        );
+      }
     } catch (_) {
       // The built-in plan remains available while Firestore is unavailable.
     }
+  }
+
+  static List<GymTechniqueModel> _withCurrentDefaultSchedule(
+    List<GymTechniqueModel> techniques,
+  ) {
+    final defaultsById = {
+      for (final technique in defaultGymTechniques) technique.id: technique,
+    };
+    return [
+      for (final technique in techniques)
+        _withCurrentDefaultTechnique(technique, defaultsById),
+    ];
+  }
+
+  static GymTechniqueModel _withCurrentDefaultTechnique(
+    GymTechniqueModel technique,
+    Map<String, GymTechniqueModel> defaultsById,
+  ) {
+    final defaultTechnique = defaultsById[technique.id];
+    if (defaultTechnique == null) return technique;
+
+    return GymTechniqueModel(
+      id: technique.id,
+      weekday: defaultTechnique.weekday,
+      name: defaultTechnique.name,
+      cue: technique.cue,
+      instructions: technique.instructions,
+      imageUrl: technique.imageUrl,
+    );
+  }
+
+  static List<GymTechniqueModel> _withMissingDefaults(
+    List<GymTechniqueModel> techniques,
+  ) {
+    final existingKeys = {
+      for (final technique in techniques)
+        '${technique.weekday}:${technique.name.toLowerCase()}',
+    };
+    final missingDefaults = [
+      for (final defaultTechnique in defaultGymTechniques)
+        if (existingKeys.add(
+          '${defaultTechnique.weekday}:${defaultTechnique.name.toLowerCase()}',
+        ))
+          defaultTechnique,
+    ];
+    return [...techniques, ...missingDefaults];
+  }
+
+  static bool _hasSameTechniques(
+    List<GymTechniqueModel> current,
+    List<GymTechniqueModel> next,
+  ) {
+    if (current.length != next.length) return false;
+
+    for (var index = 0; index < current.length; index++) {
+      final currentTechnique = current[index];
+      final nextTechnique = next[index];
+      if (currentTechnique.id != nextTechnique.id ||
+          currentTechnique.weekday != nextTechnique.weekday ||
+          currentTechnique.name != nextTechnique.name ||
+          currentTechnique.cue != nextTechnique.cue ||
+          currentTechnique.instructions != nextTechnique.instructions ||
+          currentTechnique.imageUrl != nextTechnique.imageUrl) {
+        return false;
+      }
+    }
+    return true;
   }
 
   static List<GymTechniqueModel> _sorted(
@@ -146,9 +220,9 @@ class _GymDayTemplate {
 }
 
 const _gymDayTemplates = [
-  _GymDayTemplate(1, 'Push 1', 'Chest, Shoulders, Triceps'),
-  _GymDayTemplate(2, 'Pull 1', 'Back, Rear Delts, Biceps'),
-  _GymDayTemplate(3, 'Legs 1 & Core', 'Quads, Calves, Abs'),
+  _GymDayTemplate(1, 'Legs 1 & Core', 'Quads, Calves, Abs'),
+  _GymDayTemplate(2, 'Push 1', 'Chest, Shoulders, Triceps'),
+  _GymDayTemplate(3, 'Pull 1', 'Back, Rear Delts, Biceps'),
   _GymDayTemplate(4, 'Push 2', 'Chest, Shoulders, Triceps'),
   _GymDayTemplate(5, 'Pull 2', 'Back, Biceps'),
   _GymDayTemplate(6, 'Legs 2 & Core', 'Hamstrings, Glutes, Abs'),
@@ -156,21 +230,21 @@ const _gymDayTemplates = [
 ];
 
 const _defaultGymTechniqueEntries = <(int, String)>[
-  (1, 'Bench press'),
-  (1, 'Incline dumbbell press'),
-  (1, 'Shoulder press'),
-  (1, 'Lateral raises'),
-  (1, 'Triceps pushdowns'),
-  (2, 'Pull-ups or lat pulldown'),
-  (2, 'Barbell rows'),
-  (2, 'Seated cable rows'),
-  (2, 'Face pulls'),
-  (2, 'Biceps curls'),
-  (3, 'Squats'),
-  (3, 'Leg press'),
-  (3, 'Leg extensions'),
-  (3, 'Standing calf raises'),
-  (3, 'Plank'),
+  (1, 'Squats'),
+  (1, 'Leg press'),
+  (1, 'Leg extensions'),
+  (1, 'Standing calf raises'),
+  (1, 'Plank'),
+  (2, 'Bench press'),
+  (2, 'Incline dumbbell press'),
+  (2, 'Shoulder press'),
+  (2, 'Lateral raises'),
+  (2, 'Triceps pushdowns'),
+  (3, 'Pull-ups or lat pulldown'),
+  (3, 'Barbell rows'),
+  (3, 'Seated cable rows'),
+  (3, 'Face pulls'),
+  (3, 'Biceps curls'),
   (4, 'Incline bench press'),
   (4, 'Machine chest press'),
   (4, 'Arnold press'),

@@ -38,11 +38,16 @@ dependencies:
   firebase_core: ^4.7.0
   cloud_firestore: ^6.3.0
   flutter_riverpod: ^2.6.1
+  google_fonts: ^6.2.1
+  json_annotation: ^4.9.0
+  firebase_auth: ^6.4.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
+  build_runner: ^2.4.11
+  json_serializable: ^6.8.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

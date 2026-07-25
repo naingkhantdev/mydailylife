@@ -6,6 +6,6 @@ final firestoreServiceProvider = Provider<FirestoreService>((ref) {
   return FirestoreService();
 });
 
-final currentUserIdProvider = Provider<String>((ref) {
+final currentUserIdProvider = StateProvider<String>((ref) {
   return 'local-user';
 });

@@ -371,7 +371,6 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               value: _weekday,
               decoration: const InputDecoration(
                 labelText: 'Training day',
-                border: OutlineInputBorder(),
               ),
               items: [
                 for (var weekday = 1; weekday <= 7; weekday++)
@@ -392,7 +391,6 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               decoration: const InputDecoration(
                 labelText: 'Exercise name',
                 hintText: 'Example: Dumbbell pullover',
-                border: OutlineInputBorder(),
               ),
               validator: _validateName,
             ),
@@ -404,7 +402,6 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               decoration: const InputDecoration(
                 labelText: 'Quick coaching cue',
                 hintText: 'Example: Keep ribs down and move slowly.',
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 14),
@@ -417,7 +414,6 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
                 labelText: 'Technique steps',
                 hintText: 'Enter one step per line',
                 alignLabelWithHint: true,
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 14),
@@ -427,7 +423,6 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               decoration: const InputDecoration(
                 labelText: 'Image URL (optional)',
                 prefixIcon: Icon(Icons.link_rounded),
-                border: OutlineInputBorder(),
               ),
               validator: _validateImageUrl,
             ),
@@ -489,9 +484,9 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
 
 String _dayName(int weekday) {
   const names = [
-    'Monday · Push 1',
-    'Tuesday · Pull 1',
-    'Wednesday · Legs 1 & Core',
+    'Monday · Legs 1 & Core',
+    'Tuesday · Push 1',
+    'Wednesday · Pull 1',
     'Thursday · Push 2',
     'Friday · Pull 2',
     'Saturday · Legs 2 & Core',

@@ -5,6 +5,7 @@ import '../models/task_model.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/empty_state.dart';
 
 class RoutineManagerScreen extends ConsumerWidget {
   const RoutineManagerScreen({super.key});
@@ -46,7 +47,13 @@ class RoutineManagerScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 22),
           if (tasks.isEmpty)
-            const _EmptyTasks()
+            const EmptyState(
+              icon: Icons.event_note_outlined,
+              title: 'No tasks yet',
+              message: 'Add the first part of your day to get started.',
+              iconColor: AppColors.primary,
+              iconBackground: AppColors.blueSoft,
+            )
           else
             Container(
               decoration: BoxDecoration(
@@ -254,7 +261,6 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
               decoration: const InputDecoration(
                 labelText: 'Task name',
                 prefixIcon: Icon(Icons.edit_outlined),
-                border: OutlineInputBorder(),
               ),
               validator: (value) => value == null || value.trim().isEmpty
                   ? 'Enter a task name'
@@ -291,7 +297,15 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
               children: [
                 for (var day = 1; day <= 7; day++)
                   FilterChip(
-                    label: Text(shortDay(day)),
+                    label: Text(
+                      shortDay(day),
+                      style: TextStyle(
+                        color: _days.contains(day)
+                            ? Colors.white
+                            : AppColors.bodyText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     selected: _days.contains(day),
                     onSelected: (selected) {
                       setState(() {
@@ -318,7 +332,6 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
             DropdownButtonFormField<RoutineCategory>(
               value: _category,
               decoration: const InputDecoration(
-                border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.category_outlined),
               ),
               items: [
@@ -403,7 +416,6 @@ class _TimeField extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
           suffixIcon: const Icon(Icons.schedule_rounded),
         ),
         child: Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -431,23 +443,6 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-class _EmptyTasks extends StatelessWidget {
-  const _EmptyTasks();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 48),
-      child: Column(
-        children: [
-          Icon(Icons.event_note_outlined, size: 42, color: AppColors.mutedText),
-          SizedBox(height: 12),
-          Text('No tasks yet. Add the first part of your day.'),
-        ],
-      ),
-    );
-  }
-}
 
 IconData categoryIcon(RoutineCategory category) {
   return switch (category) {

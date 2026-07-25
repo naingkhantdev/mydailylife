@@ -27,4 +27,14 @@ class AppColors {
   static const violetSoft = Color(0xFFF3F0FF);
   static const blueSoft = Color(0xFFEEF0FF);
   static const coralSoft = Color(0xFFFFF0EB);
+
+  // Text/border colors for content sitting on a dark "ink" surface
+  // (hero cards, splash screen). Keeps the on-dark palette consistent
+  // instead of each hero card hardcoding its own near-white grays.
+  static const onInk = Colors.white;
+  static const onInkMuted = Color(0xFFCBD5E1);
+  static const onInkFaint = Color(0xFF94A3B8);
+  static const onInkBorder = Color(0x26FFFFFF);
+  static const onInkSurface = Color(0x1FFFFFFF);
+  static const onInkAccent = Color(0xFFA5B4FC);
 }

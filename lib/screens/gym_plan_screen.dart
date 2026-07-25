@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_radii.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/dark_hero_card.dart';
 import '../widgets/gym_technique_card.dart';
 
 class GymPlanScreen extends ConsumerWidget {
@@ -35,19 +37,15 @@ class GymPlanScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Container(
+          DarkHeroCard(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.ink,
-              borderRadius: BorderRadius.circular(16),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   todayGym.title,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.onInk,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -55,19 +53,21 @@ class GymPlanScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   todayGym.focus,
-                  style: const TextStyle(color: Color(0xFFCBD5E1)),
+                  style: const TextStyle(color: AppColors.onInkMuted),
                 ),
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
                   value: target == 0 ? 0 : completed / target,
                   minHeight: 8,
-                  borderRadius: BorderRadius.circular(999),
-                  backgroundColor: const Color(0xFF334155),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  backgroundColor: AppColors.onInkSurface,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.gold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '$completed / $target sets finished',
-                  style: const TextStyle(color: Color(0xFFCBD5E1)),
+                  style: const TextStyle(color: AppColors.onInkMuted),
                 ),
               ],
             ),
@@ -109,8 +109,8 @@ class _GymDaySummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.md),
         border: Border.all(
           color: isToday ? AppColors.primary : AppColors.border,
         ),
@@ -123,12 +123,15 @@ class _GymDaySummary extends StatelessWidget {
               children: [
                 Text(
                   day.title,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   day.focus,
-                  style: const TextStyle(color: Color(0xFF6B7280)),
+                  style: const TextStyle(color: AppColors.mutedText),
                 ),
               ],
             ),

@@ -9,6 +9,10 @@ import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/app_status_chip.dart';
+import '../widgets/dark_hero_card.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/section_heading.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -52,7 +56,12 @@ class HistoryScreen extends ConsumerWidget {
       body: dateIds.isEmpty && dailyLogHistory.isLoading
           ? const Center(child: CircularProgressIndicator())
           : dateIds.isEmpty
-              ? const _EmptyHistory()
+              ? const EmptyState(
+                  icon: Icons.history_toggle_off_rounded,
+                  title: 'No past days yet',
+                  message:
+                      'Complete routines and add short remarks today. Past daily facts will appear here clearly by date.',
+                )
               : ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               children: [
@@ -62,19 +71,9 @@ class HistoryScreen extends ConsumerWidget {
                   completionRate: completionRate,
                 ),
                 const SizedBox(height: 26),
-                const Text(
-                  'PAST DAILY FACTS',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your days, clearly remembered',
-                  style: Theme.of(context).textTheme.titleLarge,
+                const SectionHeading(
+                  eyebrow: 'PAST DAILY FACTS',
+                  title: 'Your days, clearly remembered',
                 ),
                 const SizedBox(height: 6),
                 const Text(
@@ -147,12 +146,7 @@ class _HistoryHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: AppColors.ink,
-      ),
+    return DarkHeroCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -161,7 +155,7 @@ class _HistoryHero extends StatelessWidget {
           const Text(
             'Patterns become visible\nwhen days are remembered.',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.onInk,
               fontSize: 22,
               height: 1.2,
               fontWeight: FontWeight.w900,
@@ -198,7 +192,7 @@ class _HeroFact extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.onInk,
               fontSize: 21,
               fontWeight: FontWeight.w900,
             ),
@@ -206,8 +200,8 @@ class _HeroFact extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.64),
+            style: const TextStyle(
+              color: AppColors.onInkFaint,
               fontSize: 9,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.7,
@@ -228,7 +222,7 @@ class _HeroDivider extends StatelessWidget {
       width: 1,
       height: 38,
       margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.white.withOpacity(0.16),
+      color: AppColors.onInkBorder,
     );
   }
 }
@@ -297,11 +291,11 @@ class _DayHistoryCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                _StatusChip(label: '$done done', color: AppColors.success),
+                AppStatusChip(label: '$done done', color: AppColors.success),
                 if (missed > 0)
-                  _StatusChip(label: '$missed missed', color: AppColors.coral),
+                  AppStatusChip(label: '$missed missed', color: AppColors.coral),
                 if (pending > 0)
-                  _StatusChip(label: '$pending untracked', color: AppColors.mutedText),
+                  AppStatusChip(label: '$pending untracked', color: AppColors.mutedText),
               ],
             ),
           ),
@@ -518,28 +512,6 @@ class _DateBadge extends StatelessWidget {
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.09),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800),
-      ),
-    );
-  }
-}
-
 class _DayBrief extends StatelessWidget {
   const _DayBrief({
     required this.done,
@@ -700,45 +672,3 @@ class _HistoryRoutineRow extends StatelessWidget {
   }
 }
 
-class _EmptyHistory extends StatelessWidget {
-  const _EmptyHistory();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 92,
-              height: 92,
-              decoration: const BoxDecoration(
-                color: AppColors.violetSoft,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.history_toggle_off_rounded,
-                color: AppColors.violet,
-                size: 42,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'No past days yet',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Complete routines and add short remarks today. Past daily facts will appear here clearly by date.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.mutedText, height: 1.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

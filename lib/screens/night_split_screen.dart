@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/diet_provider.dart';
+import '../theme/app_colors.dart';
+import '../widgets/section_heading.dart';
 
 class NightSplitScreen extends ConsumerStatefulWidget {
   const NightSplitScreen({super.key});
@@ -34,8 +36,18 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Night Split')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
+          const SectionHeading(
+            eyebrow: 'EVENING WIND-DOWN',
+            title: 'Study & gaming notes',
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'A short note is enough — just what you focused on and how it went.',
+            style: TextStyle(color: AppColors.mutedText, height: 1.4),
+          ),
+          const SizedBox(height: 22),
           TextField(
             controller: _studyController,
             minLines: 5,
@@ -43,7 +55,6 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
             decoration: const InputDecoration(
               labelText: 'Study notes',
               alignLabelWithHint: true,
-              border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 16),
@@ -54,10 +65,9 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
             decoration: const InputDecoration(
               labelText: 'Gaming notes',
               alignLabelWithHint: true,
-              border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 22),
           FilledButton.icon(
             onPressed: () {
               ref.read(dailyLogProvider.notifier).updateNotes(
@@ -66,8 +76,11 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
                   );
               Navigator.of(context).pop();
             },
-            icon: const Icon(Icons.save),
-            label: const Text('Save'),
+            icon: const Icon(Icons.save_outlined),
+            label: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 2),
+              child: Text('Save'),
+            ),
           ),
         ],
       ),
