@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/daily_log_model.dart';
@@ -10,19 +8,6 @@ import '../models/task_model.dart';
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  /// Where every account's data lived before sign-in became per-user.
-  static const legacyUserId = 'local-user';
-
-  /// The one account allowed to adopt [legacyUserId]'s data.
-  static const seedUserEmail = 'naingkhantab@gmail.com';
-
-  static const _userCollections = [
-    'daily_logs',
-    'tasks',
-    'routine_history',
-    'gym_techniques',
-  ];
 
   /// Firestore rejects an empty document id, and a widget can rebuild for a
   /// frame while signing out. Every call is a no-op in that window.
@@ -201,11 +186,7 @@ class FirestoreService {
     return _routineHistory(userId).doc(entryKey).delete();
   }
 
-  /// Records the profile document for [userId] and, the first time the seed
-  /// account signs in, adopts the data that predates per-user sign-in.
-  ///
-  /// Called on every sign-in; the `legacy_import_completed` flag keeps the
-  /// import itself to exactly once per account.
+  /// Records the profile document for [userId]. Called on every sign-in.
   Future<void> prepareUserWorkspace({
     required String userId,
     String? email,
@@ -213,59 +194,10 @@ class FirestoreService {
   }) async {
     if (_isSignedOut(userId)) return;
 
-    final userDoc = _firestore.collection('users').doc(userId);
-    final profile = (await userDoc.get()).data();
-
-    await userDoc.set({
+    await _firestore.collection('users').doc(userId).set({
       'email': email ?? '',
       'display_name': displayName ?? '',
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-
-    final isSeedUser = (email ?? '').toLowerCase() == seedUserEmail;
-    final alreadyImported = profile?['legacy_import_completed'] == true;
-    if (!isSeedUser || alreadyImported || userId == legacyUserId) {
-      return;
-    }
-
-    await _importLegacyData(userDoc);
-    await userDoc.set(
-      {'legacy_import_completed': true},
-      SetOptions(merge: true),
-    );
-  }
-
-  Future<void> _importLegacyData(
-    DocumentReference<Map<String, dynamic>> userDoc,
-  ) async {
-    final legacyDoc = _firestore.collection('users').doc(legacyUserId);
-
-    for (final collectionName in _userCollections) {
-      // Anything the account already has wins: the import must never clobber
-      // data written after the first sign-in.
-      final existing =
-          await userDoc.collection(collectionName).limit(1).get();
-      if (existing.docs.isNotEmpty) continue;
-
-      final legacyDocs = await legacyDoc.collection(collectionName).get();
-      for (final chunk in _chunked(legacyDocs.docs, 400)) {
-        final batch = _firestore.batch();
-        for (final document in chunk) {
-          batch.set(
-            userDoc.collection(collectionName).doc(document.id),
-            document.data(),
-          );
-        }
-        await batch.commit();
-      }
-    }
-  }
-
-  /// Firestore caps a write batch at 500 operations, and years of daily logs
-  /// can pass that.
-  static Iterable<List<T>> _chunked<T>(List<T> items, int size) sync* {
-    for (var start = 0; start < items.length; start += size) {
-      yield items.sublist(start, math.min(start + size, items.length));
-    }
   }
 }

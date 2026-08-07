@@ -14,13 +14,6 @@ service cloud.firestore {
       }
     }
 
-    // Data written before sign-in was per-user. Read-only, and only for the
-    // seed account, which imports it into its own tree on first sign-in.
-    match /users/local-user/{document=**} {
-      allow read: if request.auth != null
-        && request.auth.token.email == 'naingkhantab@gmail.com';
-    }
-
     match /{document=**} {
       allow read, write: if false;
     }
