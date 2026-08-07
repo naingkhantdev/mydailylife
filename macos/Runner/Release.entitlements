@@ -4,5 +4,9 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- Outbound network: Firebase Auth, Firestore, and the Google OAuth
+	     redirect are all blocked by the sandbox without this. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
 </dict>
 </plist>

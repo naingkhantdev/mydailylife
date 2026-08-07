@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 
 /// Shared container chrome for the app's dark "ink" hero cards
@@ -25,7 +26,7 @@ class DarkHeroCard extends StatelessWidget {
     final content = Padding(padding: padding, child: child);
 
     return Material(
-      color: AppColors.ink,
+      color: context.palette.heroSurface,
       borderRadius: BorderRadius.circular(AppRadii.lg),
       clipBehavior: Clip.antiAlias,
       child: onTap == null

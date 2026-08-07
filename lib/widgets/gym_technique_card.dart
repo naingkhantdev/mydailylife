@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 
 GymTechniqueModel? _findTechnique(
@@ -44,26 +44,26 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(AppRadii.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.fitness_center_rounded,
                 size: 20,
-                color: AppColors.primary,
+                color: context.palette.primary,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '${widget.gymDay.title} technique',
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: context.palette.ink,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -72,14 +72,14 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
                 isWorkoutDone
                     ? Icons.check_circle_rounded
                     : Icons.check_circle_outline_rounded,
-                color: isWorkoutDone ? AppColors.success : AppColors.mutedText,
+                color: isWorkoutDone ? context.palette.success : context.palette.mutedText,
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             widget.gymDay.focus,
-            style: const TextStyle(color: AppColors.mutedText),
+            style: TextStyle(color: context.palette.mutedText),
           ),
           const SizedBox(height: 12),
           for (final exercise in widget.gymDay.exercises) ...[
@@ -153,12 +153,12 @@ class _TechniqueRow extends StatelessWidget {
               height: 44,
               child: guide.photoUrl == null
                   ? Container(
-                      color: AppColors.blueSoft,
+                      color: context.palette.blueSoft,
                       alignment: Alignment.center,
-                      child: const Icon(
+                      child: Icon(
                         Icons.fitness_center_rounded,
                         size: 18,
-                        color: AppColors.primary,
+                        color: context.palette.primary,
                       ),
                     )
                   : Image.network(
@@ -166,12 +166,12 @@ class _TechniqueRow extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: AppColors.blueSoft,
+                          color: context.palette.blueSoft,
                           alignment: Alignment.center,
-                          child: const Icon(
+                          child: Icon(
                             Icons.image_not_supported_outlined,
                             size: 18,
-                            color: AppColors.primary,
+                            color: context.palette.primary,
                           ),
                         );
                       },
@@ -183,67 +183,90 @@ class _TechniqueRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                InkWell(
-                  onTap: () => _openTechniqueDetail(context),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          exercise,
-                          style: const TextStyle(
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.w700,
+                // 44 high so opening the technique detail is a real tap
+                // target; the bare text row was ~17px.
+                SizedBox(
+                  height: 44,
+                  child: InkWell(
+                    onTap: () => _openTechniqueDetail(context),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            exercise,
+                            style: TextStyle(
+                              color: context.palette.ink,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      const Icon(
-                        Icons.expand_more_rounded,
-                        size: 18,
-                        color: AppColors.mutedText,
-                      ),
-                    ],
+                        Icon(
+                          Icons.expand_more_rounded,
+                          size: 18,
+                          color: context.palette.mutedText,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   technique?.cue.isNotEmpty ?? false
                       ? technique!.cue
                       : _cueFor(exercise),
-                  style: const TextStyle(
-                    color: AppColors.mutedText,
+                  style: TextStyle(
+                    color: context.palette.mutedText,
                     fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    InkWell(
-                      onTap: () => _openTargetDialog(context),
-                      child: Row(
-                        children: [
-                          Text(
-                            '${session.targetSets} x ${session.targetReps}',
-                            style: const TextStyle(
-                              color: AppColors.bodyText,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
+                    SizedBox(
+                      height: 48,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(AppRadii.sm),
+                        onTap: () => _openTargetDialog(context),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${session.targetSets} x ${session.targetReps}',
+                                style: TextStyle(
+                                  color: context.palette.bodyText,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 15,
+                                color: context.palette.mutedText,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.edit_outlined,
-                            size: 15,
-                            color: AppColors.mutedText,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: isDone ? null : onMarkDone,
+                      child: const Text('All done'),
+                    ),
+                  ],
+                ),
+                // Set toggles get their own row at 48x48 each. They are the
+                // most-tapped control in the app, and at five sets they no
+                // longer fit beside the target and "All done" controls.
+                Wrap(
+                  children: [
                     for (var setNumber = 1;
                         setNumber <= session.targetSets;
                         setNumber++)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 4),
+                      SizedBox.square(
+                        dimension: 48,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(AppRadii.pill),
                           onTap: () => onToggleSet(setNumber),
@@ -253,16 +276,11 @@ class _TechniqueRow extends StatelessWidget {
                                 : Icons.radio_button_unchecked_rounded,
                             size: 22,
                             color: session.completedSets.contains(setNumber)
-                                ? AppColors.success
-                                : AppColors.mutedText,
+                                ? context.palette.success
+                                : context.palette.mutedText,
                           ),
                         ),
                       ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: isDone ? null : onMarkDone,
-                      child: const Text('All done'),
-                    ),
                   ],
                 ),
               ],
@@ -468,17 +486,17 @@ class _DetailBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(AppRadii.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: context.palette.ink,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -492,14 +510,14 @@ class _DetailBlock extends StatelessWidget {
                   height: 18,
                   margin: const EdgeInsets.only(top: 1),
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: AppColors.blueSoft,
+                  decoration: BoxDecoration(
+                    color: context.palette.blueSoft,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '${i + 1}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: context.palette.primary,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),
@@ -509,7 +527,7 @@ class _DetailBlock extends StatelessWidget {
                 Expanded(
                   child: Text(
                     items[i],
-                    style: const TextStyle(color: AppColors.bodyText),
+                    style: TextStyle(color: context.palette.bodyText),
                   ),
                 ),
               ],
@@ -532,9 +550,9 @@ class _PhotoGuide extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(AppRadii.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,11 +566,11 @@ class _PhotoGuide extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    color: AppColors.blueSoft,
+                    color: context.palette.blueSoft,
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       Icons.image_not_supported_outlined,
-                      color: AppColors.primary,
+                      color: context.palette.primary,
                     ),
                   );
                 },
@@ -562,31 +580,31 @@ class _PhotoGuide extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             technique.photoTitle,
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: context.palette.ink,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             technique.setup,
-            style: const TextStyle(color: AppColors.bodyText),
+            style: TextStyle(color: context.palette.bodyText),
           ),
           if (technique.benchAngle != null) ...[
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.straighten_rounded,
                   size: 18,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Bench angle: ${technique.benchAngle}',
-                    style: const TextStyle(
-                      color: AppColors.ink,
+                    style: TextStyle(
+                      color: context.palette.ink,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -597,7 +615,7 @@ class _PhotoGuide extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             technique.photoCredit,
-            style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
+            style: TextStyle(color: context.palette.mutedText, fontSize: 11),
           ),
         ],
       ),
@@ -610,9 +628,38 @@ class _SafetyNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
-      'Use a weight you can control for your chosen sets and reps. Stop if pain, dizziness, numbness, or joint pinching happens. For heavy bench, squat, or overhead work, use safety pins or a spotter.',
-      style: TextStyle(color: AppColors.mutedText, fontSize: 12, height: 1.4),
+    // Injury copy was the smallest, faintest text in the sheet. It now reads
+    // at body size in a warning-tinted block so it cannot be skimmed past.
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.palette.warningSoft,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: context.palette.warning.withOpacity(0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.health_and_safety_outlined,
+            size: 20,
+            color: context.palette.warning,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Use a weight you can control for your chosen sets and reps. '
+              'Stop if pain, dizziness, numbness, or joint pinching happens. '
+              'For heavy bench, squat, or overhead work, use safety pins or a '
+              'spotter.',
+              style: TextStyle(
+                color: context.palette.bodyText,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/daily_log_model.dart';
 import '../providers/diet_provider.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/calorie_summary.dart';
 import '../widgets/meal_input_card.dart';
-1import '../widgets/section_heading.dart';
+import '../widgets/section_heading.dart';
 
 class DietScreen extends ConsumerWidget {
   const DietScreen({super.key});
@@ -16,6 +17,7 @@ class DietScreen extends ConsumerWidget {
     final controller = ref.read(dailyLogProvider.notifier);
 
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.diet),
       appBar: AppBar(title: const Text('Diet & Calories')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

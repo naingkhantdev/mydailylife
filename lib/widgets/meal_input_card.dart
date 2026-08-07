@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/daily_log_model.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
+import '../utils/number_format.dart';
 
 class MealInputCard extends StatefulWidget {
   const MealInputCard({
@@ -45,9 +46,9 @@ class _MealInputCardState extends State<MealInputCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(AppRadii.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,12 +59,12 @@ class _MealInputCardState extends State<MealInputCard> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.coralSoft,
+                  color: context.palette.coralSoft,
                   borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
                 child: Icon(
                   _iconForMeal(widget.title),
-                  color: AppColors.coral,
+                  color: context.palette.coral,
                   size: 18,
                 ),
               ),
@@ -71,8 +72,8 @@ class _MealInputCardState extends State<MealInputCard> {
               Expanded(
                 child: Text(
                   widget.title,
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: context.palette.ink,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
@@ -80,8 +81,8 @@ class _MealInputCardState extends State<MealInputCard> {
               ),
               Text(
                 '$mealTotal kcal',
-                style: const TextStyle(
-                  color: AppColors.mutedText,
+                style: TextStyle(
+                  color: context.palette.mutedText,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -92,8 +93,10 @@ class _MealInputCardState extends State<MealInputCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 5/3/2: field width should telegraph the expected input. Qty
+              // holds "1", kcal holds "1200" — they were the same width.
               Expanded(
-                flex: 3,
+                flex: 5,
                 child: TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -104,7 +107,7 @@ class _MealInputCardState extends State<MealInputCard> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                flex: 2,
+                flex: 3,
                 child: TextField(
                   controller: _calorieController,
                   keyboardType: TextInputType.number,
@@ -144,8 +147,8 @@ class _MealInputCardState extends State<MealInputCard> {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.coral,
+                      decoration: BoxDecoration(
+                        color: context.palette.coral,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -153,17 +156,18 @@ class _MealInputCardState extends State<MealInputCard> {
                     Expanded(
                       child: Text(
                         widget.items[i].name,
-                        style: const TextStyle(
-                          color: AppColors.ink,
+                        style: TextStyle(
+                          color: context.palette.ink,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     Text(
-                      '${widget.items[i].quantity}x · ${widget.items[i].totalCalories} kcal',
-                      style: const TextStyle(
-                        color: AppColors.mutedText,
+                      '${widget.items[i].quantity}x · '
+                      '${formatCount(widget.items[i].totalCalories)} kcal',
+                      style: TextStyle(
+                        color: context.palette.mutedText,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -171,12 +175,11 @@ class _MealInputCardState extends State<MealInputCard> {
                     IconButton(
                       tooltip: 'Remove food',
                       onPressed: () => widget.onRemove(i),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close_rounded,
-                        color: AppColors.mutedText,
+                        color: context.palette.mutedText,
                         size: 18,
                       ),
-                      visualDensity: VisualDensity.compact,
                     ),
                   ],
                 ),
@@ -199,7 +202,19 @@ class _MealInputCardState extends State<MealInputCard> {
     final name = _nameController.text.trim();
     final calories = int.tryParse(_calorieController.text.trim());
     final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
-    if (name.isEmpty || calories == null || calories <= 0 || quantity <= 0) {
+
+    // Say why nothing happened. A silent return on a tapped button reads as a
+    // broken app.
+    if (name.isEmpty) {
+      _showProblem('Enter a food name first');
+      return;
+    }
+    if (calories == null || calories <= 0) {
+      _showProblem('Enter calories as a number');
+      return;
+    }
+    if (quantity <= 0) {
+      _showProblem('Quantity must be at least 1');
       return;
     }
 
@@ -209,5 +224,11 @@ class _MealInputCardState extends State<MealInputCard> {
     _nameController.clear();
     _calorieController.clear();
     _quantityController.text = '1';
+  }
+
+  void _showProblem(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 }

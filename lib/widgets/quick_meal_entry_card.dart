@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/daily_log_model.dart';
 import '../providers/diet_provider.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
+import '../utils/number_format.dart';
 import 'food_manager_modal.dart';
 
 class QuickMealEntryCard extends ConsumerWidget {
@@ -17,6 +18,7 @@ class QuickMealEntryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     final log = ref.watch(dailyLogProvider);
     final mealItems = _itemsFor(log);
     final mealTotal = mealItems.fold<int>(
@@ -27,9 +29,9 @@ class QuickMealEntryCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: palette.background,
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -39,16 +41,16 @@ class QuickMealEntryCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   '${_slotLabel(slot)} food',
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: palette.ink,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
               Text(
                 '$mealTotal kcal',
-                style: const TextStyle(
-                  color: AppColors.mutedText,
+                style: TextStyle(
+                  color: palette.mutedText,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -71,17 +73,17 @@ class QuickMealEntryCard extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         '${mealItems[i].name} x${mealItems[i].quantity}',
-                        style: const TextStyle(
-                          color: AppColors.bodyText,
+                        style: TextStyle(
+                          color: palette.bodyText,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     Text(
-                      '${mealItems[i].totalCalories} kcal',
-                      style: const TextStyle(
-                        color: AppColors.mutedText,
+                      '${formatCount(mealItems[i].totalCalories)} kcal',
+                      style: TextStyle(
+                        color: palette.mutedText,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -94,12 +96,11 @@ class QuickMealEntryCard extends ConsumerWidget {
                               i,
                             );
                       },
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close_rounded,
-                        color: AppColors.mutedText,
+                        color: palette.mutedText,
                         size: 18,
                       ),
-                      visualDensity: VisualDensity.compact,
                     ),
                   ],
                 ),

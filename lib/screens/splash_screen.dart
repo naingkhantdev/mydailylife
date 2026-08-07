@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'home_screen.dart';
 import 'login_screen.dart';
+import '../providers/auth_provider.dart';
 import '../providers/firestore_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_drawer.dart';
@@ -23,28 +24,47 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final AnimationController _controller;
   late final Animation<double> _entranceAnimation;
 
+  /// Started in `initState` so the network round trip overlaps the animation
+  /// instead of following it. Cold start used to cost 2.8s *plus* the sync.
+  late final Future<Object?> _workspaceReady;
+  User? _user;
+
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 1600),
     )..addStatusListener(_handleAnimationStatus);
     _entranceAnimation = CurvedAnimation(
       parent: _controller,
       curve: const Interval(0, 0.38, curve: Curves.easeOutCubic),
     );
+    _workspaceReady = _prepareWorkspace();
     _controller.forward();
   }
 
-  void _handleAnimationStatus(AnimationStatus status) {
+  /// Resolves before the first data screen builds, so the seed account's
+  /// imported data is in place by the time a controller reads Firestore.
+  Future<Object?> _prepareWorkspace() async {
+    _user = ref.read(authServiceProvider).currentUser;
+    final user = _user;
+    if (user == null) return null;
+    return syncUserWorkspace(ref.read(firestoreServiceProvider), user);
+  }
+
+  Future<void> _handleAnimationStatus(AnimationStatus status) async {
     if (status != AnimationStatus.completed || !mounted) return;
 
-    final isSignedIn = FirebaseAuth.instance.currentUser != null;
-    if (isSignedIn) {
-      ref.read(currentUserIdProvider.notifier).state = 'local-user';
+    final error = await _workspaceReady;
+    if (!mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load your data: $error')),
+      );
     }
 
+    final isSignedIn = _user != null;
     final destinationRoute = isSignedIn ? AppRoutes.home : AppRoutes.login;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
@@ -68,7 +88,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF101229),
+      backgroundColor: AppColors.primary,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -156,7 +176,7 @@ class _OrbitLogo extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFC4B5FD), AppColors.primary],
+                colors: [AppColors.secondary, AppColors.primary],
               ),
               boxShadow: [
                 BoxShadow(
@@ -191,7 +211,7 @@ class _AppTitle extends StatelessWidget {
           TextSpan(text: 'Routine'),
           TextSpan(
             text: 'Sync',
-            style: TextStyle(color: Color(0xFF8B8CF8)),
+            style: TextStyle(color: AppColors.secondary),
           ),
         ],
       ),
@@ -231,7 +251,7 @@ class _LoadingStatus extends StatelessWidget {
                 progress > 0.78
                     ? Icons.check_circle_rounded
                     : Icons.auto_awesome_rounded,
-                color: const Color(0xFF8B8CF8),
+                color: AppColors.secondary,
                 size: 16,
               ),
             ],
@@ -242,8 +262,8 @@ class _LoadingStatus extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 5,
-              backgroundColor: const Color(0xFF252848),
-              valueColor: const AlwaysStoppedAnimation(Color(0xFF8B8CF8)),
+              backgroundColor: AppColors.navy,
+              valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
             ),
           ),
         ],
@@ -266,9 +286,9 @@ class _DayCycleBackground extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF101229),
-                Color(0xFF202556),
-                Color(0xFF191D40),
+                AppColors.primary,
+                AppColors.navy,
+                AppColors.navyMid,
               ],
             ),
           ),
@@ -294,7 +314,7 @@ class _OrbitPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 1.5;
 
-    linePaint.color = const Color(0x338B8CF8);
+    linePaint.color = AppColors.secondary.withOpacity(0.2);
     canvas.drawCircle(center, outerRadius, linePaint);
     linePaint.color = const Color(0x22FFFFFF);
     canvas.drawCircle(center, innerRadius, linePaint);
@@ -308,16 +328,16 @@ class _OrbitPainter extends CustomPainter {
       movingPoint,
       7,
       Paint()
-        ..color = const Color(0xFF8B8CF8)
+        ..color = AppColors.secondary
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
     canvas.drawCircle(movingPoint, 4, Paint()..color = Colors.white);
 
     const nodeColors = [
-      Color(0xFFFFC857),
-      Color(0xFF8B8CF8),
-      AppColors.onInkAccent,
-      Color(0xFFF2F1FF),
+      AppColors.gold,
+      AppColors.secondary,
+      AppColors.onInkMuted,
+      Colors.white,
     ];
     for (var index = 0; index < nodeColors.length; index++) {
       final angle = (-math.pi / 2) + (index * math.pi / 2);
@@ -339,7 +359,7 @@ class _RhythmLinesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0x0C8B8CF8)
+      ..color = AppColors.secondary.withOpacity(0.05)
       ..strokeWidth = 1;
     const gap = 46.0;
 

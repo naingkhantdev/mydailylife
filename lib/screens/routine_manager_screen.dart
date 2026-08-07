@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/task_model.dart';
 import '../providers/routine_provider.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/menu_row.dart';
+import '../widgets/section_heading.dart';
 
 class RoutineManagerScreen extends ConsumerWidget {
   const RoutineManagerScreen({super.key});
@@ -25,41 +27,33 @@ class RoutineManagerScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const Text(
-            'YOUR SCHEDULE',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Keep the day realistic',
-            style: Theme.of(context).textTheme.headlineMedium,
+          const SectionHeading(
+            eyebrow: 'YOUR SCHEDULE',
+            title: 'Keep the day realistic',
           ),
           const SizedBox(height: 7),
-          const Text(
+          Text(
             'Your original tasks are preserved. Edit their time, days, title, '
             'or category—or add a routine that fits your life.',
-            style: TextStyle(color: AppColors.mutedText, height: 1.45),
+            style: TextStyle(color: context.palette.mutedText, height: 1.45),
           ),
           const SizedBox(height: 22),
           if (tasks.isEmpty)
-            const EmptyState(
+            EmptyState(
               icon: Icons.event_note_outlined,
               title: 'No tasks yet',
               message: 'Add the first part of your day to get started.',
-              iconColor: AppColors.primary,
-              iconBackground: AppColors.blueSoft,
+              iconColor: context.palette.primary,
+              iconBackground: context.palette.blueSoft,
+              actionLabel: 'Add your first task',
+              onAction: () => _openEditor(context),
             )
           else
             Container(
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.palette.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: context.palette.border),
               ),
               child: Column(
                 children: [
@@ -74,10 +68,10 @@ class RoutineManagerScreen extends ConsumerWidget {
                       ),
                     ),
                     if (index != tasks.length - 1)
-                      const Divider(
+                      Divider(
                         height: 1,
                         indent: 70,
-                        color: AppColors.border,
+                        color: context.palette.border,
                       ),
                   ],
                 ],
@@ -113,7 +107,7 @@ class RoutineManagerScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style: FilledButton.styleFrom(backgroundColor: context.palette.danger),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
           ),
@@ -149,12 +143,12 @@ class _TaskRow extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: context.palette.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 categoryIcon(task.category),
-                color: AppColors.primary,
+                color: context.palette.primary,
                 size: 20,
               ),
             ),
@@ -165,8 +159,8 @@ class _TaskRow extends StatelessWidget {
                 children: [
                   Text(
                     task.title,
-                    style: const TextStyle(
-                      color: AppColors.ink,
+                    style: TextStyle(
+                      color: context.palette.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -174,16 +168,16 @@ class _TaskRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     '${task.startTime} – ${task.endTime}',
-                    style: const TextStyle(
-                      color: AppColors.mutedText,
+                    style: TextStyle(
+                      color: context.palette.mutedText,
                       fontSize: 11,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     daySummary(task.recurringDays),
-                    style: const TextStyle(
-                      color: AppColors.bodyText,
+                    style: TextStyle(
+                      color: context.palette.bodyText,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -197,9 +191,19 @@ class _TaskRow extends StatelessWidget {
                 if (value == 'edit') onEdit();
                 if (value == 'delete') onDelete();
               },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: MenuRow(icon: Icons.edit_outlined, label: 'Edit'),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: MenuRow(
+                    icon: Icons.delete_outline_rounded,
+                    label: 'Delete',
+                    color: context.palette.danger,
+                  ),
+                ),
               ],
             ),
           ],
@@ -301,8 +305,8 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
                       shortDay(day),
                       style: TextStyle(
                         color: _days.contains(day)
-                            ? Colors.white
-                            : AppColors.bodyText,
+                            ? context.palette.onPrimary
+                            : context.palette.bodyText,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -321,9 +325,9 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
             ),
             if (_days.isEmpty) ...[
               const SizedBox(height: 7),
-              const Text(
+              Text(
                 'Select at least one day.',
-                style: TextStyle(color: AppColors.danger, fontSize: 12),
+                style: TextStyle(color: context.palette.danger, fontSize: 12),
               ),
             ],
             const SizedBox(height: 20),
@@ -433,8 +437,8 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
-        color: AppColors.mutedText,
+      style: TextStyle(
+        color: context.palette.mutedText,
         fontSize: 10,
         fontWeight: FontWeight.w800,
         letterSpacing: 1,

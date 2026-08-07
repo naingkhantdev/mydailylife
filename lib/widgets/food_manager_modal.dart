@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/daily_log_model.dart';
 import '../providers/food_dictionary_provider.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 
 class FoodManagerModal extends ConsumerStatefulWidget {
@@ -133,7 +133,14 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
   void _saveFood() {
     final name = _nameController.text.trim();
     final calories = int.tryParse(_calorieController.text.trim());
-    if (name.isEmpty || calories == null || calories <= 0) {
+
+    // Explain the rejection rather than ignoring the tap.
+    if (name.isEmpty) {
+      _showProblem('Enter a food name first');
+      return;
+    }
+    if (calories == null || calories <= 0) {
+      _showProblem('Enter calories as a number');
       return;
     }
 
@@ -142,6 +149,12 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
           previousName: _editingFood?.name,
         );
     _clearEditor();
+  }
+
+  void _showProblem(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> _showQuantityDialog(MealItem food) async {
@@ -182,7 +195,32 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
     }
   }
 
-  void _deleteFood(MealItem food) {
+  /// Confirmed, like the routine and technique managers. This was the only
+  /// delete in the app that removed data on a single tap with no undo.
+  Future<void> _deleteFood(MealItem food) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete food?'),
+        content: Text('"${food.name}" will be removed from your food list.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: context.palette.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+
     ref.read(foodDictionaryProvider.notifier).delete(food.name);
     if (_editingFood?.name == food.name) {
       _clearEditor();
@@ -228,20 +266,22 @@ class _FoodEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: palette.background,
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             editingFood == null ? 'Create food' : 'Edit food',
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: palette.ink,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -266,7 +306,8 @@ class _FoodEditor extends StatelessWidget {
                   controller: calorieController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'kcal auto-filled',
+                    labelText: 'kcal',
+                    helperText: 'Auto-filled',
                     isDense: true,
                   ),
                 ),
@@ -347,10 +388,16 @@ class _FoodRow extends StatelessWidget {
             onPressed: onEdit,
             icon: const Icon(Icons.edit),
           ),
+          // Edit and Delete sat flush against each other; 8px keeps the two
+          // 48px targets from reading as one control.
+          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Delete food',
             onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline),
+            icon: Icon(
+              Icons.delete_outline,
+              color: context.palette.danger,
+            ),
           ),
         ],
       ),

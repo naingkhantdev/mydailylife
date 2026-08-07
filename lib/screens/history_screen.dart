@@ -8,6 +8,8 @@ import '../providers/diet_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
+import '../utils/number_format.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/app_status_chip.dart';
 import '../widgets/dark_hero_card.dart';
@@ -56,11 +58,15 @@ class HistoryScreen extends ConsumerWidget {
       body: dateIds.isEmpty && dailyLogHistory.isLoading
           ? const Center(child: CircularProgressIndicator())
           : dateIds.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.history_toggle_off_rounded,
                   title: 'No past days yet',
                   message:
                       'Complete routines and add short remarks today. Past daily facts will appear here clearly by date.',
+                  actionLabel: 'Go to today',
+                  actionIcon: Icons.today_rounded,
+                  onAction: () => Navigator.of(context)
+                      .pushReplacementNamed(AppRoutes.home),
                 )
               : ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -76,9 +82,9 @@ class HistoryScreen extends ConsumerWidget {
                   title: 'Your days, clearly remembered',
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Open a date to see what happened and the remarks you saved.',
-                  style: TextStyle(color: AppColors.mutedText, height: 1.4),
+                  style: TextStyle(color: context.palette.mutedText, height: 1.4),
                 ),
                 const SizedBox(height: 14),
                 for (var index = 0; index < dateIds.length; index++) ...[
@@ -254,19 +260,19 @@ class _DayHistoryCard extends StatelessWidget {
     final missed = entries.length - done;
     final pending = tasks.length - entries.length;
     final progress = tasks.isEmpty ? 0.0 : done / tasks.length;
-    final color = _progressColor(progress);
+    final color = _progressColor(context, progress);
 
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
+        border: Border.all(color: context.palette.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0D0F172A),
+            color: context.palette.shadow,
             blurRadius: 18,
-            offset: Offset(0, 7),
+            offset: const Offset(0, 7),
           ),
         ],
       ),
@@ -279,8 +285,8 @@ class _DayHistoryCard extends StatelessWidget {
           leading: _DateBadge(date: date, color: color),
           title: Text(
             _weekdayLabel(date),
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: context.palette.ink,
               fontSize: 15,
               fontWeight: FontWeight.w900,
             ),
@@ -291,11 +297,11 @@ class _DayHistoryCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                AppStatusChip(label: '$done done', color: AppColors.success),
+                AppStatusChip(label: '$done done', color: context.palette.success),
                 if (missed > 0)
-                  AppStatusChip(label: '$missed missed', color: AppColors.coral),
+                  AppStatusChip(label: '$missed missed', color: context.palette.coral),
                 if (pending > 0)
-                  AppStatusChip(label: '$pending untracked', color: AppColors.mutedText),
+                  AppStatusChip(label: '$pending untracked', color: context.palette.mutedText),
               ],
             ),
           ),
@@ -319,7 +325,7 @@ class _DayHistoryCard extends StatelessWidget {
                 entry: historyMap['$dateId:${tasks[index].id}'],
               ),
               if (index != tasks.length - 1)
-                const Divider(height: 20, color: AppColors.border),
+                Divider(height: 20, color: context.palette.border),
             ],
           ],
         ),
@@ -327,10 +333,13 @@ class _DayHistoryCard extends StatelessWidget {
     );
   }
 
-  Color _progressColor(double progress) {
-    if (progress >= 0.75) return AppColors.success;
-    if (progress >= 0.4) return AppColors.warning;
-    return AppColors.coral;
+  // Takes a context because the thresholds now resolve against the active
+  // theme; this is a StatelessWidget, so there is no ambient `context` here
+  // the way there would be inside a State.
+  Color _progressColor(BuildContext context, double progress) {
+    if (progress >= 0.75) return context.palette.success;
+    if (progress >= 0.4) return context.palette.warning;
+    return context.palette.coral;
   }
 
   String _weekdayLabel(DateTime date) {
@@ -363,7 +372,7 @@ class _DailyLogFacts extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.blueSoft,
+        color: context.palette.blueSoft,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -374,18 +383,18 @@ class _DailyLogFacts extends StatelessWidget {
               Expanded(
                 child: _LoggedFact(
                   icon: Icons.local_fire_department_rounded,
-                  value: '${log.totalCalories}',
+                  value: formatCount(log.totalCalories),
                   label: 'kcal logged',
-                  color: AppColors.coral,
+                  color: context.palette.coral,
                 ),
               ),
-              Container(width: 1, height: 38, color: AppColors.border),
+              Container(width: 1, height: 38, color: context.palette.border),
               Expanded(
                 child: _LoggedFact(
                   icon: Icons.restaurant_rounded,
                   value: '$mealCount',
                   label: mealCount == 1 ? 'food item' : 'food items',
-                  color: AppColors.blue,
+                  color: context.palette.blue,
                 ),
               ),
             ],
@@ -395,13 +404,13 @@ class _DailyLogFacts extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(note.icon, color: AppColors.primary, size: 18),
+                Icon(note.icon, color: context.palette.primary, size: 18),
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text.rich(
                     TextSpan(
-                      style: const TextStyle(
-                        color: AppColors.bodyText,
+                      style: TextStyle(
+                        color: context.palette.bodyText,
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -449,15 +458,15 @@ class _LoggedFact extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
-                color: AppColors.ink,
+              style: TextStyle(
+                color: context.palette.ink,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(color: AppColors.mutedText, fontSize: 10),
+              style: TextStyle(color: context.palette.mutedText, fontSize: 10),
             ),
           ],
         ),
@@ -499,8 +508,8 @@ class _DateBadge extends StatelessWidget {
           ),
           Text(
             '${date.day}',
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: context.palette.ink,
               fontSize: 23,
               height: 1.05,
               fontWeight: FontWeight.w900,
@@ -543,8 +552,8 @@ class _DayBrief extends StatelessWidget {
         children: [
           Text(
             _brief(),
-            style: const TextStyle(
-              color: AppColors.bodyText,
+            style: TextStyle(
+              color: context.palette.bodyText,
               fontSize: 13,
               height: 1.4,
               fontWeight: FontWeight.w600,
@@ -556,7 +565,9 @@ class _DayBrief extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 7,
-              backgroundColor: Colors.white,
+              // The track sits on this card's tinted accent wash, so it has to
+              // follow the card surface rather than being a fixed white.
+              backgroundColor: context.palette.surface,
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -583,9 +594,9 @@ class _HistoryRoutineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = entry?.status;
     final color = switch (status) {
-      RoutineStatus.done => AppColors.success,
-      RoutineStatus.missed => AppColors.coral,
-      null => AppColors.mutedText,
+      RoutineStatus.done => context.palette.success,
+      RoutineStatus.missed => context.palette.coral,
+      null => context.palette.mutedText,
     };
     final icon = switch (status) {
       RoutineStatus.done => Icons.check_rounded,
@@ -622,8 +633,8 @@ class _HistoryRoutineRow extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: AppColors.ink,
+                style: TextStyle(
+                  color: context.palette.ink,
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                 ),
@@ -632,22 +643,22 @@ class _HistoryRoutineRow extends StatelessWidget {
               if (hasTime)
                 Text(
                   '${task.startTime} – ${task.endTime}',
-                  style: const TextStyle(
-                    color: AppColors.mutedText,
+                  style: TextStyle(
+                    color: context.palette.mutedText,
                     fontSize: 11,
                   ),
                 )
               else
-                const Text(
+                Text(
                   'Archived routine',
-                  style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+                  style: TextStyle(color: context.palette.mutedText, fontSize: 11),
                 ),
               if (entry?.remark.isNotEmpty ?? false) ...[
                 const SizedBox(height: 6),
                 Text(
                   entry!.remark,
-                  style: const TextStyle(
-                    color: AppColors.bodyText,
+                  style: TextStyle(
+                    color: context.palette.bodyText,
                     fontSize: 12,
                     height: 1.4,
                     fontStyle: FontStyle.italic,

@@ -5,7 +5,3 @@ import '../services/firestore_service.dart';
 final firestoreServiceProvider = Provider<FirestoreService>((ref) {
   return FirestoreService();
 });
-
-final currentUserIdProvider = StateProvider<String>((ref) {
-  return 'local-user';
-});

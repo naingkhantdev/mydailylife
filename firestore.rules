@@ -2,8 +2,22 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Every account owns exactly one tree, keyed by its Firebase uid. A signed
+    // in user can never read or write another account's routines, logs,
+    // history or gym techniques.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /{document=**} {
+        allow read, write: if request.auth != null
+          && request.auth.uid == userId;
+      }
+    }
+
+    // Data written before sign-in was per-user. Read-only, and only for the
+    // seed account, which imports it into its own tree on first sign-in.
     match /users/local-user/{document=**} {
-      allow read, write: if request.auth != null
+      allow read: if request.auth != null
         && request.auth.token.email == 'naingkhantab@gmail.com';
     }
 

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/menu_row.dart';
+import '../widgets/section_heading.dart';
 
 class GymTechniqueManagerScreen extends ConsumerWidget {
   const GymTechniqueManagerScreen({super.key});
@@ -24,25 +26,15 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const Text(
-            'EXERCISE LIBRARY',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Build your own training plan',
-            style: Theme.of(context).textTheme.headlineMedium,
+          const SectionHeading(
+            eyebrow: 'EXERCISE LIBRARY',
+            title: 'Build your own training plan',
           ),
           const SizedBox(height: 7),
-          const Text(
+          Text(
             'Add exercises to any training day, update their coaching cues '
             'and instructions, or remove techniques you no longer use.',
-            style: TextStyle(color: AppColors.mutedText, height: 1.45),
+            style: TextStyle(color: context.palette.mutedText, height: 1.45),
           ),
           const SizedBox(height: 22),
           for (var weekday = 1; weekday <= 7; weekday++) ...[
@@ -62,6 +54,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
                 ref,
                 technique,
               ),
+              onAdd: () => _openEditor(context, ref, initialWeekday: weekday),
             ),
             const SizedBox(height: 16),
           ],
@@ -74,6 +67,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref, {
     GymTechniqueModel? technique,
+    int? initialWeekday,
   }) async {
     final result = await showModalBottomSheet<GymTechniqueModel>(
       context: context,
@@ -83,6 +77,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
       builder: (context) => _TechniqueEditorSheet(
         technique: technique,
         existingTechniques: ref.read(gymTechniqueProvider),
+        initialWeekday: initialWeekday,
       ),
     );
     if (result == null) return;
@@ -113,7 +108,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text('Delete technique?'),
         content: Text(
-          '${technique.name} will be removed from ${_dayName(technique.weekday)}.',
+          '${technique.name} will be removed from ${gymDayLabel(technique.weekday)}.',
         ),
         actions: [
           TextButton(
@@ -121,7 +116,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style: FilledButton.styleFrom(backgroundColor: context.palette.danger),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
           ),
@@ -144,12 +139,14 @@ class _DaySection extends StatelessWidget {
     required this.techniques,
     required this.onEdit,
     required this.onDelete,
+    required this.onAdd,
   });
 
   final int weekday;
   final List<GymTechniqueModel> techniques;
   final ValueChanged<GymTechniqueModel> onEdit;
   final ValueChanged<GymTechniqueModel> onDelete;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -160,20 +157,20 @@ class _DaySection extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                _dayName(weekday),
+                gymDayLabel(weekday),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.blueSoft,
+                color: context.palette.blueSoft,
                 borderRadius: BorderRadius.circular(99),
               ),
               child: Text(
                 '${techniques.length}',
-                style: const TextStyle(
-                  color: AppColors.primary,
+                style: TextStyle(
+                  color: context.palette.primary,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
@@ -184,16 +181,30 @@ class _DaySection extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.palette.border),
           ),
           child: techniques.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'No techniques assigned to this day.',
-                    style: TextStyle(color: AppColors.mutedText),
+              // A bare "nothing here" line renders seven times on a fresh
+              // install; each one now offers the action that fills it.
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'No exercises on this day yet.',
+                          style: TextStyle(color: context.palette.mutedText),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: onAdd,
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Add'),
+                      ),
+                    ],
                   ),
                 )
               : Column(
@@ -205,10 +216,10 @@ class _DaySection extends StatelessWidget {
                         onDelete: () => onDelete(techniques[index]),
                       ),
                       if (index != techniques.length - 1)
-                        const Divider(
+                        Divider(
                           height: 1,
                           indent: 68,
-                          color: AppColors.border,
+                          color: context.palette.border,
                         ),
                     ],
                   ],
@@ -243,10 +254,10 @@ class _TechniqueRow extends StatelessWidget {
               height: 44,
               child: technique.imageUrl.isEmpty
                   ? Container(
-                      color: AppColors.blueSoft,
-                      child: const Icon(
+                      color: context.palette.blueSoft,
+                      child: Icon(
                         Icons.fitness_center_rounded,
-                        color: AppColors.primary,
+                        color: context.palette.primary,
                         size: 19,
                       ),
                     )
@@ -255,7 +266,7 @@ class _TechniqueRow extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: AppColors.blueSoft,
+                          color: context.palette.blueSoft,
                           child: const Icon(Icons.broken_image_outlined),
                         );
                       },
@@ -278,8 +289,8 @@ class _TechniqueRow extends StatelessWidget {
                       : technique.cue,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.mutedText,
+                  style: TextStyle(
+                    color: context.palette.mutedText,
                     fontSize: 11,
                   ),
                 ),
@@ -292,9 +303,19 @@ class _TechniqueRow extends StatelessWidget {
               if (value == 'edit') onEdit();
               if (value == 'delete') onDelete();
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'edit', child: Text('Edit')),
-              PopupMenuItem(value: 'delete', child: Text('Delete')),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: MenuRow(icon: Icons.edit_outlined, label: 'Edit'),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: MenuRow(
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Delete',
+                  color: context.palette.danger,
+                ),
+              ),
             ],
           ),
         ],
@@ -307,10 +328,15 @@ class _TechniqueEditorSheet extends StatefulWidget {
   const _TechniqueEditorSheet({
     required this.technique,
     required this.existingTechniques,
+    this.initialWeekday,
   });
 
   final GymTechniqueModel? technique;
   final List<GymTechniqueModel> existingTechniques;
+
+  /// Preselects the day when adding from a specific day's empty state, so the
+  /// user does not have to re-pick the day they just tapped.
+  final int? initialWeekday;
 
   @override
   State<_TechniqueEditorSheet> createState() => _TechniqueEditorSheetState();
@@ -328,7 +354,8 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
   void initState() {
     super.initState();
     final technique = widget.technique;
-    _weekday = technique?.weekday ?? DateTime.now().weekday;
+    _weekday =
+        technique?.weekday ?? widget.initialWeekday ?? DateTime.now().weekday;
     _nameController = TextEditingController(text: technique?.name ?? '');
     _cueController = TextEditingController(text: technique?.cue ?? '');
     _instructionsController = TextEditingController(
@@ -376,7 +403,7 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
                 for (var weekday = 1; weekday <= 7; weekday++)
                   DropdownMenuItem(
                     value: weekday,
-                    child: Text(_dayName(weekday)),
+                    child: Text(gymDayLabel(weekday)),
                   ),
               ],
               onChanged: (value) {
@@ -480,17 +507,4 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
       ),
     );
   }
-}
-
-String _dayName(int weekday) {
-  const names = [
-    'Monday · Legs 1 & Core',
-    'Tuesday · Push 1',
-    'Wednesday · Pull 1',
-    'Thursday · Push 2',
-    'Friday · Pull 2',
-    'Saturday · Legs 2 & Core',
-    'Sunday · Rest & Recovery',
-  ];
-  return names[weekday - 1];
 }

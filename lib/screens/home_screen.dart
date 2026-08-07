@@ -9,8 +9,11 @@ import '../providers/gym_session_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/app_status_chip.dart';
 import '../widgets/dark_hero_card.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/quick_meal_entry_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -88,9 +91,9 @@ class HomeScreen extends ConsumerWidget {
           else
             Container(
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.palette.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: context.palette.border),
               ),
               child: Column(
                 children: [
@@ -107,10 +110,12 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                     if (index != todayTasks.length - 1)
-                      const Divider(
+                      Divider(
                         height: 1,
-                        indent: 82,
-                        color: AppColors.border,
+                        // 14 padding + 54 time + 34 icon + 11 gap: the rule
+                        // has to start where the text column starts.
+                        indent: 113,
+                        color: context.palette.border,
                       ),
                   ],
                 ],
@@ -285,9 +290,9 @@ class _TodayHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +304,7 @@ class _TodayHeader extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             _date(date),
-            style: const TextStyle(color: AppColors.mutedText, fontSize: 13),
+            style: TextStyle(color: context.palette.mutedText, fontSize: 13),
           ),
           const SizedBox(height: 18),
           Row(
@@ -310,15 +315,15 @@ class _TodayHeader extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 7,
-                    backgroundColor: AppColors.border,
+                    backgroundColor: context.palette.border,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 '$done of $total done',
-                style: const TextStyle(
-                  color: AppColors.bodyText,
+                style: TextStyle(
+                  color: context.palette.bodyText,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -465,9 +470,9 @@ class _RoutineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = entry?.status;
     final statusColor = switch (status) {
-      RoutineStatus.done => AppColors.success,
-      RoutineStatus.missed => AppColors.danger,
-      null => AppColors.mutedText,
+      RoutineStatus.done => context.palette.success,
+      RoutineStatus.missed => context.palette.danger,
+      null => context.palette.mutedText,
     };
     final statusIcon = switch (status) {
       RoutineStatus.done => Icons.check_circle_rounded,
@@ -486,7 +491,7 @@ class _RoutineRow extends StatelessWidget {
               child: Text(
                 _shortTime(task.startTime),
                 style: TextStyle(
-                  color: isCurrent ? AppColors.primary : AppColors.mutedText,
+                  color: isCurrent ? context.palette.primary : context.palette.mutedText,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -497,14 +502,14 @@ class _RoutineRow extends StatelessWidget {
               height: 34,
               decoration: BoxDecoration(
                 color: isCurrent
-                    ? AppColors.primary.withOpacity(0.09)
-                    : AppColors.background,
+                    ? context.palette.primary.withOpacity(0.09)
+                    : context.palette.background,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 _categoryIcon(task.category),
                 size: 17,
-                color: isCurrent ? AppColors.primary : AppColors.bodyText,
+                color: isCurrent ? context.palette.primary : context.palette.bodyText,
               ),
             ),
             const SizedBox(width: 11),
@@ -520,8 +525,8 @@ class _RoutineRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: AppColors.ink,
-                            fontSize: 13,
+                            color: context.palette.ink,
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                             decoration: status == RoutineStatus.missed
                                 ? TextDecoration.lineThrough
@@ -531,14 +536,12 @@ class _RoutineRow extends StatelessWidget {
                       ),
                       if (isCurrent) ...[
                         const SizedBox(width: 7),
-                        const Text(
-                          'NOW',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.7,
-                          ),
+                        // A tinted pill, not 8px text: in light mode `primary`
+                        // is the same near-black navy as the title beside it,
+                        // so the badge marking the live routine disappeared.
+                        AppStatusChip(
+                          label: 'NOW',
+                          color: context.palette.coral,
                         ),
                       ],
                     ],
@@ -546,16 +549,16 @@ class _RoutineRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'Until ${task.endTime}',
-                    style: const TextStyle(
-                        color: AppColors.mutedText, fontSize: 10),
+                    style: TextStyle(
+                        color: context.palette.mutedText, fontSize: 12),
                   ),
                 ],
               ),
             ),
             Icon(statusIcon, color: statusColor, size: 21),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded,
-                color: AppColors.mutedText, size: 19),
+            Icon(Icons.chevron_right_rounded,
+                color: context.palette.mutedText, size: 19),
           ],
         ),
       ),
@@ -612,19 +615,19 @@ class _TaskActionSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${task.startTime} – ${task.endTime}',
-            style: const TextStyle(color: AppColors.mutedText),
+            style: TextStyle(color: context.palette.mutedText),
           ),
           if (entry?.remark.isNotEmpty ?? false) ...[
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: context.palette.background,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 entry!.remark,
-                style: const TextStyle(color: AppColors.bodyText, height: 1.4),
+                style: TextStyle(color: context.palette.bodyText, height: 1.4),
               ),
             ),
           ],
@@ -670,16 +673,20 @@ class _EmptyToday extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
-      child: const Column(
-        children: [
-          Icon(Icons.free_breakfast_outlined, color: AppColors.mutedText),
-          SizedBox(height: 10),
-          Text('No routines scheduled today.'),
-        ],
+      child: EmptyState(
+        icon: Icons.free_breakfast_outlined,
+        title: 'Nothing scheduled today',
+        message:
+            'Add a routine and it will show up here at the right time of day.',
+        iconColor: context.palette.primary,
+        iconBackground: context.palette.blueSoft,
+        actionLabel: 'Add a routine',
+        onAction: () =>
+            Navigator.of(context).pushReplacementNamed(AppRoutes.routines),
       ),
     );
   }

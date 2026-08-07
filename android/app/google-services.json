@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "865190600063",
+    "firebase_url": "https://daily-routine-b4799-default-rtdb.firebaseio.com",
     "project_id": "daily-routine-b4799",
     "storage_bucket": "daily-routine-b4799.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.mdr"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "865190600063-ndh308ee3d64kl9qm77cbmak1b61phmd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mdr",
+            "certificate_hash": "57b8a750e8df6f2a11d2baf9e4a010f32437b22b"
+          }
+        },
+        {
+          "client_id": "865190600063-47q2qi9bjtggat0nvucgmf38o4fpjpsf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAVA3LB6_eXtrvOx4XekX2w_fW2bdas7r4"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "865190600063-47q2qi9bjtggat0nvucgmf38o4fpjpsf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "865190600063-u4gsrkefir820nnqseon65ev3faok2d1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mdr"
+              }
+            }
+          ]
         }
       }
     }

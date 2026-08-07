@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
 import '../services/firestore_service.dart';
+import 'auth_provider.dart';
 import 'firestore_provider.dart';
 
 final historyProvider =

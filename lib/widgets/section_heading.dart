@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 
 /// Eyebrow + title (+ optional trailing action) header used to
 /// introduce a section of a screen. Shared so every screen's section
@@ -30,8 +30,8 @@ class SectionHeading extends StatelessWidget {
             children: [
               Text(
                 eyebrow,
-                style: const TextStyle(
-                  color: AppColors.primary,
+                style: TextStyle(
+                  color: context.palette.primary,
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.2,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 
 /// Icon-in-circle + title + message pattern shared by every screen's
 /// "nothing here yet" state.
@@ -10,18 +10,35 @@ class EmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    this.iconColor = AppColors.violet,
-    this.iconBackground = AppColors.violetSoft,
+    this.iconColor,
+    this.iconBackground,
+    this.actionLabel,
+    this.onAction,
+    this.actionIcon,
   });
 
   final IconData icon;
   final String title;
   final String message;
-  final Color iconColor;
-  final Color iconBackground;
+
+  /// An empty state that only reports emptiness is a dead end. Pass these to
+  /// offer the one action that fills it — both are needed for the button to
+  /// render.
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final IconData? actionIcon;
+
+  /// Null means "use the theme's default empty-state accent". These cannot
+  /// default to a constant in the constructor any more: the fallback now has
+  /// to be read from the active theme, which is only available once `build`
+  /// has a `BuildContext`.
+  final Color? iconColor;
+  final Color? iconBackground;
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 32),
@@ -32,10 +49,10 @@ class EmptyState extends StatelessWidget {
               width: 84,
               height: 84,
               decoration: BoxDecoration(
-                color: iconBackground,
+                color: iconBackground ?? palette.violetSoft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: iconColor, size: 38),
+              child: Icon(icon, color: iconColor ?? palette.violet, size: 38),
             ),
             const SizedBox(height: 18),
             Text(
@@ -47,8 +64,16 @@ class EmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.mutedText, height: 1.5),
+              style: TextStyle(color: palette.mutedText, height: 1.5),
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: onAction,
+                icon: Icon(actionIcon ?? Icons.add_rounded, size: 18),
+                label: Text(actionLabel!),
+              ),
+            ],
           ],
         ),
       ),

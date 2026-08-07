@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/diet_provider.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/section_heading.dart';
 
 class NightSplitScreen extends ConsumerStatefulWidget {
@@ -34,6 +35,7 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.nightSplit),
       appBar: AppBar(title: const Text('Night Split')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -43,9 +45,9 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
             title: 'Study & gaming notes',
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'A short note is enough — just what you focused on and how it went.',
-            style: TextStyle(color: AppColors.mutedText, height: 1.4),
+            style: TextStyle(color: context.palette.mutedText, height: 1.4),
           ),
           const SizedBox(height: 22),
           TextField(

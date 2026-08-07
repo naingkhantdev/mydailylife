@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../utils/number_format.dart';
 import 'dark_hero_card.dart';
 
 class CalorieSummary extends StatelessWidget {
@@ -35,7 +36,7 @@ class CalorieSummary extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  '$totalCalories kcal',
+                  '${formatCount(totalCalories)} kcal',
                   style: const TextStyle(
                     color: AppColors.onInk,
                     fontSize: 25,

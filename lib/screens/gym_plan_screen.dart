@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dark_hero_card.dart';
@@ -109,10 +110,10 @@ class _GymDaySummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(AppRadii.md),
         border: Border.all(
-          color: isToday ? AppColors.primary : AppColors.border,
+          color: isToday ? context.palette.primary : context.palette.border,
         ),
       ),
       child: Row(
@@ -123,24 +124,24 @@ class _GymDaySummary extends StatelessWidget {
               children: [
                 Text(
                   day.title,
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: context.palette.ink,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   day.focus,
-                  style: const TextStyle(color: AppColors.mutedText),
+                  style: TextStyle(color: context.palette.mutedText),
                 ),
               ],
             ),
           ),
           if (isToday)
-            const Text(
+            Text(
               'Today',
               style: TextStyle(
-                color: AppColors.primary,
+                color: context.palette.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),

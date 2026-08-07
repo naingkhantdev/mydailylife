@@ -9,6 +9,8 @@ import '../providers/gym_session_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
+import '../utils/number_format.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dark_hero_card.dart';
 import '../widgets/section_heading.dart';
@@ -112,8 +114,8 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _InsightCard(
               icon: Icons.auto_awesome_rounded,
-              color: AppColors.success,
-              background: AppColors.successSoft,
+              color: context.palette.success,
+              background: context.palette.successSoft,
               title: 'Wins worth remembering',
               entries: doneRemarks,
               emptyMessage: '',
@@ -123,8 +125,8 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _InsightCard(
               icon: Icons.lightbulb_outline_rounded,
-              color: AppColors.warning,
-              background: AppColors.warningSoft,
+              color: context.palette.warning,
+              background: context.palette.warningSoft,
               title: 'What got in the way',
               entries: missedRemarks,
               emptyMessage: '',
@@ -164,14 +166,15 @@ class DashboardScreen extends ConsumerWidget {
       return 'Today is intentionally light. Use the space to recover and reset.';
     }
     if (done == 0 && missed == 0) {
-      return 'Your day is ready: $total routines, $calories kcal logged, and '
+      return 'Your day is ready: $total routines, ${formatCount(calories)} kcal '
+          'logged, and '
           '$gymSetsDone of $gymSetsTotal gym sets complete.';
     }
     final routineFact = '$done of $total routines completed';
     final missedFact = missed == 0 ? '' : ', $missed missed';
     final pendingFact = pending == 0 ? '' : ', and $pending still open';
     return 'You have $routineFact$missedFact$pendingFact. '
-        'You logged $calories kcal and finished $gymSetsDone of '
+        'You logged ${formatCount(calories)} kcal and finished $gymSetsDone of '
         '$gymSetsTotal gym sets.';
   }
 
@@ -262,23 +265,26 @@ class _TodayHero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // The label is the eyebrow and the brief is the content —
+                    // it read the other way round, with a 25px w900 heading
+                    // over 14px muted body.
                     const Text(
-                      'Today, in brief',
+                      'TODAY, IN BRIEF',
                       style: TextStyle(
-                        color: AppColors.onInk,
-                        fontSize: 25,
-                        height: 1.1,
-                        fontWeight: FontWeight.w900,
+                        color: AppColors.onInkFaint,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       brief,
                       style: const TextStyle(
-                        color: AppColors.onInkMuted,
-                        fontSize: 14,
-                        height: 1.5,
-                        fontWeight: FontWeight.w500,
+                        color: AppColors.onInk,
+                        fontSize: 18,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -376,17 +382,17 @@ class _FactGrid extends StatelessWidget {
             _FactTile(
               width: itemWidth,
               icon: Icons.local_fire_department_rounded,
-              iconColor: AppColors.coral,
-              iconBackground: AppColors.coralSoft,
+              iconColor: context.palette.coral,
+              iconBackground: context.palette.coralSoft,
               label: 'CALORIES',
-              value: '$calories',
+              value: formatCount(calories),
               suffix: 'kcal',
             ),
             _FactTile(
               width: itemWidth,
               icon: Icons.fitness_center_rounded,
-              iconColor: AppColors.violet,
-              iconBackground: AppColors.violetSoft,
+              iconColor: context.palette.violet,
+              iconBackground: context.palette.violetSoft,
               label: 'GYM SETS',
               value: '$gymSetsDone/$gymSetsTotal',
               suffix: 'today',
@@ -394,8 +400,8 @@ class _FactGrid extends StatelessWidget {
             _FactTile(
               width: itemWidth,
               icon: Icons.task_alt_rounded,
-              iconColor: AppColors.success,
-              iconBackground: AppColors.successSoft,
+              iconColor: context.palette.success,
+              iconBackground: context.palette.successSoft,
               label: 'ROUTINES',
               value: '$done/$total',
               suffix: 'done',
@@ -403,8 +409,8 @@ class _FactGrid extends StatelessWidget {
             _FactTile(
               width: itemWidth,
               icon: Icons.monitor_weight_outlined,
-              iconColor: AppColors.blue,
-              iconBackground: AppColors.blueSoft,
+              iconColor: context.palette.blue,
+              iconBackground: context.palette.blueSoft,
               label: 'WEIGHT',
               value: weight.toStringAsFixed(1),
               suffix: 'lb',
@@ -443,7 +449,7 @@ class _FactTile extends StatelessWidget {
     return SizedBox(
       width: width,
       child: Material(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -452,7 +458,7 @@ class _FactTile extends StatelessWidget {
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.palette.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,14 +473,28 @@ class _FactTile extends StatelessWidget {
                   child: Icon(icon, color: iconColor, size: 20),
                 ),
                 const SizedBox(height: 14),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppColors.mutedText,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: context.palette.mutedText,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    // Only the weight tile is editable, and all four tiles
+                    // render identically — nothing said which one responds.
+                    if (onTap != null)
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 14,
+                        color: context.palette.mutedText,
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Row(
@@ -484,8 +504,8 @@ class _FactTile extends StatelessWidget {
                       child: Text(
                         value,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.ink,
+                        style: TextStyle(
+                          color: context.palette.ink,
                           fontSize: 21,
                           fontWeight: FontWeight.w900,
                         ),
@@ -496,8 +516,8 @@ class _FactTile extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 3),
                       child: Text(
                         suffix,
-                        style: const TextStyle(
-                          color: AppColors.mutedText,
+                        style: TextStyle(
+                          color: context.palette.mutedText,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -531,12 +551,12 @@ class _FocusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isComplete ? AppColors.successSoft : AppColors.blueSoft,
+        color: isComplete ? context.palette.successSoft : context.palette.blueSoft,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isComplete
-              ? AppColors.success.withOpacity(0.16)
-              : AppColors.blue.withOpacity(0.16),
+              ? context.palette.success.withOpacity(0.16)
+              : context.palette.blue.withOpacity(0.16),
         ),
       ),
       child: Row(
@@ -545,12 +565,15 @@ class _FocusCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isComplete ? AppColors.success : AppColors.blue,
+              color: isComplete ? context.palette.success : context.palette.blue,
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
               isComplete ? Icons.celebration_rounded : Icons.near_me_rounded,
-              color: Colors.white,
+              // The tile behind this icon is a filled accent, which is dark in
+              // light mode but bright in dark mode — a fixed white would be
+              // unreadable there.
+              color: context.palette.onPrimary,
             ),
           ),
           const SizedBox(width: 14),
@@ -560,8 +583,8 @@ class _FocusCard extends StatelessWidget {
               children: [
                 Text(
                   isComplete ? 'Day reviewed' : 'Next clear step',
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: context.palette.ink,
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                   ),
@@ -572,8 +595,8 @@ class _FocusCard extends StatelessWidget {
                       ? 'Everything scheduled has a status. Take a moment to notice the progress.'
                       : '${nextTask?.title ?? 'Review your remaining routines'} · '
                           '${nextTask?.startTime ?? '$pendingCount open'}',
-                  style: const TextStyle(
-                    color: AppColors.bodyText,
+                  style: TextStyle(
+                    color: context.palette.bodyText,
                     fontSize: 14,
                     height: 1.35,
                     fontWeight: FontWeight.w600,
@@ -583,8 +606,8 @@ class _FocusCard extends StatelessWidget {
                   const SizedBox(height: 5),
                   Text(
                     '$missedCount missed ${missedCount == 1 ? 'routine' : 'routines'} — use the note as information, not judgment.',
-                    style: const TextStyle(
-                      color: AppColors.mutedText,
+                    style: TextStyle(
+                      color: context.palette.mutedText,
                       fontSize: 11,
                       height: 1.35,
                     ),
@@ -633,8 +656,8 @@ class _InsightCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
-                  color: AppColors.ink,
+                style: TextStyle(
+                  color: context.palette.ink,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -662,14 +685,30 @@ class _InsightCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 9),
+                    // Title above remark rather than "title: remark" — weight
+                    // separates them better than a colon does.
                     Expanded(
-                      child: Text(
-                        '${entry.taskTitle}: ${entry.remark}',
-                        style: const TextStyle(
-                          color: AppColors.bodyText,
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.taskTitle,
+                            style: TextStyle(
+                              color: context.palette.ink,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 1.4,
+                            ),
+                          ),
+                          Text(
+                            entry.remark,
+                            style: TextStyle(
+                              color: context.palette.bodyText,
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -689,18 +728,18 @@ class _EmptyReflectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.violetSoft,
+        color: context.palette.violetSoft,
         borderRadius: BorderRadius.circular(22),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.edit_note_rounded, color: AppColors.violet),
-          SizedBox(width: 12),
+          Icon(Icons.edit_note_rounded, color: context.palette.violet),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Add a short remark when you complete or miss a routine. Those small facts make your history genuinely useful.',
               style: TextStyle(
-                color: AppColors.bodyText,
+                color: context.palette.bodyText,
                 height: 1.4,
                 fontWeight: FontWeight.w500,
               ),

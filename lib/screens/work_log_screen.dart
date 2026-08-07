@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/diet_provider.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_palette.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/section_heading.dart';
 
 class WorkLogScreen extends ConsumerStatefulWidget {
@@ -32,6 +33,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: AppRoutes.workLog),
       appBar: AppBar(title: const Text('Work Log')),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
@@ -43,9 +45,9 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
               title: 'Accomplishments & notes',
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'What did you get done today? Future you will thank you for the detail.',
-              style: TextStyle(color: AppColors.mutedText, height: 1.4),
+              style: TextStyle(color: context.palette.mutedText, height: 1.4),
             ),
             const SizedBox(height: 18),
             Expanded(
