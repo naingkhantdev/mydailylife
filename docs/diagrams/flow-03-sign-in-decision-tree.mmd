@@ -1,0 +1,36 @@
+flowchart TD
+  A(["LoginScreen"]) --> B{"Which action?"}
+
+  B -->|"Continue / Create account"| C{"Sign-up mode?"}
+  C -->|"yes"| D{"Passwords<br/>match?"}
+  D -->|"no"| E["Inline: passwords do not match"]
+  D -->|"yes"| F["createUserWithEmailAndPassword"]
+  C -->|"no"| G["signInWithEmailAndPassword"]
+
+  B -->|"Continue with Google"| H{"Platform?"}
+  H -->|"web"| I["signInWithPopup"]
+  H -->|"mobile"| J["GoogleSignIn.signIn"]
+  J --> K{"Account<br/>picked?"}
+  K -->|"dismissed"| L["Throw code canceled<br/>shown as nothing at all"]
+  K -->|"yes"| M["signInWithCredential<br/>idToken and accessToken"]
+
+  B -->|"Forgot?"| N{"Email field<br/>filled?"}
+  N -->|"no"| O["Inline: enter your email"]
+  N -->|"yes"| P["sendPasswordResetEmail"]
+
+  F --> Q{"Firebase<br/>accepted?"}
+  G --> Q
+  I --> Q
+  M --> Q
+
+  Q -->|"no"| R["Map the code onto a field<br/>invalid-credential, email-already-in-use,<br/>weak-password, too-many-requests"]
+  Q -->|"yes"| S["syncUserWorkspace"]
+  S --> T{"Profile write<br/>succeeded?"}
+  T -->|"no"| U["SnackBar: signed in, data could not load"]
+  T -->|"yes"| V(["pushReplacementNamed /home"])
+  U --> V
+
+  classDef fail fill:#FEF0EC,stroke:#B4402A,color:#3A1409
+  classDef ok fill:#F0FDF4,stroke:#15803D,color:#052E16
+  class E,O,R,U fail
+  class V,P ok

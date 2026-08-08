@@ -1,0 +1,19 @@
+flowchart TD
+  A(["Controller constructed for a uid"]) --> B["Seed state with built-in defaults<br/>routine plan, gym techniques, today's empty log"]
+  B --> C["Fetch from Firestore"]
+  C --> D{"Request<br/>succeeded?"}
+  D -->|"no"| E["Keep defaults<br/>app stays usable offline"]
+  D -->|"yes"| F{"Still<br/>mounted?"}
+  F -->|"no"| G["Drop the result"]
+  F -->|"yes"| H{"User already<br/>edited locally?"}
+  H -->|"yes"| I["Keep the local state<br/>never overwrite a live edit"]
+  H -->|"no"| J{"Collection<br/>empty?"}
+  J -->|"yes"| K["Write the defaults up<br/>new account seeding"]
+  J -->|"no"| L["Sort, migrate, adopt as state"]
+  L --> M(["UI repaints with saved data"])
+  K --> M
+  E --> M
+  I --> M
+
+  classDef warn fill:#FFFBEB,stroke:#B45309,color:#3A2A05
+  class E,I,G warn

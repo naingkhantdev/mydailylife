@@ -1,0 +1,37 @@
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant H as HomeScreen
+  participant Sh as Task action sheet
+  participant HC as HistoryController
+  participant F as FirestoreService
+  participant DB as Cloud Firestore
+
+  U->>H: Tap a routine block
+  H->>Sh: showModalBottomSheet with today's entry and meal slot
+  alt Done
+    U->>Sh: Done
+    Sh->>H: close sheet, open the note dialog
+    U->>H: Save note, or Done only for no remark
+    H->>HC: markDone task, remark
+  else Missed
+    U->>Sh: Missed
+    Sh->>H: close sheet, ask what got in the way
+    U->>H: Save
+    H->>HC: markMissed task, reason
+  else Clear today
+    U->>Sh: Clear
+    Sh->>HC: clearToday task
+  end
+  HC->>HC: write the entry into a map keyed date and task id
+  HC-->>U: Today, Dashboard and History repaint at once
+  alt Recorded
+    HC->>F: saveRoutineHistoryEntry
+    F->>DB: set users/{uid}/routine_history/{yyyy-MM-dd:taskId}
+  else Cleared
+    HC->>F: deleteRoutineHistoryEntry
+    F->>DB: delete the same document
+  end
+  opt Write fails
+    HC->>HC: swallow, the optimistic entry stays for this session
+  end

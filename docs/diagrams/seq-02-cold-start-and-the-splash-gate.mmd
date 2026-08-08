@@ -1,0 +1,36 @@
+sequenceDiagram
+  autonumber
+  participant M as main
+  participant FB as Firebase
+  participant SP as SharedPreferences
+  participant App as MyApp / MaterialApp
+  participant S as SplashScreen
+  participant A as AuthService
+  participant F as FirestoreService
+
+  M->>FB: initializeApp with DefaultFirebaseOptions
+  FB-->>M: ready
+  M->>SP: getInstance
+  SP-->>M: preferences
+  M->>App: runApp, ProviderScope overrides sharedPreferencesProvider
+  App->>App: watch themeModeProvider, restored light / dark / system
+  App->>S: home is SplashScreen
+  par Entrance animation, 1600 ms
+    S->>S: AnimationController.forward
+  and Workspace prep, started in initState
+    S->>A: currentUser
+    A-->>S: User or null
+    opt User present
+      S->>F: prepareUserWorkspace uid, email, displayName
+      F-->>S: null on success, or the error object
+    end
+  end
+  S->>S: animation completed, await the workspace future
+  opt Workspace failed
+    S-->>S: SnackBar, could not load your data
+  end
+  alt Signed in
+    S->>App: pushReplacement to HomeScreen
+  else Signed out
+    S->>App: pushReplacement to LoginScreen
+  end

@@ -1,0 +1,21 @@
+flowchart TD
+  A(["addMealItem, removeMealItem or updateNotes"]) --> B["state = state.copyWith<br/>totals recomputed"]
+  B --> C["UI repaints immediately"]
+  B --> D["hasLocalChanges = true"]
+  D --> E{"Save already<br/>in flight?"}
+  E -->|"yes"| F["saveQueued = true<br/>return without a request"]
+  E -->|"no"| G["saveInProgress = true"]
+  G --> H["Take the current state"]
+  H --> I["saveDailyLog<br/>set users/uid/daily_logs/yyyy-MM-dd"]
+  I --> J{"Write<br/>threw?"}
+  J -->|"yes"| K["Swallow it<br/>optimistic state survives the session"]
+  J -->|"no"| L["Written"]
+  K --> M
+  L --> M{"saveQueued<br/>and still mounted?"}
+  M -->|"yes"| H
+  M -->|"no"| N["saveInProgress = false"]
+  N --> O(["Idle"])
+  F --> O
+
+  classDef warn fill:#FFFBEB,stroke:#B45309,color:#3A2A05
+  class K warn

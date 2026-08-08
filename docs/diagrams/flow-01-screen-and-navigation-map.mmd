@@ -1,0 +1,27 @@
+flowchart TD
+  Start(["App launch"]) --> Splash["SplashScreen<br/>not a named route"]
+  Splash -->|"no session"| Login["LoginScreen<br/>/login"]
+  Splash -->|"session restored"| Home
+  Login -->|"pushReplacementNamed"| Home["Today<br/>/home"]
+
+  Home --> Drawer{{"AppDrawer"}}
+  Drawer --> Dash["Dashboard<br/>/dashboard"]
+  Drawer --> Diet["Diet and calories<br/>/diet"]
+  Drawer --> Work["Work log<br/>/work-log"]
+  Drawer --> Night["Evening split<br/>/night-split"]
+  Drawer --> Hist["History<br/>/history"]
+  Drawer --> Gym["Gym plan<br/>/gym"]
+  Drawer --> Tech["Gym techniques<br/>/gym-techniques"]
+  Drawer --> Routines["Routines<br/>/routines"]
+  Drawer -->|"sign out"| Login
+
+  Home -.->|"bottom sheet"| Sheet["Task action sheet<br/>done, missed, clear, quick meal"]
+  Diet -.->|"modal"| Food["Food manager<br/>dictionary and quantity"]
+  Tech -.->|"bottom sheet"| TechEd["Technique editor"]
+  Routines -.->|"push"| Editor["TaskEditorScreen<br/>new or edit"]
+  Dash -.->|"dialog"| Weight["Body weight entry"]
+
+  classDef entry fill:#E4EEF7,stroke:#0F4C81,color:#001935
+  classDef modal fill:#FFFBEB,stroke:#B45309,color:#3A2A05
+  class Start,Splash,Login entry
+  class Sheet,Food,TechEd,Editor,Weight modal

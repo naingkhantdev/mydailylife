@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant D as AppDrawer
+  participant A as AuthService
+  participant G as GoogleSignIn plugin
+  participant FA as FirebaseAuth
+  participant ID as currentUserIdProvider
+  participant C as Data controllers
+
+  U->>D: Sign out
+  opt Mobile
+    A->>G: signOut, clear the cached account
+    G-->>A: done, failures ignored on purpose
+  end
+  D->>A: signOut
+  A->>FA: signOut
+  D->>D: close the drawer, then pushReplacementNamed /login
+  FA-->>ID: authStateChanges emits null, uid becomes an empty string
+  ID-->>C: controllers disposed and rebuilt for the empty user
+  C->>C: any late save resolves against an empty uid
+  Note over C: FirestoreService treats an empty uid as signed out and no-ops every read and write

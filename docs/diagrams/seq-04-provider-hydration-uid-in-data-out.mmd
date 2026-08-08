@@ -1,0 +1,25 @@
+sequenceDiagram
+  autonumber
+  participant FA as FirebaseAuth
+  participant AS as authStateProvider
+  participant ID as currentUserIdProvider
+  participant C as Data controllers
+  participant F as FirestoreService
+  participant DB as Cloud Firestore
+
+  FA-->>AS: authStateChanges emits User
+  AS-->>ID: uid, or the cached currentUser while the stream warms up
+  Note over ID,C: An empty string means signed out, and every write is guarded against it
+  ID-->>C: rebuild Routine, GymTechnique, History and DailyLog controllers
+  C->>C: seed state with defaults so the first frame is already useful
+  C->>F: getTasks, getGymTechniques, getRoutineHistory, getDailyLog
+  F->>DB: get users/{uid}/tasks, gym_techniques, routine_history, daily_logs
+  alt Documents exist
+    DB-->>C: saved data
+    C->>C: sort by time, run gym technique migration, adopt unless the user already edited
+  else Collection empty, new account
+    C->>F: saveTasks and saveGymTechniques with the built-in plan
+    F->>DB: batch set the defaults
+  else Request fails
+    C->>C: keep defaults in memory, app stays usable offline
+  end

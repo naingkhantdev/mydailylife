@@ -1,0 +1,36 @@
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant App as main + MyApp
+  participant S as SplashScreen
+  participant A as AuthService
+  participant R as Riverpod controllers
+  participant F as FirestoreService
+  participant DB as Cloud Firestore
+
+  U->>App: Launch RoutineSync
+  App->>App: Firebase.initializeApp, load SharedPreferences
+  App->>S: runApp inside ProviderScope
+  S->>A: currentUser
+  alt Session restored
+    S->>F: prepareUserWorkspace uid
+    F->>DB: set users/{uid} merge
+    S-->>U: HomeScreen
+  else No session
+    S-->>U: LoginScreen
+    U->>A: Email or Google sign-in
+  end
+  A-->>R: authStateChanges emits User, uid propagates
+  R->>F: load tasks, techniques, history, today's log
+  F->>DB: get users/{uid} subcollections
+  DB-->>R: saved documents, or empty on a new account
+  R-->>U: Today, Diet, Gym, History
+  loop Through the day
+    U->>R: Log meals, mark routines done, tick gym sets
+    R-->>U: State updates before the network answers
+    R->>F: save the changed document
+    F->>DB: set or delete users/{uid}/...
+  end
+  U->>A: Sign out
+  A-->>R: authStateChanges emits null, uid becomes empty
+  R->>R: Controllers rebuilt, writes guarded off

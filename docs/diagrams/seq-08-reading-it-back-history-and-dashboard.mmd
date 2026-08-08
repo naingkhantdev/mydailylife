@@ -1,0 +1,27 @@
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant V as History or Dashboard
+  participant HP as historyProvider
+  participant RP as routineProvider
+  participant LH as dailyLogHistoryProvider
+  participant F as FirestoreService
+  participant DB as Cloud Firestore
+
+  U->>V: Open from the drawer
+  V->>HP: watch the entry map, already in memory
+  V->>RP: watch the routine list
+  V->>LH: watch the FutureProvider
+  LH->>F: getDailyLogs uid
+  F->>DB: get users/{uid}/daily_logs
+  DB-->>LH: one document per day
+  alt Data
+    LH-->>V: list of daily logs
+    V->>V: join entries to tasks, compute streaks, calories and completion
+    V-->>U: day by day timeline
+  else Loading
+    V-->>U: skeleton and progress
+  else Error
+    V-->>U: empty state with a retry route
+  end
+  Note over V: Dashboard adds todayGymProvider, gymSessionProvider and the in-memory weight value

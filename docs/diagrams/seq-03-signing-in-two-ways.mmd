@@ -1,0 +1,40 @@
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant L as LoginScreen
+  participant A as AuthService
+  participant G as GoogleSignIn plugin
+  participant FA as FirebaseAuth
+  participant F as FirestoreService
+  participant DB as Cloud Firestore
+
+  alt Email and password
+    U->>L: Fill the form, tap Continue or Create account
+    L->>L: Validate, and on sign-up check both passwords match
+    L->>A: signInWithEmail or signUpWithEmail
+    A->>FA: signInWithEmailAndPassword or createUserWithEmailAndPassword
+  else Continue with Google
+    U->>L: Tap Continue with Google
+    L->>A: signInWithGoogle
+    alt Web
+      A->>FA: signInWithPopup, GoogleAuthProvider
+    else Android and iOS
+      A->>G: signIn, native account picker
+      G-->>A: GoogleSignInAccount, or null if dismissed
+      A->>FA: signInWithCredential, idToken and accessToken
+    end
+  end
+
+  alt Credential accepted
+    FA-->>L: UserCredential
+    L->>F: syncUserWorkspace, then prepareUserWorkspace
+    F->>DB: set users/{uid} with email, display_name, updated_at, merge
+    F-->>L: null, or the error that stopped it
+    opt Workspace failed
+      L-->>U: SnackBar, signed in but data could not load
+    end
+    L->>L: pushReplacementNamed /home
+  else FirebaseAuthException
+    FA-->>L: invalid-credential, email-already-in-use, weak-password, canceled
+    L-->>U: Field-level message under email or password
+  end

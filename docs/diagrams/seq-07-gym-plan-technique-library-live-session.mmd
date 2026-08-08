@@ -1,0 +1,30 @@
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant M as Technique manager
+  participant GC as GymTechniqueController
+  participant P as gymPlanProvider and todayGymProvider
+  participant GS as GymSessionController
+  participant F as FirestoreService
+  participant DB as Cloud Firestore
+
+  GC->>F: getGymTechniques on construction
+  F->>DB: get users/{uid}/gym_techniques
+  DB-->>GC: saved techniques
+  GC->>GC: drop retired leg work, re-pin default day and name, add missing defaults
+  opt Migration changed something
+    GC->>F: saveGymTechniques, then delete the retired ids
+    F->>DB: batch set and per-document deletes
+  end
+  GC-->>P: technique list
+  P->>P: group by weekday across the seven day templates
+  P-->>U: Gym plan screen, plus today's workout on Home and Dashboard
+  U->>M: Add, edit or delete a technique with cue, instructions, image
+  M->>GC: addTechnique, updateTechnique or deleteTechnique
+  GC->>GC: update state first
+  GC->>F: saveGymTechnique or deleteGymTechnique
+  F->>DB: set or delete users/{uid}/gym_techniques/{id}
+  U->>GS: set targets, tick individual sets, mark an exercise done
+  GS->>GS: update the in-memory session map
+  GS-->>U: progress ring, completed sets over target sets
+  Note over GS: Session progress is never written to Firestore and resets on restart

@@ -1,0 +1,52 @@
+flowchart TD
+  subgraph UI["UI · lib/screens, lib/widgets"]
+    S1["Today, Dashboard, Diet,<br/>Work log, Evening split, History"]
+    S2["Gym plan, Gym techniques,<br/>Routines, Login, Splash"]
+    S3["AppDrawer, meal cards,<br/>food manager, technique cards"]
+  end
+
+  subgraph State["State · lib/providers"]
+    P1["RoutineController"]
+    P2["DailyLogController"]
+    P3["HistoryController"]
+    P4["GymTechniqueController"]
+    P5["GymSessionController"]
+    P6["FoodDictionaryController"]
+    P7["ThemeModeController"]
+  end
+
+  subgraph Domain["Models · lib/models"]
+    M1["TaskModel"]
+    M2["DailyLogModel + MealItem"]
+    M3["RoutineHistoryEntry"]
+    M4["GymTechniqueModel"]
+  end
+
+  subgraph Svc["Services · lib/services"]
+    V1["FirestoreService"]
+    V2["AuthService"]
+  end
+
+  subgraph Ext["Platform"]
+    E1[("Cloud Firestore<br/>users/uid/...")]
+    E2["Firebase Auth<br/>+ Google Sign-In"]
+    E3["SharedPreferences"]
+  end
+
+  UI --> State
+  State --> Domain
+  P1 --> V1
+  P2 --> V1
+  P3 --> V1
+  P4 --> V1
+  UI --> V2
+  V1 --> E1
+  V2 --> E2
+  P7 --> E3
+  P5 -. "no persistence" .-> X["resets on restart"]
+  P6 -. "no persistence" .-> X
+
+  classDef mem fill:#FFFBEB,stroke:#B45309,color:#3A2A05
+  classDef db fill:#ECFEFF,stroke:#0E7490,color:#042F2E
+  class P5,P6,X mem
+  class E1,E2,E3 db

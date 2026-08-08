@@ -1,0 +1,29 @@
+flowchart LR
+  A["authServiceProvider"] --> B["authStateProvider<br/>StreamProvider"]
+  B --> C["currentUserProvider<br/>stream value, else cached user"]
+  A --> C
+  C --> D{{"currentUserIdProvider<br/>uid or empty string"}}
+  E["firestoreServiceProvider"] --> F
+
+  D --> F["routineProvider"]
+  D --> G["dailyLogProvider"]
+  D --> H["historyProvider"]
+  D --> I["gymTechniqueProvider"]
+  D --> J["dailyLogHistoryProvider"]
+  E --> G
+  E --> H
+  E --> I
+  E --> J
+
+  I --> K["gymPlanProvider<br/>derived, 7 day templates"]
+  K --> L["todayGymProvider<br/>DateTime.now weekday"]
+
+  M["gymSessionProvider"]
+  N["foodDictionaryProvider"]
+  O["currentWeightLbProvider"]
+  P["sharedPreferencesProvider<br/>overridden in main"] --> Q["themeModeProvider"]
+
+  classDef hinge fill:#ECFEFF,stroke:#0E7490,color:#042F2E
+  classDef mem fill:#FFFBEB,stroke:#B45309,color:#3A2A05
+  class D hinge
+  class M,N,O mem

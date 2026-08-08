@@ -1,0 +1,31 @@
+flowchart TD
+  A(["main"]) --> B["Firebase.initializeApp"]
+  B --> C["SharedPreferences.getInstance"]
+  C --> D["runApp with ProviderScope<br/>preferences injected as an override"]
+  D --> E["MyApp reads themeModeProvider<br/>light, dark or system"]
+  E --> F["SplashScreen"]
+
+  F --> G["Start 1600 ms animation"]
+  F --> H{"Cached currentUser<br/>present?"}
+  H -->|"no"| I["Skip the workspace sync"]
+  H -->|"yes"| J["prepareUserWorkspace<br/>set users/uid with merge"]
+  J --> K{"Write<br/>succeeded?"}
+  K -->|"yes"| L["Ready"]
+  K -->|"no"| M["Keep the error object"]
+
+  G --> N{"Animation<br/>complete?"}
+  N -->|"not yet"| G
+  N -->|"yes"| O["await the workspace future"]
+  I --> O
+  L --> O
+  M --> O
+
+  O --> P{"Error to<br/>report?"}
+  P -->|"yes"| Q["SnackBar: could not load your data"]
+  P -->|"no"| R
+  Q --> R{"Signed in?"}
+  R -->|"yes"| S(["HomeScreen"])
+  R -->|"no"| T(["LoginScreen"])
+
+  classDef fail fill:#FEF0EC,stroke:#B4402A,color:#3A1409
+  class M,Q fail

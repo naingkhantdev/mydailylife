@@ -1,0 +1,34 @@
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant D as Diet or Today screen
+  participant FD as FoodDictionaryController
+  participant DL as DailyLogController
+  participant F as FirestoreService
+  participant DB as Cloud Firestore
+
+  alt Pick from the saved food list
+    U->>D: Open the food manager, search, choose a quantity
+    D->>FD: upsert or delete inside the in-memory dictionary
+    FD-->>D: filtered list with calories per item
+  else Type it straight in
+    U->>D: Name and calories on the meal card
+  end
+  D->>DL: addMealItem slot, item
+  DL->>DL: copyWith the new breakfast, lunch or dinner list
+  DL-->>U: Calorie summary updates immediately
+  DL->>DL: mark local changes, then queue a save
+  alt No save in flight
+    DL->>F: saveDailyLog uid, log
+    F->>DB: set users/{uid}/daily_logs/{yyyy-MM-dd}
+    loop While an edit arrived during the write
+      DL->>F: saveDailyLog with the newest state
+      F->>DB: set the same document again
+    end
+  else Save already running
+    DL->>DL: flag it queued and return, no second request
+  end
+  opt Write fails
+    DL->>DL: keep the optimistic log for this session
+  end
+  Note over DL,DB: Work log and evening split notes take the same path through updateNotes

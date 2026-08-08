@@ -1,0 +1,29 @@
+flowchart TD
+  A(["Tap a routine block on Today"]) --> B["Action sheet opens<br/>with today's entry, if any"]
+  B --> C{"Choice"}
+
+  C -->|"Done"| D["Note dialog:<br/>what did you accomplish?"]
+  D --> E{"Which button?"}
+  E -->|"Save note"| F["markDone with remark"]
+  E -->|"Done only"| G["markDone with empty remark"]
+  E -->|"dismissed"| H["Nothing recorded"]
+
+  C -->|"Missed"| I["Note dialog:<br/>what got in the way?"]
+  I --> J{"Which button?"}
+  J -->|"Save"| K["markMissed with reason"]
+  J -->|"Cancel"| H
+
+  C -->|"Clear"| L["clearToday<br/>remove the entry"]
+  C -->|"Meal slot task"| M["Quick meal entry<br/>routes into chart 07"]
+
+  F --> N["Entry keyed yyyy-MM-dd:taskId"]
+  G --> N
+  K --> N
+  N --> O["State updates, screens repaint"]
+  O --> P["set the history document"]
+  L --> Q["delete the history document"]
+
+  classDef db fill:#ECFEFF,stroke:#0E7490,color:#042F2E
+  classDef warn fill:#FFFBEB,stroke:#B45309,color:#3A2A05
+  class P,Q db
+  class H warn

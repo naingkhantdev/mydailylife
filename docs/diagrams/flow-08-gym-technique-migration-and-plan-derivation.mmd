@@ -1,0 +1,20 @@
+flowchart TD
+  A(["getGymTechniques for this uid"]) --> B{"Any saved<br/>techniques?"}
+  B -->|"no"| C["Write defaultGymTechniques<br/>up to Firestore"]
+  B -->|"yes"| D["Remove retired ids<br/>the leg-loading exercises"]
+  D --> E["Re-pin defaults to their<br/>current weekday and name<br/>keeping user cue, instructions, image"]
+  E --> F["Add back any default<br/>missing from the saved set"]
+  F --> G{"Did anything<br/>change?"}
+  G -->|"no"| H["Adopt as state"]
+  G -->|"yes"| I["saveGymTechniques<br/>+ delete each retired document"]
+  I --> H
+  C --> H
+
+  H --> J["gymPlanProvider"]
+  J --> K["For each of the 7 day templates,<br/>collect techniques with that weekday"]
+  K --> L["todayGymProvider<br/>picks DateTime.now weekday"]
+  L --> M(["Today's workout card<br/>on Home and Dashboard"])
+  K --> N(["Gym plan screen<br/>full week"])
+
+  classDef db fill:#ECFEFF,stroke:#0E7490,color:#042F2E
+  class C,I db

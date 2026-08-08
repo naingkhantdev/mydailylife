@@ -6,6 +6,14 @@ splash screen to the moment sign-out empties the user id and every Firestore wri
 Diagrams are Mermaid and render on GitHub. Theme colours are deliberately left to the renderer so
 they read in both light and dark.
 
+For the structural view — route map, layers, provider graph and the branch-by-branch decisions —
+see [`flowcharts.md`](flowcharts.md).
+
+> **Opening these in a Mermaid viewer?** Feed it a single diagram, not this whole file — a
+> Mermaid-only renderer reads the first line (`# RoutineSync — full process in sequence`) and reports
+> *"No diagram type detected"*. Each diagram is also saved on its own in
+> [`diagrams/`](diagrams/), ready to paste into mermaid.live or a plugin.
+
 | Stage | Flow |
 | --- | --- |
 | — | [One session, end to end](#one-session-end-to-end) |
