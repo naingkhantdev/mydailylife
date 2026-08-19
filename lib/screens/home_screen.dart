@@ -65,6 +65,7 @@ class HomeScreen extends ConsumerWidget {
           _GymFocusCard(
             title: todayGym.title,
             focus: todayGym.focus,
+            isRestDay: todayGym.isRestDay,
             completedSets: completedSets,
             targetSets: targetSets,
             onOpen: () => _openRoute(context, AppRoutes.gym),
@@ -371,6 +372,7 @@ class _GymFocusCard extends StatelessWidget {
   const _GymFocusCard({
     required this.title,
     required this.focus,
+    required this.isRestDay,
     required this.completedSets,
     required this.targetSets,
     required this.onOpen,
@@ -378,6 +380,7 @@ class _GymFocusCard extends StatelessWidget {
 
   final String title;
   final String focus;
+  final bool isRestDay;
   final int completedSets;
   final int targetSets;
   final VoidCallback onOpen;
@@ -436,7 +439,9 @@ class _GymFocusCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  '$completedSets/$targetSets sets · View technique',
+                  isRestDay
+                      ? 'Recovery day · View plan'
+                      : '$completedSets/$targetSets sets · View technique',
                   style: const TextStyle(
                     color: AppColors.onInkAccent,
                     fontSize: 11,

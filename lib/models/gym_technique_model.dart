@@ -21,6 +21,25 @@ class GymTechniqueModel {
   final String instructions;
   final String imageUrl;
 
+  /// Keeps the id, so moving an exercise to another day carries its saved
+  /// cue, steps and image with it instead of orphaning them.
+  GymTechniqueModel copyWith({
+    int? weekday,
+    String? name,
+    String? cue,
+    String? instructions,
+    String? imageUrl,
+  }) {
+    return GymTechniqueModel(
+      id: id,
+      weekday: weekday ?? this.weekday,
+      name: name ?? this.name,
+      cue: cue ?? this.cue,
+      instructions: instructions ?? this.instructions,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
+
   bool get hasCustomGuide {
     return cue.isNotEmpty || instructions.isNotEmpty || imageUrl.isNotEmpty;
   }

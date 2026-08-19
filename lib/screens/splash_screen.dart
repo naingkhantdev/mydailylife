@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -44,13 +45,27 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _controller.forward();
   }
 
+  /// A Firestore write only completes once the server acknowledges it, so an
+  /// offline or flaky connection would otherwise hold the splash screen open
+  /// forever. The sync is retried on the next launch, so giving up costs
+  /// nothing but the wait.
+  static const _workspaceSyncTimeout = Duration(seconds: 6);
+
   /// Resolves before the first data screen builds, so the seed account's
   /// imported data is in place by the time a controller reads Firestore.
   Future<Object?> _prepareWorkspace() async {
     _user = ref.read(authServiceProvider).currentUser;
     final user = _user;
     if (user == null) return null;
-    return syncUserWorkspace(ref.read(firestoreServiceProvider), user);
+    try {
+      return await syncUserWorkspace(
+        ref.read(firestoreServiceProvider),
+        user,
+      ).timeout(_workspaceSyncTimeout);
+    } on TimeoutException {
+      // Being offline is ordinary, not an error worth interrupting a launch.
+      return null;
+    }
   }
 
   Future<void> _handleAnimationStatus(AnimationStatus status) async {

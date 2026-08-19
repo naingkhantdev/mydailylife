@@ -31,7 +31,7 @@ class AppTextStyles {
           GoogleFonts.inter(
             color: palette.ink,
             fontSize: 26,
-            fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w700,
             height: 1.18,
             letterSpacing: -0.5,
           ),

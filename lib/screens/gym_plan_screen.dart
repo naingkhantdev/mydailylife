@@ -57,19 +57,28 @@ class GymPlanScreen extends ConsumerWidget {
                   style: const TextStyle(color: AppColors.onInkMuted),
                 ),
                 const SizedBox(height: 12),
-                LinearProgressIndicator(
-                  value: target == 0 ? 0 : completed / target,
-                  minHeight: 8,
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                  backgroundColor: AppColors.onInkSurface,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.gold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$completed / $target sets finished',
-                  style: const TextStyle(color: AppColors.onInkMuted),
-                ),
+                // A rest day has nothing to count, so an empty progress bar
+                // would only read as an unfinished workout.
+                if (todayGym.isRestDay)
+                  const Text(
+                    'Recovery day — no sets to log.',
+                    style: TextStyle(color: AppColors.onInkMuted),
+                  )
+                else ...[
+                  LinearProgressIndicator(
+                    value: target == 0 ? 0 : completed / target,
+                    minHeight: 8,
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                    backgroundColor: AppColors.onInkSurface,
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(AppColors.gold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$completed / $target sets finished',
+                    style: const TextStyle(color: AppColors.onInkMuted),
+                  ),
+                ],
               ],
             ),
           ),
@@ -142,6 +151,14 @@ class _GymDaySummary extends StatelessWidget {
               'Today',
               style: TextStyle(
                 color: context.palette.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          else if (day.isRestDay)
+            Text(
+              'Rest',
+              style: TextStyle(
+                color: context.palette.mutedText,
                 fontWeight: FontWeight.w700,
               ),
             ),

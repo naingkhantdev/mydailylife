@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/daily_log_model.dart';
+import '../models/gym_day_model.dart';
 import '../models/gym_technique_model.dart';
 import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
@@ -35,6 +36,10 @@ class FirestoreService {
         .collection('users')
         .doc(userId)
         .collection('gym_techniques');
+  }
+
+  CollectionReference<Map<String, dynamic>> _gymDays(String userId) {
+    return _firestore.collection('users').doc(userId).collection('gym_days');
   }
 
   Future<void> saveDailyLog({
@@ -156,6 +161,37 @@ class FirestoreService {
   }) async {
     if (_isSignedOut(userId)) return;
     return _gymTechniques(userId).doc(techniqueId).delete();
+  }
+
+  Future<void> saveGymDays({
+    required String userId,
+    required List<GymDayModel> days,
+  }) async {
+    if (_isSignedOut(userId)) return;
+    final batch = _firestore.batch();
+    for (final day in days) {
+      batch.set(_gymDays(userId).doc(day.documentId), day.toMap());
+    }
+    return batch.commit();
+  }
+
+  Future<List<GymDayModel>> getGymDays({
+    required String userId,
+  }) async {
+    if (_isSignedOut(userId)) return const [];
+    final snapshot = await _gymDays(userId).get();
+    return snapshot.docs
+        .map((document) => GymDayModel.fromMap(document.data()))
+        .where((day) => day.weekday >= 1 && day.weekday <= 7)
+        .toList();
+  }
+
+  Future<void> saveGymDay({
+    required String userId,
+    required GymDayModel day,
+  }) async {
+    if (_isSignedOut(userId)) return;
+    return _gymDays(userId).doc(day.documentId).set(day.toMap());
   }
 
   Future<List<RoutineHistoryEntry>> getRoutineHistory({
