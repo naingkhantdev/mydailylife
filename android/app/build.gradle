@@ -32,6 +32,9 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // flutter_local_notifications needs the java.time backport on the
+        // minSdk this app targets.
+        coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -63,6 +66,20 @@ android {
             signingConfig = signingConfigs.debug
         }
     }
+}
+
+dependencies {
+    // 1.2.x, not 2.x: desugar_jdk_libs 2.0 requires AGP 7.4 and this
+    // project is on 7.3. This is the version flutter_local_notifications
+    // itself builds against.
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.2"
+
+    // Turning desugaring on crashes Flutter apps at startup on Android 12L
+    // and above until WindowManager is on the classpath. It is a Flutter bug,
+    // not a plugin one — see flutter/flutter#110658 — and these two lines are
+    // the documented workaround.
+    implementation "androidx.window:window:1.0.0"
+    implementation "androidx.window:window-java:1.0.0"
 }
 
 flutter {

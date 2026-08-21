@@ -4,16 +4,19 @@ flowchart TD
   Splash -->|"session restored"| Home
   Login -->|"pushReplacementNamed"| Home["Today<br/>/home"]
 
-  Home --> Drawer{{"AppDrawer"}}
+  Home --> Drawer{{"AppDrawer<br/>five daily screens"}}
   Drawer --> Dash["Dashboard<br/>/dashboard"]
-  Drawer --> Diet["Diet and calories<br/>/diet"]
-  Drawer --> Work["Work log<br/>/work-log"]
-  Drawer --> Night["Evening split<br/>/night-split"]
-  Drawer --> Hist["History<br/>/history"]
   Drawer --> Gym["Gym plan<br/>/gym"]
   Drawer --> Tech["Gym techniques<br/>/gym-techniques"]
-  Drawer --> Routines["Routines<br/>/routines"]
-  Drawer -->|"sign out"| Login
+  Drawer --> Diet["Diet and calories<br/>/diet"]
+  Drawer --> Set["Settings<br/>/settings"]
+
+  Set --> Work["Work log<br/>/work-log"]
+  Set --> Night["Evening split<br/>/night-split"]
+  Set --> Hist["History<br/>/history"]
+  Set --> Routines["Routines<br/>/routines"]
+  Set -->|"sign out"| Login
+  Set -.->|"appearance"| Theme["Auto / Light / Dark<br/>ThemeModeSelector"]
 
   Home -.->|"bottom sheet"| Sheet["Task action sheet<br/>done, missed, clear, quick meal"]
   Diet -.->|"modal"| Food["Food manager<br/>dictionary and quantity"]
@@ -24,4 +27,4 @@ flowchart TD
   classDef entry fill:#E4EEF7,stroke:#0F4C81,color:#001935
   classDef modal fill:#FFFBEB,stroke:#B45309,color:#3A2A05
   class Start,Splash,Login entry
-  class Sheet,Food,TechEd,Editor,Weight modal
+  class Sheet,Food,TechEd,Editor,Weight,Theme modal

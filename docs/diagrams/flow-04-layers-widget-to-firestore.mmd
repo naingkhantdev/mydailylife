@@ -1,6 +1,6 @@
 flowchart TD
   subgraph UI["UI · lib/screens, lib/widgets"]
-    S1["Today, Dashboard, Diet,<br/>Work log, Evening split, History"]
+    S1["Today, Dashboard, Diet,<br/>Work log, Evening split, History, Settings"]
     S2["Gym plan, Gym techniques,<br/>Routines, Login, Splash"]
     S3["AppDrawer, meal cards,<br/>food manager, technique cards"]
   end
@@ -13,6 +13,9 @@ flowchart TD
     P5["GymSessionController"]
     P6["FoodDictionaryController"]
     P7["ThemeModeController"]
+    P8["WeightController"]
+    P9["SyncStatusController"]
+    P10["ReminderController"]
   end
 
   subgraph Domain["Models · lib/models"]
@@ -20,17 +23,21 @@ flowchart TD
     M2["DailyLogModel + MealItem"]
     M3["RoutineHistoryEntry"]
     M4["GymTechniqueModel"]
+    M5["GymSessionLog + GymExerciseSession"]
+    M6["WeightEntryModel"]
   end
 
   subgraph Svc["Services · lib/services"]
     V1["FirestoreService"]
     V2["AuthService"]
+    V3["NotificationService"]
   end
 
   subgraph Ext["Platform"]
     E1[("Cloud Firestore<br/>users/uid/...")]
     E2["Firebase Auth<br/>+ Google Sign-In"]
     E3["SharedPreferences"]
+    E4["Local notifications"]
   end
 
   UI --> State
@@ -39,14 +46,18 @@ flowchart TD
   P2 --> V1
   P3 --> V1
   P4 --> V1
+  P5 --> V1
+  P6 --> V1
+  P8 --> V1
   UI --> V2
+  P1 --> P10
+  P10 --> V3
   V1 --> E1
   V2 --> E2
   P7 --> E3
-  P5 -. "no persistence" .-> X["resets on restart"]
-  P6 -. "no persistence" .-> X
+  P10 --> E3
+  V3 --> E4
+  P1 & P2 & P3 & P4 & P5 & P6 & P8 -. "every write" .-> P9
 
-  classDef mem fill:#FFFBEB,stroke:#B45309,color:#3A2A05
   classDef db fill:#ECFEFF,stroke:#0E7490,color:#042F2E
-  class P5,P6,X mem
-  class E1,E2,E3 db
+  class E1,E2,E3,E4 db

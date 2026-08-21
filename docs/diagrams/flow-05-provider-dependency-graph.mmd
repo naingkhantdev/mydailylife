@@ -10,20 +10,26 @@ flowchart LR
   D --> H["historyProvider"]
   D --> I["gymTechniqueProvider"]
   D --> J["dailyLogHistoryProvider"]
+  D --> M["gymSessionProvider"]
+  D --> N["foodDictionaryProvider"]
+  D --> R["weightProvider"]
   E --> G
   E --> H
   E --> I
   E --> J
+  E --> M
+  E --> N
+  E --> R
 
   I --> K["gymPlanProvider<br/>derived, 7 day templates"]
   K --> L["todayGymProvider<br/>DateTime.now weekday"]
 
-  M["gymSessionProvider"]
-  N["foodDictionaryProvider"]
-  O["currentWeightLbProvider"]
   P["sharedPreferencesProvider<br/>overridden in main"] --> Q["themeModeProvider"]
+  P --> T["reminderProvider"]
+  S["notificationServiceProvider<br/>overridden in main"] --> T
+  F --> T
+  U{{"syncStatusProvider<br/>no dependencies"}}
+  F & G & H & I & M & N & R --> U
 
   classDef hinge fill:#ECFEFF,stroke:#0E7490,color:#042F2E
-  classDef mem fill:#FFFBEB,stroke:#B45309,color:#3A2A05
-  class D hinge
-  class M,N,O mem
+  class D,U hinge

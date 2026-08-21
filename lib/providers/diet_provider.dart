@@ -1,16 +1,20 @@
+import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/daily_log_model.dart';
 import '../services/firestore_service.dart';
 import 'auth_provider.dart';
 import 'firestore_provider.dart';
+import 'sync_status_provider.dart';
 
 final dailyLogProvider =
     StateNotifierProvider<DailyLogController, DailyLogModel>((ref) {
   return DailyLogController(
     firestoreService: ref.watch(firestoreServiceProvider),
     userId: ref.watch(currentUserIdProvider),
+    syncStatus: ref.watch(syncStatusProvider.notifier),
   );
 });
 
@@ -24,19 +28,32 @@ class DailyLogController extends StateNotifier<DailyLogModel> {
   DailyLogController({
     required FirestoreService firestoreService,
     required String userId,
+    required SyncStatusController syncStatus,
   })  : _firestoreService = firestoreService,
         _userId = userId,
+        _syncStatus = syncStatus,
         super(DailyLogModel(date: DateTime.now())) {
-    _loadToday();
+    _lifecycleListener = AppLifecycleListener(onResume: _rollOverIfNeeded);
+    _listenToToday();
   }
 
   final FirestoreService _firestoreService;
   final String _userId;
-  bool _hasLocalChanges = false;
+  final SyncStatusController _syncStatus;
+  late final AppLifecycleListener _lifecycleListener;
+  StreamSubscription<DailyLogModel?>? _subscription;
   bool _saveInProgress = false;
   bool _saveQueued = false;
 
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _lifecycleListener.dispose();
+    super.dispose();
+  }
+
   void addMealItem(MealSlot slot, MealItem item) {
+    _rollOverIfNeeded();
     switch (slot) {
       case MealSlot.breakfast:
         state = state.copyWith(breakfast: [...state.breakfast, item]);
@@ -56,6 +73,7 @@ class DailyLogController extends StateNotifier<DailyLogModel> {
       ];
     }
 
+    _rollOverIfNeeded();
     switch (slot) {
       case MealSlot.breakfast:
         state = state.copyWith(breakfast: removeAt(state.breakfast));
@@ -72,6 +90,7 @@ class DailyLogController extends StateNotifier<DailyLogModel> {
     String? studyNotes,
     String? gamingNotes,
   }) {
+    _rollOverIfNeeded();
     state = state.copyWith(
       workNotes: workNotes,
       studyNotes: studyNotes,
@@ -86,24 +105,55 @@ class DailyLogController extends StateNotifier<DailyLogModel> {
   }
 
   void _didChange() {
-    _hasLocalChanges = true;
     _queueSave();
   }
 
-  Future<void> _loadToday() async {
-    try {
-      final log = await _firestoreService.getDailyLog(
-        userId: _userId,
-        date: state.date,
-      );
-      if (!mounted || _hasLocalChanges || log == null) {
-        return;
-      }
-      state = log;
-    } catch (_) {
-      // Keep the local day available when Firestore cannot be reached.
+  /// Moves the log onto today's document when the date has changed under it.
+  ///
+  /// The controller is built once and its date came with it, so an app left
+  /// open overnight used to write this morning's breakfast into yesterday's
+  /// document. Checked before every edit, and again whenever the app is
+  /// brought back to the foreground — which is how the day actually turns
+  /// over on a phone.
+  void _rollOverIfNeeded() {
+    final now = DateTime.now();
+    if (_dateId(now) == _dateId(state.date)) {
+      return;
     }
+
+    // Yesterday is already saved under its own id; start today clean and
+    // follow the new document instead.
+    state = DailyLogModel(date: now);
+    _listenToToday();
   }
+
+  /// Follows today's document rather than reading it once, so a meal logged on
+  /// another device appears here without a restart.
+  void _listenToToday() {
+    _subscription?.cancel();
+    final date = state.date;
+    _subscription = _firestoreService
+        .watchDailyLog(userId: _userId, date: date)
+        .listen(
+      (log) {
+        // Drop anything that arrives for a day we have already left, or while
+        // one of our own writes is still on its way out.
+        if (!mounted ||
+            log == null ||
+            _saveInProgress ||
+            _saveQueued ||
+            _dateId(date) != _dateId(state.date)) {
+          return;
+        }
+        state = log;
+      },
+      onError: (Object _) {
+        // Keep the local day available when Firestore cannot be reached.
+      },
+    );
+  }
+
+  String _dateId(DateTime date) => DailyLogModel(date: date).documentId;
 
   Future<void> _queueSave() async {
     if (_saveInProgress) {
@@ -115,14 +165,13 @@ class DailyLogController extends StateNotifier<DailyLogModel> {
     do {
       _saveQueued = false;
       final logToSave = state;
-      try {
-        await _firestoreService.saveDailyLog(
+      await _syncStatus.track(
+        key: 'daily_log:${logToSave.documentId}',
+        write: () => _firestoreService.saveDailyLog(
           userId: _userId,
           log: logToSave,
-        );
-      } catch (_) {
-        // Optimistic local edits remain available for the current session.
-      }
+        ),
+      );
     } while (mounted && _saveQueued);
     _saveInProgress = false;
   }

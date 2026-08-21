@@ -296,14 +296,19 @@ sequenceDiagram
   participant F as FirestoreService
   participant DB as Cloud Firestore
 
+  FD->>F: getFoodDictionary on construction
+  F->>DB: get users/{uid}/foods/dictionary
+  DB-->>FD: saved list, or null to keep the starter foods
   alt Pick from the saved food list
     U->>D: Open the food manager, search, choose a quantity
-    D->>FD: upsert or delete inside the in-memory dictionary
+    D->>FD: upsert or delete
+    FD->>F: saveFoodDictionary with the whole list
     FD-->>D: filtered list with calories per item
   else Type it straight in
     U->>D: Name and calories on the meal card
   end
   D->>DL: addMealItem slot, item
+  DL->>DL: roll onto today's document if the date moved
   DL->>DL: copyWith the new breakfast, lunch or dinner list
   DL-->>U: Calorie summary updates immediately
   DL->>DL: mark local changes, then queue a save
@@ -324,7 +329,8 @@ sequenceDiagram
 ```
 
 - **Why:** one document per calendar day (`yyyy-MM-dd`) keeps history a simple collection read — see stage 07.
-- **Watch:** the food dictionary is seeded in code and lives only in memory. Edits to it disappear on restart, though items already added to a meal are saved with the log.
+- The controller's date is re-checked before every edit and whenever the app resumes, so a session left open overnight starts a new document instead of writing this morning's breakfast into yesterday.
+- **Watch:** a saved dictionary replaces the starter foods wholesale rather than merging with them — otherwise deleting a built-in food would bring it back on the next launch.
 
 ---
 
@@ -363,14 +369,20 @@ sequenceDiagram
   GC->>GC: update state first
   GC->>F: saveGymTechnique or deleteGymTechnique
   F->>DB: set or delete users/{uid}/gym_techniques/{id}
-  U->>GS: set targets, tick individual sets, mark an exercise done
-  GS->>GS: update the in-memory session map
+  GS->>F: getGymSessions on construction
+  F->>DB: get users/{uid}/gym_sessions
+  DB-->>GS: one document per logged day
+  U->>GS: set targets, tick a set, mark an exercise done, untick or clear it
+  GS->>GS: update today's log first
+  GS->>F: saveGymSession, or deleteGymSession once the day holds nothing
+  F->>DB: set or delete users/{uid}/gym_sessions/{yyyy-MM-dd}
   GS-->>U: progress ring, completed sets over target sets
-  Note over GS: Session progress is never written to Firestore and resets on restart
+  Note over GS: Ticks survive a restart and past days stay readable as history
 ```
 
 - **Why:** technique ids are stable across plan changes, so a saved cue, instruction or image follows an exercise when it moves to another training day.
-- **Watch:** tick marks on sets are the one piece of daily activity with no persistence path — closing the app loses today's session progress.
+- `total_volume_kg` is derived from the exercise list and written anyway, the same call `DailyLogModel` makes with `total_calories`: it keeps the day's headline number readable straight out of the document.
+- **Watch:** a day's document is deleted once every set is unticked and the targets are back at their defaults, so an emptied day does not linger as a blank history entry.
 
 ---
 
@@ -379,7 +391,7 @@ sequenceDiagram
 Nothing new is fetched per screen — history and dashboard compose the same providers other screens
 write to, plus one `FutureProvider` that pulls the full run of daily logs.
 
-**Files:** `lib/screens/history_screen.dart:24` · `lib/screens/dashboard_screen.dart:23` · `lib/providers/diet_provider.dart:17`
+**Files:** `lib/screens/history_screen.dart:24` · `lib/screens/dashboard_screen.dart` · `lib/providers/diet_provider.dart:17`
 
 ```mermaid
 sequenceDiagram
@@ -392,7 +404,7 @@ sequenceDiagram
   participant F as FirestoreService
   participant DB as Cloud Firestore
 
-  U->>V: Open from the drawer
+  U->>V: Open Dashboard from the drawer, or History from Settings
   V->>HP: watch the entry map, already in memory
   V->>RP: watch the routine list
   V->>LH: watch the FutureProvider
@@ -408,10 +420,11 @@ sequenceDiagram
   else Error
     V-->>U: empty state with a retry route
   end
-  Note over V: Dashboard adds todayGymProvider, gymSessionProvider and the in-memory weight value
+  Note over V: Dashboard adds todayGymProvider, gymSessionProvider and the in-memory weight value, and keeps only the last seven days
 ```
 
 - History entries already live in memory from stage 04, so only the calorie history costs a round trip.
+- The dashboard's seven-day strip lists only dates that hold a routine entry or a logged meal, so days before the account existed never show as `0/5`.
 - **Watch:** the dashboard's body weight is a plain `StateProvider` defaulting to 190 lb — it is not saved anywhere.
 
 ---
@@ -422,13 +435,13 @@ Signing out clears the cached Google account before Firebase's, so the next sign
 instead of silently reusing the account that just left. The uid then empties, which is what actually
 disconnects the data layer.
 
-**Files:** `lib/widgets/app_drawer.dart:192` · `lib/services/auth_service.dart:74` · `lib/services/firestore_service.dart:14`
+**Files:** `lib/screens/settings_screen.dart` · `lib/services/auth_service.dart:74` · `lib/services/firestore_service.dart:14`
 
 ```mermaid
 sequenceDiagram
   autonumber
   actor U as User
-  participant D as AppDrawer
+  participant D as SettingsScreen
   participant A as AuthService
   participant G as GoogleSignIn plugin
   participant FA as FirebaseAuth
@@ -442,7 +455,7 @@ sequenceDiagram
   end
   D->>A: signOut
   A->>FA: signOut
-  D->>D: close the drawer, then pushReplacementNamed /login
+  D->>D: pushReplacementNamed /login once the navigator is still mounted
   FA-->>ID: authStateChanges emits null, uid becomes an empty string
   ID-->>C: controllers disposed and rebuilt for the empty user
   C->>C: any late save resolves against an empty uid
@@ -466,10 +479,41 @@ when `request.auth.uid` matches the `{userId}` in the path, and deny everything 
 | `users/{uid}/daily_logs` | `yyyy-MM-dd` | Meals, work notes, study and gaming notes — one document per day |
 | `users/{uid}/routine_history` | `yyyy-MM-dd:taskId` | Done / missed status with an optional remark |
 | `users/{uid}/gym_techniques` | technique id | Weekday, name, cue, instructions, image URL |
+| `users/{uid}/gym_sessions` | `yyyy-MM-dd` | Per-exercise target, working weight and ticked sets, plus the day's `total_volume_kg` |
+| `users/{uid}/foods` | `dictionary` | The food list offered when logging a meal, as one array |
+| `users/{uid}/weight_log` | `yyyy-MM-dd` | One body-weight reading per day, the dashboard trend line |
 
-### Lives in memory only
+Every collection above is keyed to the account, so all of it survives a reinstall. Nothing the user
+enters is memory-only any more — the body weight was the last holdout and now lives in `weight_log`.
 
-Gym session ticks (`gymSessionProvider`), the food dictionary (`foodDictionaryProvider`) and the
-dashboard body weight (`currentWeightLbProvider`) are never written to Firestore. They reset when the
-app restarts. Everything else survives a reinstall, because it is keyed to the account rather than
-the device.
+### How much is read
+
+Each history read is bounded by `FirestoreService.historyWindowDays` (90). `daily_logs`,
+`gym_sessions` and `weight_log` order by document id — which is the date — and take a limit;
+`routine_history` filters on its stored `date` field. Opening the app used to cost the whole of every
+collection, which grew with every day of use.
+
+### What is watched rather than fetched
+
+Today's `daily_logs` document and today's `gym_sessions` document are followed with `snapshots()`, so
+a meal or a ticked set from another device lands without a restart. Both controllers ignore incoming
+snapshots while one of their own writes is still in flight, and both re-point at the new document when
+the day rolls over. Everything else is still a one-shot read: the routine list, technique library and
+day plan change rarely, and a stale one is corrected on the next launch.
+
+### When a write fails
+
+`SyncStatusController` (`lib/providers/sync_status_provider.dart`) wraps every save. Controllers still
+apply their change locally first and never block on the network, but a failure is now recorded against
+the document's key instead of being swallowed. `SyncBanner`, wrapped around the navigator in
+`MaterialApp.builder`, shows the count with a retry on any screen, and the Settings account card
+reports the same state calmly. Retrying re-runs the stored operation, which reads the controller's
+current state — so a retry always sends the newest version, not the one that failed.
+
+### Reminders
+
+`NotificationService` schedules one weekly notification per routine per weekday it runs on, built from
+the `startTime` label the routine already carries. `ReminderController` listens to `routineProvider`,
+so renaming, retiming or deleting a routine reschedules on its own, and it stores the on/off choice in
+`SharedPreferences` beside the theme. Alarms are inexact on purpose, which avoids Android's
+exact-alarm permission; a refused permission leaves the switch off and says so.

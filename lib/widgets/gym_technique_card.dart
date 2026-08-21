@@ -6,6 +6,14 @@ import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
+import '../utils/number_format.dart';
+
+/// 40 kg, not 40.0 kg — but 42.5 keeps its half plate.
+String _formatKg(double weightKg) {
+  return weightKg == weightKg.roundToDouble()
+      ? weightKg.toStringAsFixed(0)
+      : weightKg.toStringAsFixed(1);
+}
 
 GymTechniqueModel? _findTechnique(
   List<GymTechniqueModel> techniques,
@@ -35,11 +43,15 @@ class GymTechniqueCard extends ConsumerStatefulWidget {
 class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(gymSessionProvider);
+    // Watched so a tick — or the first Firestore load after a refresh —
+    // rebuilds the rows.
+    ref.watch(gymSessionProvider);
     final techniques = ref.watch(gymTechniqueProvider);
     final sessionController = ref.read(gymSessionProvider.notifier);
     final isWorkoutDone =
         sessionController.isWorkoutComplete(widget.gymDay.exercises);
+    final volumeKg = sessionController.todayVolumeKg;
+    final heaviest = sessionController.todayLoadedExercises;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -81,6 +93,12 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
             widget.gymDay.focus,
             style: TextStyle(color: context.palette.mutedText),
           ),
+          // Only once something has been lifted — an empty "0 kg" reads as a
+          // failed workout rather than one that has not started.
+          if (volumeKg > 0) ...[
+            const SizedBox(height: 12),
+            _VolumeSummary(volumeKg: volumeKg, heaviest: heaviest),
+          ],
           const SizedBox(height: 12),
           for (final exercise in widget.gymDay.exercises) ...[
             _TechniqueRow(
@@ -90,22 +108,28 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
                 widget.gymDay.weekday,
                 exercise,
               ),
-              session: session[exercise] ??
-                  sessionController.sessionFor(exercise),
+              session: sessionController.sessionFor(exercise),
+              lastSession: sessionController.lastLoggedSession(exercise),
               onToggleSet: (setNumber) {
                 ref
                     .read(gymSessionProvider.notifier)
                     .toggleSet(exercise, setNumber);
               },
-              onSetTarget: (sets, reps) {
+              onSetTarget: (sets, reps, weightKg) {
                 ref.read(gymSessionProvider.notifier).setTarget(
                       exercise: exercise,
                       sets: sets,
                       reps: reps,
+                      weightKg: weightKg,
                     );
               },
               onMarkDone: () {
                 ref.read(gymSessionProvider.notifier).markExerciseDone(
+                      exercise,
+                    );
+              },
+              onClearDone: () {
+                ref.read(gymSessionProvider.notifier).clearExercise(
                       exercise,
                     );
               },
@@ -118,22 +142,120 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
   }
 }
 
+/// Today's total load, with the two heaviest lifts behind it.
+///
+/// Sets answer "did I do the work"; this answers "how much did I move", which
+/// is the number that has to go up over weeks for the split to be worth doing.
+class _VolumeSummary extends StatelessWidget {
+  const _VolumeSummary({
+    required this.volumeKg,
+    required this.heaviest,
+  });
+
+  final int volumeKg;
+  final List<MapEntry<String, GymExerciseSession>> heaviest;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final top = heaviest.take(2).toList();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: palette.violetSoft,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.scale_rounded, size: 18, color: palette.violet),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      formatCount(volumeKg),
+                      style: TextStyle(
+                        color: palette.ink,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text(
+                        'kg lifted today',
+                        style: TextStyle(
+                          color: palette.bodyText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (top.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      for (final entry in top)
+                        '${entry.key} ${_formatKg(entry.value.weightKg)} kg',
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: palette.mutedText,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TechniqueRow extends StatelessWidget {
   const _TechniqueRow({
     required this.exercise,
     required this.technique,
     required this.session,
+    required this.lastSession,
     required this.onToggleSet,
     required this.onSetTarget,
     required this.onMarkDone,
+    required this.onClearDone,
   });
 
   final String exercise;
   final GymTechniqueModel? technique;
   final GymExerciseSession session;
+
+  /// The last earlier day this exercise carried a weight, or null the first
+  /// time it is logged.
+  final GymExerciseSession? lastSession;
   final ValueChanged<int> onToggleSet;
-  final void Function(int sets, int reps) onSetTarget;
+  final void Function(int sets, int reps, double weightKg) onSetTarget;
   final VoidCallback onMarkDone;
+  final VoidCallback onClearDone;
+
+  /// "Last: 40 kg x 3x10", or null before this exercise has ever been loaded.
+  String? get _lastLoadLabel {
+    final previous = lastSession;
+    if (previous == null || !previous.hasWeight) {
+      return null;
+    }
+    return 'Last ${_formatKg(previous.weightKg)} kg · '
+        '${previous.targetSets} x ${previous.targetReps}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,6 +340,27 @@ class _TechniqueRow extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
+                if (_lastLoadLabel != null) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.history_rounded,
+                        size: 12,
+                        color: context.palette.mutedText,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _lastLoadLabel!,
+                        style: TextStyle(
+                          color: context.palette.mutedText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -232,7 +375,12 @@ class _TechniqueRow extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                '${session.targetSets} x ${session.targetReps}',
+                                session.hasWeight
+                                    ? '${session.targetSets} x '
+                                        '${session.targetReps} · '
+                                        '${_formatKg(session.weightKg)} kg'
+                                    : '${session.targetSets} x '
+                                        '${session.targetReps}',
                                 style: TextStyle(
                                   color: context.palette.bodyText,
                                   fontSize: 12,
@@ -251,9 +399,12 @@ class _TechniqueRow extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
+                    // Doubles as the undo: once every set is ticked the
+                    // button clears them again, so a mistaken "All done" is
+                    // not a dead end.
                     TextButton(
-                      onPressed: isDone ? null : onMarkDone,
-                      child: const Text('All done'),
+                      onPressed: isDone ? onClearDone : onMarkDone,
+                      child: Text(isDone ? 'Clear' : 'All done'),
                     ),
                   ],
                 ),
@@ -309,31 +460,56 @@ class _TechniqueRow extends StatelessWidget {
     final repsController = TextEditingController(
       text: session.targetReps.toString(),
     );
+    // Prefilled from the last time this exercise was loaded, so the usual
+    // action is "add 2.5" rather than remembering the number from scratch.
+    final weightController = TextEditingController(
+      text: session.hasWeight
+          ? _formatKg(session.weightKg)
+          : (lastSession?.hasWeight ?? false)
+              ? _formatKg(lastSession!.weightKg)
+              : '',
+    );
 
-    final result = await showDialog<({int sets, int reps})>(
+    final result = await showDialog<({int sets, int reps, double weightKg})>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Set target'),
-          content: Row(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: setsController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Sets',
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: setsController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Sets',
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: repsController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Reps',
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: repsController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Reps',
-                  ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: weightController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Weight (kg)',
+                  helperText: _lastLoadLabel ?? 'Leave empty for bodyweight',
+                  prefixIcon: const Icon(Icons.fitness_center_rounded),
                 ),
               ),
             ],
@@ -351,7 +527,12 @@ class _TechniqueRow extends StatelessWidget {
                   Navigator.of(context).pop();
                   return;
                 }
-                Navigator.of(context).pop((sets: sets, reps: reps));
+                // An empty field means bodyweight, which stores as zero.
+                final weightKg =
+                    double.tryParse(weightController.text.trim()) ?? 0;
+                Navigator.of(context).pop(
+                  (sets: sets, reps: reps, weightKg: weightKg),
+                );
               },
               child: const Text('Save'),
             ),
@@ -362,10 +543,20 @@ class _TechniqueRow extends StatelessWidget {
 
     setsController.dispose();
     repsController.dispose();
+    weightController.dispose();
 
-    if (result != null) {
-      onSetTarget(result.sets, result.reps);
+    if (result == null) {
+      return;
     }
+
+    // Let the dialog route fully detach before the provider update rebuilds
+    // the gym card and save-status overlay.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!context.mounted) {
+      return;
+    }
+
+    onSetTarget(result.sets, result.reps, result.weightKg);
   }
 
   String _cueFor(String exercise) {

@@ -8,7 +8,7 @@ sequenceDiagram
   participant F as FirestoreService
   participant DB as Cloud Firestore
 
-  U->>V: Open from the drawer
+  U->>V: Open Dashboard from the drawer, or History from Settings
   V->>HP: watch the entry map, already in memory
   V->>RP: watch the routine list
   V->>LH: watch the FutureProvider
@@ -24,4 +24,4 @@ sequenceDiagram
   else Error
     V-->>U: empty state with a retry route
   end
-  Note over V: Dashboard adds todayGymProvider, gymSessionProvider and the in-memory weight value
+  Note over V: Dashboard adds todayGymProvider, gymSessionProvider and the in-memory weight value, and keeps only the last seven days

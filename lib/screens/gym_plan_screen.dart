@@ -6,6 +6,7 @@ import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
+import '../utils/number_format.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dark_hero_card.dart';
 import '../widgets/gym_technique_card.dart';
@@ -21,6 +22,7 @@ class GymPlanScreen extends ConsumerWidget {
     final sessionController = ref.read(gymSessionProvider.notifier);
     final completed = sessionController.completedSetCount(todayGym.exercises);
     final target = sessionController.targetSetCount(todayGym.exercises);
+    final volumeKg = sessionController.todayVolumeKg;
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.gym),
@@ -75,7 +77,12 @@ class GymPlanScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '$completed / $target sets finished',
+                    // Volume only appears once a weight has been recorded —
+                    // an exercise with none contributes nothing to it.
+                    volumeKg > 0
+                        ? '$completed / $target sets · '
+                            '${formatCount(volumeKg)} kg moved'
+                        : '$completed / $target sets finished',
                     style: const TextStyle(color: AppColors.onInkMuted),
                   ),
                 ],

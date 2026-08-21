@@ -1,7 +1,7 @@
 sequenceDiagram
   autonumber
   actor U as User
-  participant D as AppDrawer
+  participant D as SettingsScreen
   participant A as AuthService
   participant G as GoogleSignIn plugin
   participant FA as FirebaseAuth
@@ -15,7 +15,7 @@ sequenceDiagram
   end
   D->>A: signOut
   A->>FA: signOut
-  D->>D: close the drawer, then pushReplacementNamed /login
+  D->>D: pushReplacementNamed /login once the navigator is still mounted
   FA-->>ID: authStateChanges emits null, uid becomes an empty string
   ID-->>C: controllers disposed and rebuilt for the empty user
   C->>C: any late save resolves against an empty uid

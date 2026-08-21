@@ -5,30 +5,33 @@ import '../models/task_model.dart';
 import '../services/firestore_service.dart';
 import 'auth_provider.dart';
 import 'firestore_provider.dart';
+import 'sync_status_provider.dart';
 
 final historyProvider =
     StateNotifierProvider<HistoryController, Map<String, RoutineHistoryEntry>>(
   (ref) => HistoryController(
     firestoreService: ref.watch(firestoreServiceProvider),
     userId: ref.watch(currentUserIdProvider),
+    syncStatus: ref.watch(syncStatusProvider.notifier),
   ),
 );
-
-final currentWeightLbProvider = StateProvider<double>((ref) => 190);
 
 class HistoryController
     extends StateNotifier<Map<String, RoutineHistoryEntry>> {
   HistoryController({
     required FirestoreService firestoreService,
     required String userId,
+    required SyncStatusController syncStatus,
   })  : _firestoreService = firestoreService,
         _userId = userId,
+        _syncStatus = syncStatus,
         super(const {}) {
     _loadHistory();
   }
 
   final FirestoreService _firestoreService;
   final String _userId;
+  final SyncStatusController _syncStatus;
 
   void markDone(TaskModel task, {String remark = ''}) {
     _record(task: task, status: RoutineStatus.done, remark: remark);
@@ -92,26 +95,24 @@ class HistoryController
     }
   }
 
-  Future<void> _saveEntry(RoutineHistoryEntry entry) async {
-    try {
-      await _firestoreService.saveRoutineHistoryEntry(
+  Future<void> _saveEntry(RoutineHistoryEntry entry) {
+    return _syncStatus.track(
+      key: 'routine_history:${entry.key}',
+      write: () => _firestoreService.saveRoutineHistoryEntry(
         userId: _userId,
         entry: entry,
-      );
-    } catch (_) {
-      // The optimistic local entry remains visible and can be retried later.
-    }
+      ),
+    );
   }
 
-  Future<void> _deleteEntry(String key) async {
-    try {
-      await _firestoreService.deleteRoutineHistoryEntry(
+  Future<void> _deleteEntry(String key) {
+    return _syncStatus.track(
+      key: 'routine_history:$key',
+      write: () => _firestoreService.deleteRoutineHistoryEntry(
         userId: _userId,
         entryKey: key,
-      );
-    } catch (_) {
-      // The local clear still takes effect for the current session.
-    }
+      ),
+    );
   }
 
   String _keyFor(DateTime date, String taskId) {

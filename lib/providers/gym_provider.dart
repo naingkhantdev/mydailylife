@@ -5,12 +5,14 @@ import '../models/gym_technique_model.dart';
 import '../services/firestore_service.dart';
 import 'auth_provider.dart';
 import 'firestore_provider.dart';
+import 'sync_status_provider.dart';
 
 final gymTechniqueProvider =
     StateNotifierProvider<GymTechniqueController, List<GymTechniqueModel>>(
   (ref) => GymTechniqueController(
     firestoreService: ref.watch(firestoreServiceProvider),
     userId: ref.watch(currentUserIdProvider),
+    syncStatus: ref.watch(syncStatusProvider.notifier),
   ),
 );
 
@@ -19,6 +21,7 @@ final gymDayPlanProvider =
   (ref) => GymDayPlanController(
     firestoreService: ref.watch(firestoreServiceProvider),
     userId: ref.watch(currentUserIdProvider),
+    syncStatus: ref.watch(syncStatusProvider.notifier),
   ),
 );
 
@@ -78,14 +81,17 @@ class GymDayPlanController extends StateNotifier<List<GymDayModel>> {
   GymDayPlanController({
     required FirestoreService firestoreService,
     required String userId,
+    required SyncStatusController syncStatus,
   })  : _firestoreService = firestoreService,
         _userId = userId,
+        _syncStatus = syncStatus,
         super(defaultGymDays) {
     _loadDays();
   }
 
   final FirestoreService _firestoreService;
   final String _userId;
+  final SyncStatusController _syncStatus;
   bool _hasLocalChanges = false;
 
   Future<void> updateDay(GymDayModel day) async {
@@ -94,11 +100,10 @@ class GymDayPlanController extends StateNotifier<List<GymDayModel>> {
       for (final current in state)
         if (current.weekday == day.weekday) day else current,
     ];
-    try {
-      await _firestoreService.saveGymDay(userId: _userId, day: day);
-    } catch (_) {
-      // Keep the optimistic rename available while offline.
-    }
+    await _syncStatus.track(
+      key: 'gym_day:${day.weekday}',
+      write: () => _firestoreService.saveGymDay(userId: _userId, day: day),
+    );
   }
 
   /// Trades the name, focus line and rest flag between two weekdays.
@@ -133,14 +138,13 @@ class GymDayPlanController extends StateNotifier<List<GymDayModel>> {
         else
           current,
     ];
-    try {
-      await _firestoreService.saveGymDays(
+    await _syncStatus.track(
+      key: 'gym_day:$weekdayA-$weekdayB',
+      write: () => _firestoreService.saveGymDays(
         userId: _userId,
         days: [movedToA, movedToB],
-      );
-    } catch (_) {
-      // Keep the optimistic swap available while offline.
-    }
+      ),
+    );
   }
 
   Future<void> _loadDays() async {
@@ -177,27 +181,29 @@ class GymTechniqueController extends StateNotifier<List<GymTechniqueModel>> {
   GymTechniqueController({
     required FirestoreService firestoreService,
     required String userId,
+    required SyncStatusController syncStatus,
   })  : _firestoreService = firestoreService,
         _userId = userId,
+        _syncStatus = syncStatus,
         super(_sorted(defaultGymTechniques)) {
     _loadTechniques();
   }
 
   final FirestoreService _firestoreService;
   final String _userId;
+  final SyncStatusController _syncStatus;
   bool _hasLocalChanges = false;
 
   Future<void> addTechnique(GymTechniqueModel technique) async {
     _hasLocalChanges = true;
     state = _sorted([...state, technique]);
-    try {
-      await _firestoreService.saveGymTechnique(
+    await _syncStatus.track(
+      key: 'gym_technique:${technique.id}',
+      write: () => _firestoreService.saveGymTechnique(
         userId: _userId,
         technique: technique,
-      );
-    } catch (_) {
-      // Keep the optimistic technique available while offline.
-    }
+      ),
+    );
   }
 
   Future<void> updateTechnique(GymTechniqueModel technique) async {
@@ -206,14 +212,13 @@ class GymTechniqueController extends StateNotifier<List<GymTechniqueModel>> {
       for (final current in state)
         if (current.id == technique.id) technique else current,
     ]);
-    try {
-      await _firestoreService.saveGymTechnique(
+    await _syncStatus.track(
+      key: 'gym_technique:${technique.id}',
+      write: () => _firestoreService.saveGymTechnique(
         userId: _userId,
         technique: technique,
-      );
-    } catch (_) {
-      // Keep the optimistic edit available while offline.
-    }
+      ),
+    );
   }
 
   /// Moves one exercise to another weekday, keeping its id so the cue, steps
@@ -259,14 +264,13 @@ class GymTechniqueController extends StateNotifier<List<GymTechniqueModel>> {
 
     _hasLocalChanges = true;
     state = _sorted([...state, ...additions]);
-    try {
-      await _firestoreService.saveGymTechniques(
+    await _syncStatus.track(
+      key: 'gym_techniques:additions',
+      write: () => _firestoreService.saveGymTechniques(
         userId: _userId,
         techniques: additions,
-      );
-    } catch (_) {
-      // Keep the optimistic additions available while offline.
-    }
+      ),
+    );
     return additions.length;
   }
 
@@ -288,14 +292,13 @@ class GymTechniqueController extends StateNotifier<List<GymTechniqueModel>> {
     state = _sorted([
       for (final technique in state) movedById[technique.id] ?? technique,
     ]);
-    try {
-      await _firestoreService.saveGymTechniques(
+    await _syncStatus.track(
+      key: 'gym_techniques:swap',
+      write: () => _firestoreService.saveGymTechniques(
         userId: _userId,
         techniques: moved,
-      );
-    } catch (_) {
-      // Keep the optimistic swap available while offline.
-    }
+      ),
+    );
   }
 
   Future<void> deleteTechnique(String techniqueId) async {
@@ -304,14 +307,13 @@ class GymTechniqueController extends StateNotifier<List<GymTechniqueModel>> {
       for (final technique in state)
         if (technique.id != techniqueId) technique,
     ];
-    try {
-      await _firestoreService.deleteGymTechnique(
+    await _syncStatus.track(
+      key: 'gym_technique:$techniqueId',
+      write: () => _firestoreService.deleteGymTechnique(
         userId: _userId,
         techniqueId: techniqueId,
-      );
-    } catch (_) {
-      // Keep the optimistic deletion for the current session.
-    }
+      ),
+    );
   }
 
   Future<void> _loadTechniques() async {
@@ -357,14 +359,13 @@ class GymTechniqueController extends StateNotifier<List<GymTechniqueModel>> {
 
     _hasLocalChanges = true;
     state = _sorted([...state, ...missing]);
-    try {
-      await _firestoreService.saveGymTechniques(
+    await _syncStatus.track(
+      key: 'gym_techniques:missing',
+      write: () => _firestoreService.saveGymTechniques(
         userId: _userId,
         techniques: missing,
-      );
-    } catch (_) {
-      // Keep the optimistic additions available while offline.
-    }
+      ),
+    );
     return missing.length;
   }
 

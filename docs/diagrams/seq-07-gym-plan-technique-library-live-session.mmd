@@ -24,7 +24,12 @@ sequenceDiagram
   GC->>GC: update state first
   GC->>F: saveGymTechnique or deleteGymTechnique
   F->>DB: set or delete users/{uid}/gym_techniques/{id}
-  U->>GS: set targets, tick individual sets, mark an exercise done
-  GS->>GS: update the in-memory session map
+  GS->>F: getGymSessions on construction
+  F->>DB: get users/{uid}/gym_sessions
+  DB-->>GS: one document per logged day
+  U->>GS: set targets, tick a set, mark an exercise done, untick or clear it
+  GS->>GS: update today's log first
+  GS->>F: saveGymSession, or deleteGymSession once the day holds nothing
+  F->>DB: set or delete users/{uid}/gym_sessions/{yyyy-MM-dd}
   GS-->>U: progress ring, completed sets over target sets
-  Note over GS: Session progress is never written to Firestore and resets on restart
+  Note over GS: Ticks survive a restart and past days stay readable as history

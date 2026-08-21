@@ -7,14 +7,19 @@ sequenceDiagram
   participant F as FirestoreService
   participant DB as Cloud Firestore
 
+  FD->>F: getFoodDictionary on construction
+  F->>DB: get users/{uid}/foods/dictionary
+  DB-->>FD: saved list, or null to keep the starter foods
   alt Pick from the saved food list
     U->>D: Open the food manager, search, choose a quantity
-    D->>FD: upsert or delete inside the in-memory dictionary
+    D->>FD: upsert or delete
+    FD->>F: saveFoodDictionary with the whole list
     FD-->>D: filtered list with calories per item
   else Type it straight in
     U->>D: Name and calories on the meal card
   end
   D->>DL: addMealItem slot, item
+  DL->>DL: roll onto today's document if the date moved
   DL->>DL: copyWith the new breakfast, lunch or dinner list
   DL-->>U: Calorie summary updates immediately
   DL->>DL: mark local changes, then queue a save

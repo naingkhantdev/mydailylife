@@ -43,6 +43,11 @@ dependencies:
   firebase_auth: ^6.4.0
   google_sign_in: ^6.2.1
   shared_preferences: ^2.3.2
+  # 16.x is the last line that builds on this project's AGP 7.3 toolchain;
+  # 17.x expects AGP 8 and desugar_jdk_libs 2.x.
+  flutter_local_notifications: ^16.3.3
+  timezone: ^0.9.4
+  flutter_timezone: ^3.0.1
 
 dev_dependencies:
   flutter_test:

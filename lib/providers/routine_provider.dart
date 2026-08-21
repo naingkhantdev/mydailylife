@@ -4,12 +4,14 @@ import '../models/task_model.dart';
 import '../services/firestore_service.dart';
 import 'auth_provider.dart';
 import 'firestore_provider.dart';
+import 'sync_status_provider.dart';
 
 final routineProvider =
     StateNotifierProvider<RoutineController, List<TaskModel>>((ref) {
   return RoutineController(
     firestoreService: ref.watch(firestoreServiceProvider),
     userId: ref.watch(currentUserIdProvider),
+    syncStatus: ref.watch(syncStatusProvider.notifier),
   );
 });
 
@@ -17,24 +19,26 @@ class RoutineController extends StateNotifier<List<TaskModel>> {
   RoutineController({
     required FirestoreService firestoreService,
     required String userId,
+    required SyncStatusController syncStatus,
   })  : _firestoreService = firestoreService,
         _userId = userId,
+        _syncStatus = syncStatus,
         super(_sorted(defaultRoutineTasks)) {
     _loadTasks();
   }
 
   final FirestoreService _firestoreService;
   final String _userId;
+  final SyncStatusController _syncStatus;
   bool _hasLocalChanges = false;
 
   Future<void> addTask(TaskModel task) async {
     _hasLocalChanges = true;
     state = _sorted([...state, task]);
-    try {
-      await _firestoreService.saveTask(userId: _userId, task: task);
-    } catch (_) {
-      // Keep the optimistic task available while offline.
-    }
+    await _syncStatus.track(
+      key: 'task:${task.id}',
+      write: () => _firestoreService.saveTask(userId: _userId, task: task),
+    );
   }
 
   Future<void> updateTask(TaskModel task) async {
@@ -43,21 +47,22 @@ class RoutineController extends StateNotifier<List<TaskModel>> {
       for (final current in state)
         if (current.id == task.id) task else current,
     ]);
-    try {
-      await _firestoreService.saveTask(userId: _userId, task: task);
-    } catch (_) {
-      // Keep the optimistic edit available while offline.
-    }
+    await _syncStatus.track(
+      key: 'task:${task.id}',
+      write: () => _firestoreService.saveTask(userId: _userId, task: task),
+    );
   }
 
   Future<void> deleteTask(String taskId) async {
     _hasLocalChanges = true;
     state = [for (final task in state) if (task.id != taskId) task];
-    try {
-      await _firestoreService.deleteTask(userId: _userId, taskId: taskId);
-    } catch (_) {
-      // Keep the optimistic deletion for the current session.
-    }
+    await _syncStatus.track(
+      key: 'task:$taskId',
+      write: () => _firestoreService.deleteTask(
+        userId: _userId,
+        taskId: taskId,
+      ),
+    );
   }
 
   Future<void> _loadTasks() async {

@@ -27,9 +27,12 @@ Diagrams are Mermaid and render on GitHub.
 
 ## 01 — Screen and navigation map
 
-Ten routes, all resolved by `onGenerateRoute` in `lib/main.dart`. The drawer is the hub: every
+Eleven routes, all resolved by `onGenerateRoute` in `lib/main.dart`. The drawer is the hub: every
 destination is reached with `pushReplacementNamed`, so the back stack never stacks up. Only the task
 editor is a real `push`.
+
+The drawer carries only the five screens opened daily. Everything occasional — work log, evening
+split, history, routines — plus appearance and sign-out sits one level down on `/settings`.
 
 ```mermaid
 flowchart TD
@@ -38,16 +41,19 @@ flowchart TD
   Splash -->|"session restored"| Home
   Login -->|"pushReplacementNamed"| Home["Today<br/>/home"]
 
-  Home --> Drawer{{"AppDrawer"}}
+  Home --> Drawer{{"AppDrawer<br/>five daily screens"}}
   Drawer --> Dash["Dashboard<br/>/dashboard"]
-  Drawer --> Diet["Diet and calories<br/>/diet"]
-  Drawer --> Work["Work log<br/>/work-log"]
-  Drawer --> Night["Evening split<br/>/night-split"]
-  Drawer --> Hist["History<br/>/history"]
   Drawer --> Gym["Gym plan<br/>/gym"]
   Drawer --> Tech["Gym techniques<br/>/gym-techniques"]
-  Drawer --> Routines["Routines<br/>/routines"]
-  Drawer -->|"sign out"| Login
+  Drawer --> Diet["Diet and calories<br/>/diet"]
+  Drawer --> Set["Settings<br/>/settings"]
+
+  Set --> Work["Work log<br/>/work-log"]
+  Set --> Night["Evening split<br/>/night-split"]
+  Set --> Hist["History<br/>/history"]
+  Set --> Routines["Routines<br/>/routines"]
+  Set -->|"sign out"| Login
+  Set -.->|"appearance"| Theme["Auto / Light / Dark<br/>ThemeModeSelector"]
 
   Home -.->|"bottom sheet"| Sheet["Task action sheet<br/>done, missed, clear, quick meal"]
   Diet -.->|"modal"| Food["Food manager<br/>dictionary and quantity"]
@@ -58,7 +64,7 @@ flowchart TD
   classDef entry fill:#E4EEF7,stroke:#0F4C81,color:#001935
   classDef modal fill:#FFFBEB,stroke:#B45309,color:#3A2A05
   class Start,Splash,Login entry
-  class Sheet,Food,TechEd,Editor,Weight modal
+  class Sheet,Food,TechEd,Editor,Weight,Theme modal
 ```
 
 - Every screen except the splash and the task editor pulls in `AppDrawer` with its own
@@ -163,7 +169,7 @@ owns state, and a service that owns the SDK call.
 ```mermaid
 flowchart TD
   subgraph UI["UI · lib/screens, lib/widgets"]
-    S1["Today, Dashboard, Diet,<br/>Work log, Evening split, History"]
+    S1["Today, Dashboard, Diet,<br/>Work log, Evening split, History, Settings"]
     S2["Gym plan, Gym techniques,<br/>Routines, Login, Splash"]
     S3["AppDrawer, meal cards,<br/>food manager, technique cards"]
   end
@@ -176,6 +182,9 @@ flowchart TD
     P5["GymSessionController"]
     P6["FoodDictionaryController"]
     P7["ThemeModeController"]
+    P8["WeightController"]
+    P9["SyncStatusController"]
+    P10["ReminderController"]
   end
 
   subgraph Domain["Models · lib/models"]
@@ -183,17 +192,21 @@ flowchart TD
     M2["DailyLogModel + MealItem"]
     M3["RoutineHistoryEntry"]
     M4["GymTechniqueModel"]
+    M5["GymSessionLog + GymExerciseSession"]
+    M6["WeightEntryModel"]
   end
 
   subgraph Svc["Services · lib/services"]
     V1["FirestoreService"]
     V2["AuthService"]
+    V3["NotificationService"]
   end
 
   subgraph Ext["Platform"]
     E1[("Cloud Firestore<br/>users/uid/...")]
     E2["Firebase Auth<br/>+ Google Sign-In"]
     E3["SharedPreferences"]
+    E4["Local notifications"]
   end
 
   UI --> State
@@ -202,21 +215,28 @@ flowchart TD
   P2 --> V1
   P3 --> V1
   P4 --> V1
+  P5 --> V1
+  P6 --> V1
+  P8 --> V1
   UI --> V2
+  P1 --> P10
+  P10 --> V3
   V1 --> E1
   V2 --> E2
   P7 --> E3
-  P5 -. "no persistence" .-> X["resets on restart"]
-  P6 -. "no persistence" .-> X
+  P10 --> E3
+  V3 --> E4
+  P1 & P2 & P3 & P4 & P5 & P6 & P8 -. "every write" .-> P9
 
-  classDef mem fill:#FFFBEB,stroke:#B45309,color:#3A2A05
   classDef db fill:#ECFEFF,stroke:#0E7490,color:#042F2E
-  class P5,P6,X mem
-  class E1,E2,E3 db
+  class E1,E2,E3,E4 db
 ```
 
-- `json_serializable` generates the `toJson` / `fromJson` on every model; the `.g.dart` files are
-  build output and are never edited by hand.
+- `json_serializable` generates the `toJson` / `fromJson` on most models; the `.g.dart` files are
+  build output and are never edited by hand. `GymDayModel`, `GymSessionLog` and `WeightEntryModel`
+  map themselves by hand, so adding a field to them needs no code generation run.
+- Every controller that writes reports the result into `SyncStatusController`. Optimistic local state
+  is unchanged — the difference is that a failure is now countable and retryable rather than silent.
 - `FirestoreService` treats an empty user id as "signed out" and no-ops, which is what makes the
   sign-out frame safe.
 
@@ -240,26 +260,34 @@ flowchart LR
   D --> H["historyProvider"]
   D --> I["gymTechniqueProvider"]
   D --> J["dailyLogHistoryProvider"]
+  D --> M["gymSessionProvider"]
+  D --> N["foodDictionaryProvider"]
+  D --> R["weightProvider"]
   E --> G
   E --> H
   E --> I
   E --> J
+  E --> M
+  E --> N
+  E --> R
 
   I --> K["gymPlanProvider<br/>derived, 7 day templates"]
   K --> L["todayGymProvider<br/>DateTime.now weekday"]
 
-  M["gymSessionProvider"]
-  N["foodDictionaryProvider"]
-  O["currentWeightLbProvider"]
   P["sharedPreferencesProvider<br/>overridden in main"] --> Q["themeModeProvider"]
+  P --> T["reminderProvider"]
+  S["notificationServiceProvider<br/>overridden in main"] --> T
+  F --> T
+  U{{"syncStatusProvider<br/>no dependencies"}}
+  F & G & H & I & M & N & R --> U
 
   classDef hinge fill:#ECFEFF,stroke:#0E7490,color:#042F2E
-  classDef mem fill:#FFFBEB,stroke:#B45309,color:#3A2A05
-  class D hinge
-  class M,N,O mem
+  class D,U hinge
 ```
 
-Amber nodes have no dependency on the user id because they never leave memory.
+`syncStatusProvider` is the second hinge: it depends on nothing, so every controller can report a
+failed write into it without creating a cycle. `reminderProvider` watches the routine list, which is
+what reschedules notifications when a routine is renamed, retimed or deleted.
 
 ---
 
