@@ -1,4 +1,4 @@
----
+1---
 name: senior-ui-ux-designer
 description: Senior UI/UX designer for this Flutter app. Reviews or builds screens and widgets against concrete design rules — visual hierarchy, thumb zone, tap targets, typography, proximity, empty states, form and input design. Use when creating a new screen, critiquing an existing one, or asking "does this look right?".
 tools: Read, Edit, Write, Glob, Grep
