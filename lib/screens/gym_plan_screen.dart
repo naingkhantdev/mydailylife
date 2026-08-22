@@ -22,6 +22,8 @@ class GymPlanScreen extends ConsumerWidget {
     final sessionController = ref.read(gymSessionProvider.notifier);
     final completed = sessionController.completedSetCount(todayGym.exercises);
     final target = sessionController.targetSetCount(todayGym.exercises);
+    final started =
+        sessionController.startedExercises(todayGym.exercises).length;
     final volumeKg = sessionController.todayVolumeKg;
 
     return Scaffold(
@@ -77,12 +79,17 @@ class GymPlanScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    // Volume only appears once a weight has been recorded —
-                    // an exercise with none contributes nothing to it.
-                    volumeKg > 0
-                        ? '$completed / $target sets · '
-                            '${formatCount(volumeKg)} kg moved'
-                        : '$completed / $target sets finished',
+                    // The day is a menu, so before the first tick there is no
+                    // session to report on yet — only a list to choose from.
+                    // Volume joins the line once a weight has been recorded;
+                    // an exercise without one contributes nothing to it.
+                    started == 0
+                        ? '${todayGym.exercises.length} exercises · '
+                            'tick a set to start the day'
+                        : volumeKg > 0
+                            ? '$completed / $target sets · $started exercises · '
+                                '${formatCount(volumeKg)} kg moved'
+                            : '$completed / $target sets · $started exercises',
                     style: const TextStyle(color: AppColors.onInkMuted),
                   ),
                 ],

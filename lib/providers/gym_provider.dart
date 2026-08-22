@@ -623,6 +623,11 @@ const defaultGymDays = <GymDayModel>[
 /// Entries carry no cue or instructions on purpose: an empty cue lets the rich
 /// built-in guide in `gym_technique_card.dart` answer for the exercise, while
 /// filling one in would replace that guide with the generic custom template.
+///
+/// A training day seeds a menu of about sixteen rather than one fixed session.
+/// A session is the five to seven of them you actually tick, which is why the
+/// day's progress and its done tick read off the exercises you started rather
+/// than off the whole list — see `GymSessionController.startedExercises`.
 const _defaultGymTechniqueEntries = <(String, int, String)>[
   // Push 1 — chest, shoulders, triceps.
   ('gym-2-5', 1, 'Bench press'),
@@ -635,6 +640,12 @@ const _defaultGymTechniqueEntries = <(String, int, String)>[
   ('gym-2-9', 1, 'Triceps pushdowns'),
   ('gym-push-close-grip-bench', 1, 'Close-grip bench press'),
   ('gym-push-front-raise', 1, 'Front raises'),
+  ('gym-d1-push-ups', 1, 'Push-ups'),
+  ('gym-d1-machine-chest-press', 1, 'Machine chest press'),
+  ('gym-d1-pec-deck-fly', 1, 'Pec deck fly'),
+  ('gym-d1-cable-lateral-raise', 1, 'Cable lateral raise'),
+  ('gym-d1-arnold-press', 1, 'Arnold press'),
+  ('gym-d1-overhead-triceps-extension', 1, 'Overhead triceps extension'),
 
   // Pull 1 — back, rear delts, biceps.
   ('gym-3-10', 2, 'Pull-ups or lat pulldown'),
@@ -647,6 +658,12 @@ const _defaultGymTechniqueEntries = <(String, int, String)>[
   ('gym-back-shrugs', 2, 'Dumbbell shrugs'),
   ('gym-3-14', 2, 'Biceps curls'),
   ('gym-pull-cable-curl', 2, 'Cable curls'),
+  ('gym-d2-one-arm-db-row', 2, 'One-arm dumbbell row'),
+  ('gym-d2-wide-grip-pulldown', 2, 'Wide-grip lat pulldown'),
+  ('gym-d2-chest-supported-row', 2, 'Chest-supported row'),
+  ('gym-d2-inverted-row', 2, 'Inverted row'),
+  ('gym-d2-hammer-curls', 2, 'Hammer curls'),
+  ('gym-d2-farmer-carry', 2, 'Farmer carry'),
 
   // Legs 1 & Core — quads, calves, abs.
   ('gym-1-0', 3, 'Squats'),
@@ -659,6 +676,12 @@ const _defaultGymTechniqueEntries = <(String, int, String)>[
   ('gym-legs-seated-calf-raise', 3, 'Seated calf raises'),
   ('gym-1-4', 3, 'Plank'),
   ('gym-core-cable-crunch', 3, 'Cable crunches'),
+  ('gym-d3-hack-squat', 3, 'Hack squat'),
+  ('gym-d3-goblet-squat', 3, 'Goblet squat'),
+  ('gym-d3-step-ups', 3, 'Dumbbell step-ups'),
+  ('gym-d3-calf-press', 3, 'Calf press on the leg press'),
+  ('gym-d3-hanging-knee-raises', 3, 'Hanging knee raises'),
+  ('gym-d3-dead-bug', 3, 'Dead bug'),
 
   // Push 2 — chest, shoulders, triceps.
   ('gym-4-15', 4, 'Incline bench press'),
@@ -671,6 +694,12 @@ const _defaultGymTechniqueEntries = <(String, int, String)>[
   ('gym-push-upright-row', 4, 'Upright row'),
   ('gym-4-19', 4, 'Overhead triceps extension'),
   ('gym-push-skull-crushers', 4, 'Skull crushers'),
+  ('gym-d4-bench-press', 4, 'Bench press'),
+  ('gym-d4-cable-fly', 4, 'Cable fly'),
+  ('gym-d4-chest-dips', 4, 'Chest dips'),
+  ('gym-d4-lateral-raises', 4, 'Lateral raises'),
+  ('gym-d4-triceps-pushdowns', 4, 'Triceps pushdowns'),
+  ('gym-d4-front-raises', 4, 'Front raises'),
 
   // Pull 2 — back, biceps.
   ('gym-5-20', 5, 'Deadlift or rack pull'),
@@ -683,6 +712,12 @@ const _defaultGymTechniqueEntries = <(String, int, String)>[
   ('gym-5-24', 5, 'Preacher curls'),
   ('gym-pull-incline-db-curl', 5, 'Incline dumbbell curls'),
   ('gym-6-29', 5, 'Hanging knee raises'),
+  ('gym-d5-lat-pulldown', 5, 'Pull-ups or lat pulldown'),
+  ('gym-d5-seated-cable-rows', 5, 'Seated cable rows'),
+  ('gym-d5-face-pulls', 5, 'Face pulls'),
+  ('gym-d5-rear-delt-fly', 5, 'Rear delt fly'),
+  ('gym-d5-shrugs', 5, 'Dumbbell shrugs'),
+  ('gym-d5-cable-curls', 5, 'Cable curls'),
 
   // Legs 2 & Core — hamstrings, glutes, abs.
   ('gym-6-25', 6, 'Romanian deadlift'),
@@ -695,6 +730,12 @@ const _defaultGymTechniqueEntries = <(String, int, String)>[
   ('gym-legs-calf-press', 6, 'Calf press on the leg press'),
   ('gym-core-russian-twist', 6, 'Russian twists'),
   ('gym-core-dead-bug', 6, 'Dead bug'),
+  ('gym-d6-leg-press', 6, 'Leg press'),
+  ('gym-d6-walking-lunges', 6, 'Walking lunges'),
+  ('gym-d6-bulgarian-split-squat', 6, 'Bulgarian split squat'),
+  ('gym-d6-cable-pull-through', 6, 'Cable pull-through'),
+  ('gym-d6-cable-crunches', 6, 'Cable crunches'),
+  ('gym-d6-plank', 6, 'Plank'),
 
   // Rest & Recovery.
   ('gym-7-30', 7, 'Light walk'),

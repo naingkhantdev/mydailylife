@@ -404,7 +404,9 @@ class _FactGrid extends StatelessWidget {
               icon: Icons.fitness_center_rounded,
               iconColor: context.palette.violet,
               label: 'Gym sets',
-              value: '$gymSetsDone/$gymSetsTotal',
+              // Out of the exercises started, not the whole day's menu, so an
+              // untouched day reads as a plain zero rather than 0/48.
+              value: gymSetsTotal == 0 ? '0' : '$gymSetsDone/$gymSetsTotal',
               suffix: '',
             ),
             _FactTile(

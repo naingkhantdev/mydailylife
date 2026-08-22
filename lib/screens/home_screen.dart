@@ -68,6 +68,7 @@ class HomeScreen extends ConsumerWidget {
             isRestDay: todayGym.isRestDay,
             completedSets: completedSets,
             targetSets: targetSets,
+            exerciseCount: todayGym.exercises.length,
             onOpen: () => _openRoute(context, AppRoutes.gym),
           ),
           const SizedBox(height: 26),
@@ -375,6 +376,7 @@ class _GymFocusCard extends StatelessWidget {
     required this.isRestDay,
     required this.completedSets,
     required this.targetSets,
+    required this.exerciseCount,
     required this.onOpen,
   });
 
@@ -383,6 +385,11 @@ class _GymFocusCard extends StatelessWidget {
   final bool isRestDay;
   final int completedSets;
   final int targetSets;
+
+  /// How many exercises the day offers. The sets line has nothing to count
+  /// until one of them is started, so it names the choice instead.
+  final int exerciseCount;
+
   final VoidCallback onOpen;
 
   @override
@@ -441,7 +448,9 @@ class _GymFocusCard extends StatelessWidget {
                 Text(
                   isRestDay
                       ? 'Recovery day · View plan'
-                      : '$completedSets/$targetSets sets · View technique',
+                      : targetSets == 0
+                          ? '$exerciseCount exercises · View technique'
+                          : '$completedSets/$targetSets sets · View technique',
                   style: const TextStyle(
                     color: AppColors.onInkAccent,
                     fontSize: 11,

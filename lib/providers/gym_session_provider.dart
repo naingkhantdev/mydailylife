@@ -94,11 +94,27 @@ class GymSessionController extends StateNotifier<Map<String, GymSessionLog>> {
 
   bool isExerciseComplete(String exercise) => sessionFor(exercise).isComplete;
 
+  /// The exercises actually started today, in plan order.
+  ///
+  /// A training day seeds a menu of about sixteen and a session is the five to
+  /// seven of them you tick. Reading progress off the whole menu would cap the
+  /// bar around a third and put the day's done tick out of reach, so both read
+  /// off this instead: what you chose to train today.
+  List<String> startedExercises(List<String> exercises) {
+    return [
+      for (final exercise in exercises)
+        if (sessionFor(exercise).completedSets.isNotEmpty) exercise,
+    ];
+  }
+
+  /// True once every exercise you started is finished. False on an untouched
+  /// day: nothing started is not the same as everything done.
   bool isWorkoutComplete(List<String> exercises) {
-    if (exercises.isEmpty) {
+    final started = startedExercises(exercises);
+    if (started.isEmpty) {
       return false;
     }
-    return exercises.every(isExerciseComplete);
+    return started.every(isExerciseComplete);
   }
 
   int completedSetCount(List<String> exercises) {
@@ -108,8 +124,11 @@ class GymSessionController extends StateNotifier<Map<String, GymSessionLog>> {
     );
   }
 
+  /// Target sets across the exercises you started, so the progress bar is out
+  /// of the session you chose. Zero until the first tick, which the screens
+  /// read as "not started" rather than as a finished day.
   int targetSetCount(List<String> exercises) {
-    return exercises.fold<int>(
+    return startedExercises(exercises).fold<int>(
       0,
       (total, exercise) => total + sessionFor(exercise).targetSets,
     );
@@ -143,7 +162,12 @@ class GymSessionController extends StateNotifier<Map<String, GymSessionLog>> {
       current.copyWith(
         targetSets: sets,
         targetReps: reps,
-        weightKg: weightKg != null && weightKg >= 0 ? weightKg : null,
+        // A non-finite weight would survive as far as the day's volume
+        // total, which is an int — rounding an infinity throws and takes the
+        // whole gym screen down with it.
+        weightKg: weightKg != null && weightKg.isFinite && weightKg >= 0
+            ? weightKg
+            : null,
         completedSets: current.completedSets
             .where((setNumber) => setNumber <= sets)
             .toSet(),

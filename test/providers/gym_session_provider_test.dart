@@ -8,10 +8,12 @@ void main() {
       final controller = GymSessionController();
 
       expect(controller.sessionFor('Bench').targetSets, 3);
-      expect(controller.targetSetCount(['Bench']), 3);
+      // Nothing started yet, so there is no session to count sets out of.
+      expect(controller.targetSetCount(['Bench']), 0);
 
       controller.toggleSet('Bench', 1);
       controller.toggleSet('Bench', 2);
+      expect(controller.targetSetCount(['Bench']), 3);
       expect(controller.completedSetCount(['Bench']), 2);
       expect(controller.isExerciseComplete('Bench'), isFalse);
 
@@ -32,15 +34,21 @@ void main() {
       expect(controller.isExerciseComplete('Squat'), isTrue);
     });
 
-    test('requires every exercise for workout completion', () {
+    test('completes on the exercises actually started', () {
       final controller = GymSessionController();
-      controller.markExerciseDone('Bench');
 
+      // A day seeds a menu, so an untouched one is not a finished one.
       expect(controller.isWorkoutComplete([]), isFalse);
       expect(controller.isWorkoutComplete(['Bench', 'Fly']), isFalse);
 
-      controller.markExerciseDone('Fly');
+      controller.markExerciseDone('Bench');
+      // Fly was never started, so it is not part of today's session.
+      expect(controller.startedExercises(['Bench', 'Fly']), ['Bench']);
       expect(controller.isWorkoutComplete(['Bench', 'Fly']), isTrue);
+
+      // Starting it puts the day back in progress until it is finished too.
+      controller.toggleSet('Fly', 1);
+      expect(controller.isWorkoutComplete(['Bench', 'Fly']), isFalse);
     });
 
     test('ignores invalid targets and set numbers', () {

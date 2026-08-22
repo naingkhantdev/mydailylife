@@ -454,96 +454,21 @@ class _TechniqueRow extends StatelessWidget {
   }
 
   Future<void> _openTargetDialog(BuildContext context) async {
-    final setsController = TextEditingController(
-      text: session.targetSets.toString(),
-    );
-    final repsController = TextEditingController(
-      text: session.targetReps.toString(),
-    );
-    // Prefilled from the last time this exercise was loaded, so the usual
-    // action is "add 2.5" rather than remembering the number from scratch.
-    final weightController = TextEditingController(
-      text: session.hasWeight
-          ? _formatKg(session.weightKg)
-          : (lastSession?.hasWeight ?? false)
-              ? _formatKg(lastSession!.weightKg)
-              : '',
-    );
-
     final result = await showDialog<({int sets, int reps, double weightKg})>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Set target'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: setsController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Sets',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: repsController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Reps',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: weightController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Weight (kg)',
-                  helperText: _lastLoadLabel ?? 'Leave empty for bodyweight',
-                  prefixIcon: const Icon(Icons.fitness_center_rounded),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final sets = int.tryParse(setsController.text.trim());
-                final reps = int.tryParse(repsController.text.trim());
-                if (sets == null || reps == null) {
-                  Navigator.of(context).pop();
-                  return;
-                }
-                // An empty field means bodyweight, which stores as zero.
-                final weightKg =
-                    double.tryParse(weightController.text.trim()) ?? 0;
-                Navigator.of(context).pop(
-                  (sets: sets, reps: reps, weightKg: weightKg),
-                );
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => _TargetDialog(
+        initialSets: session.targetSets,
+        initialReps: session.targetReps,
+        // Prefilled from the last time this exercise was loaded, so the usual
+        // action is "add 2.5" rather than remembering the number from scratch.
+        initialWeightKg: session.hasWeight
+            ? session.weightKg
+            : (lastSession?.hasWeight ?? false)
+                ? lastSession!.weightKg
+                : null,
+        lastLoadLabel: _lastLoadLabel,
+      ),
     );
-
-    setsController.dispose();
-    repsController.dispose();
-    weightController.dispose();
 
     if (result == null) {
       return;
@@ -583,6 +508,138 @@ class _TechniqueRow extends StatelessWidget {
       return 'Ribs down, glutes tight, breathe steady, stop before form breaks.';
     }
     return 'Use controlled reps, full range you can own, and stop if form breaks.';
+  }
+}
+
+/// Sets, reps and working weight for one exercise.
+///
+/// Stateful so it owns its text controllers. They used to be created and
+/// disposed around the `await showDialog(...)` in the caller, but that future
+/// completes as soon as `Navigator.pop` runs: the route is still mounted and
+/// animating out, so the controllers were disposed out from under live
+/// `TextField`s and the unfocus during teardown called `clearComposing()` on a
+/// disposed notifier.
+class _TargetDialog extends StatefulWidget {
+  const _TargetDialog({
+    required this.initialSets,
+    required this.initialReps,
+    required this.initialWeightKg,
+    required this.lastLoadLabel,
+  });
+
+  final int initialSets;
+  final int initialReps;
+
+  /// Null when this exercise has never carried a weight, so the field opens
+  /// empty rather than at a zero the user has to clear.
+  final double? initialWeightKg;
+
+  final String? lastLoadLabel;
+
+  @override
+  State<_TargetDialog> createState() => _TargetDialogState();
+}
+
+class _TargetDialogState extends State<_TargetDialog> {
+  late final TextEditingController _setsController;
+  late final TextEditingController _repsController;
+  late final TextEditingController _weightController;
+
+  @override
+  void initState() {
+    super.initState();
+    _setsController = TextEditingController(
+      text: widget.initialSets.toString(),
+    );
+    _repsController = TextEditingController(
+      text: widget.initialReps.toString(),
+    );
+    _weightController = TextEditingController(
+      text: widget.initialWeightKg == null
+          ? ''
+          : _formatKg(widget.initialWeightKg!),
+    );
+  }
+
+  @override
+  void dispose() {
+    _setsController.dispose();
+    _repsController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final sets = int.tryParse(_setsController.text.trim());
+    final reps = int.tryParse(_repsController.text.trim());
+    if (sets == null || reps == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    // An empty field means bodyweight, which stores as zero. So does anything
+    // that parses to a number the day's volume total could not hold: that
+    // total is an int, and rounding an infinity throws.
+    final parsed = double.tryParse(_weightController.text.trim()) ?? 0;
+    final weightKg = parsed.isFinite && parsed > 0 ? parsed : 0.0;
+
+    Navigator.of(context).pop((sets: sets, reps: reps, weightKg: weightKg));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Set target'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _setsController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Sets',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _repsController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Reps',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _weightController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onSubmitted: (_) => _save(),
+            decoration: InputDecoration(
+              labelText: 'Weight (kg)',
+              helperText: widget.lastLoadLabel ?? 'Leave empty for bodyweight',
+              prefixIcon: const Icon(Icons.fitness_center_rounded),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }
 
@@ -916,6 +973,16 @@ class _ExerciseTechnique {
       );
     }
     final name = exercise.toLowerCase();
+
+    // Exact names win over the fragment matching below. That chain reads an
+    // upright row as a bent-over row, an incline curl as an incline press and
+    // a walking lunge as a recovery walk, and everything it does not recognise
+    // at all gets the shoulder-press guide at the end of it.
+    final named = _techniqueByName[name];
+    if (named != null) {
+      return named;
+    }
+
     if (name == 'pull-ups or lat pulldown') {
       return const _ExerciseTechnique(
         photoUrl:
@@ -1782,3 +1849,1100 @@ class _ExerciseTechnique {
     );
   }
 }
+
+/// Coaching notes for exercises the fragment matching in
+/// [_ExerciseTechnique.forExercise] gets wrong, or does not recognise at all.
+///
+/// Keyed by the exercise name in lower case, exactly as it is seeded in
+/// `gym_provider.dart` — rename an exercise there and its key moves with it.
+/// Entries carry no photo, so the detail sheet drops the image block and the
+/// row falls back to its icon tile.
+const _techniqueByName = <String, _ExerciseTechnique>{
+  // --- Push: chest ---------------------------------------------------------
+  'dumbbell bench press': _ExerciseTechnique(
+    photoTitle: 'Dumbbell bench press',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Sit with the dumbbells on your thighs, kick them back one at a time as you lie down, and set your shoulder blades down and together before the first rep.',
+    hold: [
+      'Wrists stacked over the elbows, knuckles to the ceiling.',
+      'Shoulder blades pinched down into the bench.',
+      'Feet flat, glutes down, ribs down.',
+      'Dumbbells start just outside the chest, not out wide.',
+    ],
+    steps: [
+      'Press both dumbbells to full arm length over the mid-chest.',
+      'Lower under control until the elbows are level with your ribs.',
+      'Keep the elbows about 45 degrees from the body, not flared to 90.',
+      'Press back up and stop just short of clashing the dumbbells.',
+    ],
+    avoid: [
+      'Flaring the elbows straight out to the sides.',
+      'Letting the shoulder blades come loose and the shoulders roll forward.',
+      'Dropping the dumbbells behind you at the end of a set.',
+    ],
+    tempo: [
+      'Lower for 2-3 seconds.',
+      'Pause briefly at chest level.',
+      'Press up strongly without locking hard.',
+    ],
+  ),
+  'chest dips': _ExerciseTechnique(
+    photoTitle: 'Chest dips',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Press up to straight arms on the parallel bars, then lean the chest forward 20-30 degrees and keep that lean for the whole set.',
+    hold: [
+      'Full grip, wrists straight, elbows soft at the top.',
+      'Shoulders pulled down away from the ears.',
+      'Chest leaning forward, hips slightly behind the hands.',
+      'Use the assisted dip machine or a band until 8 clean reps are easy.',
+    ],
+    steps: [
+      'Start at the top with straight arms and the shoulders down.',
+      'Lower until the upper arms are roughly parallel to the floor.',
+      'Keep the forward lean so the chest takes the load, not the shoulder joint.',
+      'Press back up without shrugging at the top.',
+    ],
+    avoid: [
+      'Dropping below a comfortable shoulder range.',
+      'Letting the shoulders shrug up at the bottom.',
+      'Bouncing out of the bottom position.',
+    ],
+    tempo: [
+      'Lower for 2-3 seconds.',
+      'Pause where you feel a stretch, not a pinch.',
+      'Press up with control.',
+    ],
+  ),
+  'close-grip bench press': _ExerciseTechnique(
+    photoTitle: 'Close-grip bench press',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Take a grip about shoulder width, not narrower. Tuck the elbows in and drive the bar over the lower chest.',
+    hold: [
+      'Hands roughly shoulder width, wrists stacked over the bar.',
+      'Elbows tucked to about 30 degrees from the body.',
+      'Shoulder blades down and together.',
+      'Feet planted, glutes on the bench.',
+    ],
+    steps: [
+      'Unrack and set the bar over the lower chest.',
+      'Lower to the bottom of the sternum with the elbows tucked.',
+      'Touch lightly and keep the wrists straight.',
+      'Press back up and think about driving the elbows to lockout.',
+    ],
+    avoid: [
+      'Gripping so narrow that the wrists bend back.',
+      'Letting the elbows drift out wide.',
+      'Bouncing the bar off the chest.',
+    ],
+    tempo: [
+      'Lower for 2 seconds.',
+      'Touch without resting on the chest.',
+      'Press up strongly through the triceps.',
+    ],
+  ),
+  'pec deck fly': _ExerciseTechnique(
+    photoTitle: 'Pec deck fly',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Set the seat so the handles sit at mid-chest height and the elbows stay level with or just below the shoulders.',
+    hold: [
+      'Seat height so the handles line up with the middle of the chest.',
+      'Soft elbow bend, fixed at that angle.',
+      'Back and both shoulders stay on the pad.',
+      'Feet flat, ribs down.',
+    ],
+    steps: [
+      'Start with the arms open and a stretch across the chest.',
+      'Squeeze the handles together with the chest, not the hands.',
+      'Bring them until they nearly touch in front of the sternum.',
+      'Open back out slowly to a comfortable stretch.',
+    ],
+    avoid: [
+      'Opening so far back that the shoulders feel pinched.',
+      'Bending and straightening the elbows to press it.',
+      'Letting the back arch off the pad.',
+    ],
+    tempo: [
+      'Open for 3 seconds.',
+      'Squeeze for 1 second at the front.',
+      'Keep the tension for the whole set.',
+    ],
+  ),
+  'dumbbell pullover': _ExerciseTechnique(
+    photoTitle: 'Dumbbell pullover',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Lie along a bench holding one dumbbell with both palms flat against the inside of the top plate, arms nearly straight over the chest.',
+    hold: [
+      'Both palms flat under the top plate, thumbs wrapped.',
+      'Elbows slightly bent and locked at that angle.',
+      'Ribs down, glutes tight, feet planted.',
+      'Hips stay level through the whole rep.',
+    ],
+    steps: [
+      'Start with the dumbbell over the chest.',
+      'Lower it back over the head until the lats and ribs stretch.',
+      'Stop where the shoulders still feel comfortable.',
+      'Pull it back over the chest with the lats, elbow angle unchanged.',
+    ],
+    avoid: [
+      'Arching the lower back to reach further.',
+      'Bending the elbows and turning it into a triceps move.',
+      'Going heavy before the shoulder range is comfortable.',
+    ],
+    tempo: [
+      'Lower for 3 seconds.',
+      'Pause in the stretch.',
+      'Pull back over for 1-2 seconds.',
+    ],
+  ),
+
+  'push-ups': _ExerciseTechnique(
+    photoTitle: 'Push-ups',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Hands under the shoulders, body in one line from ears to heels. The plank position is the exercise; the arms only lower and raise it.',
+    hold: [
+      'Hands under the shoulders, fingers spread.',
+      'Elbows travel back at about 45 degrees, not out to the sides.',
+      'Glutes tight, ribs down, hips level.',
+      'Put the hands on a bench to scale it down before dropping to the knees.',
+    ],
+    steps: [
+      'Set the plank position and brace before the first rep.',
+      'Lower until the chest is about a fist off the floor.',
+      'Keep the elbows tucked at about 45 degrees.',
+      'Press the floor away and stop just short of locking out.',
+    ],
+    avoid: [
+      'Letting the hips sag, or piking them up to rest.',
+      'Flaring the elbows straight out to the sides.',
+      'Dropping the head forward to fake depth.',
+    ],
+    tempo: [
+      'Lower for 2-3 seconds.',
+      'Pause a moment at the bottom.',
+      'Press up for 1 second.',
+    ],
+  ),
+
+  // --- Push: shoulders -----------------------------------------------------
+  'front raises': _ExerciseTechnique(
+    photoTitle: 'Front raises',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Stand tall with the dumbbells in front of the thighs, palms facing you, ribs braced so the body stays still.',
+    hold: [
+      'Light dumbbells: this is a small muscle on a long lever.',
+      'Soft elbows, wrists neutral.',
+      'Ribs down, glutes lightly tight.',
+      'Shoulders pulled down away from the ears.',
+    ],
+    steps: [
+      'Raise one or both arms straight out in front of you.',
+      'Stop at about shoulder height.',
+      'Keep the thumb slightly higher than the little finger.',
+      'Lower slowly to the front of the thighs.',
+    ],
+    avoid: [
+      'Swinging the hips to start the rep.',
+      'Raising far above shoulder height.',
+      'Shrugging the traps to finish the lift.',
+    ],
+    tempo: [
+      'Lift for 1-2 seconds.',
+      'Pause at the top.',
+      'Lower for 2-3 seconds.',
+    ],
+  ),
+  'upright row': _ExerciseTechnique(
+    photoTitle: 'Upright row',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Hold the bar or dumbbells at shoulder width or a little wider. A wide grip is far kinder to the shoulder than a narrow one.',
+    hold: [
+      'Grip at shoulder width or wider, never narrow.',
+      'Wrists straight, the bar travelling close to the body.',
+      'Ribs down, knees soft.',
+      'Shoulders start pulled down.',
+    ],
+    steps: [
+      'Start with long arms and the bar against the thighs.',
+      'Lead with the elbows and pull the bar up the front of the body.',
+      'Stop when the elbows reach shoulder height, no higher.',
+      'Lower under control to full arm length.',
+    ],
+    avoid: [
+      'A narrow grip, which pinches the shoulder.',
+      'Pulling the elbows above shoulder height.',
+      'Leaning back and swinging the weight up.',
+      'Working through a pinch: swap to a lateral raise or face pull.',
+    ],
+    tempo: [
+      'Pull for 1-2 seconds.',
+      'Pause at shoulder height.',
+      'Lower for 2-3 seconds.',
+    ],
+  ),
+  'dumbbell shrugs': _ExerciseTechnique(
+    photoTitle: 'Dumbbell shrugs',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Stand tall with a dumbbell in each hand at your sides, arms long. The only movement is the shoulders travelling straight up.',
+    hold: [
+      'Full grip, arms straight and relaxed.',
+      'Ribs down, chin tucked slightly.',
+      'Feet under the hips.',
+      'Shoulders start all the way down.',
+    ],
+    steps: [
+      'Lift the shoulders straight up toward the ears.',
+      'Pause at the top and squeeze.',
+      'Lower all the way down until the traps stretch.',
+      'Keep the arms straight throughout.',
+    ],
+    avoid: [
+      'Rolling the shoulders in circles.',
+      'Bending the elbows to help.',
+      'Jerking with the legs.',
+    ],
+    tempo: [
+      'Shrug up for 1 second.',
+      'Hold 1-2 seconds at the top.',
+      'Lower for 2-3 seconds.',
+    ],
+  ),
+  'rear delt fly': _ExerciseTechnique(
+    photoTitle: 'Rear delt fly',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Hinge at the hips with a flat back, or lie chest-down on an incline bench, and let the dumbbells hang under the shoulders.',
+    hold: [
+      'Light dumbbells, palms facing each other.',
+      'Soft elbow bend, fixed at that angle.',
+      'Flat back, chest supported on a bench if possible.',
+      'Neck neutral: look at the floor.',
+    ],
+    steps: [
+      'Start with the arms hanging straight down.',
+      'Open the arms out to the sides, leading with the elbows.',
+      'Stop level with the shoulders.',
+      'Lower slowly back under the shoulders.',
+    ],
+    avoid: [
+      'Shrugging the traps to lift the weight.',
+      'Swinging the torso up to move heavier dumbbells.',
+      'Squeezing the shoulder blades instead of moving the arms.',
+    ],
+    tempo: [
+      'Open for 2 seconds.',
+      'Pause at the top.',
+      'Lower for 3 seconds.',
+    ],
+  ),
+
+  // --- Push: triceps -------------------------------------------------------
+  'skull crushers': _ExerciseTechnique(
+    photoTitle: 'Skull crushers',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Lie on a bench with an EZ bar or dumbbells over the chest, elbows pointing at the ceiling and angled slightly toward your head.',
+    hold: [
+      'Grip just inside shoulder width on an EZ bar.',
+      'Elbows fixed, pointing up, tucked to shoulder width.',
+      'Shoulder blades down on the bench.',
+      'Ribs down, feet flat.',
+    ],
+    steps: [
+      'Start with straight arms, the weight slightly behind the head line.',
+      'Bend only at the elbows and lower toward the forehead or just past it.',
+      'Keep the upper arms still the whole way.',
+      'Straighten the elbows without snapping into lockout.',
+    ],
+    avoid: [
+      'Letting the elbows flare wide.',
+      'Swinging the upper arms and turning it into a pullover.',
+      'Loading it heavy enough that the elbows ache.',
+    ],
+    tempo: [
+      'Lower for 3 seconds.',
+      'Pause just short of the head.',
+      'Extend for 1-2 seconds.',
+    ],
+  ),
+
+  // --- Pull: back ----------------------------------------------------------
+  'straight-arm pulldown': _ExerciseTechnique(
+    photoTitle: 'Straight-arm pulldown',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Stand a step back from a high cable, hinge slightly at the hips, and hold the bar with nearly straight arms at head height.',
+    hold: [
+      'Grip at shoulder width, wrists neutral.',
+      'Elbows slightly bent and locked at that angle.',
+      'Hips hinged back a little, chest tall.',
+      'Ribs down, core braced.',
+    ],
+    steps: [
+      'Start with the bar high and a stretch through the lats.',
+      'Pull the bar down in an arc to the thighs using the lats.',
+      'Keep the same fixed arm angle throughout.',
+      'Let the bar rise back to head height under control.',
+    ],
+    avoid: [
+      'Bending the elbows and pressing it down with the triceps.',
+      'Standing straight up and using body weight.',
+      'Rounding the back at the bottom.',
+    ],
+    tempo: [
+      'Pull down for 2 seconds.',
+      'Squeeze the lats for 1 second.',
+      'Return for 3 seconds.',
+    ],
+  ),
+  'inverted row': _ExerciseTechnique(
+    photoTitle: 'Inverted row',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Set a bar at hip height, hang underneath it with straight arms, and hold one line from ears to heels.',
+    hold: [
+      'Grip just outside shoulder width.',
+      'Body straight: ribs down, glutes tight.',
+      'Legs straight to make it harder, knees bent to make it easier.',
+      'Shoulders pulled down away from the ears.',
+    ],
+    steps: [
+      'Start hanging with long arms and the shoulder blades relaxed.',
+      'Pull the chest to the bar, driving the elbows back past the ribs.',
+      'Squeeze the shoulder blades together at the top.',
+      'Lower until the arms are fully straight.',
+    ],
+    avoid: [
+      'Letting the hips sag toward the floor.',
+      'Shrugging the shoulders to the ears.',
+      'Cutting the range short at the top.',
+    ],
+    tempo: [
+      'Pull for 1-2 seconds.',
+      'Hold at the chest for 1 second.',
+      'Lower for 2-3 seconds.',
+    ],
+  ),
+  'one-arm dumbbell row': _ExerciseTechnique(
+    photoTitle: 'One-arm dumbbell row',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Put one hand and one knee on a bench, back flat and roughly parallel to the floor, and let the dumbbell hang under the shoulder.',
+    hold: [
+      'Flat back, hips square to the floor.',
+      'Supporting arm straight, that shoulder not collapsed.',
+      'Neck neutral: look at the bench.',
+      'The dumbbell hangs directly under the shoulder.',
+    ],
+    steps: [
+      'Start with the arm long and the shoulder blade reaching forward.',
+      'Pull the dumbbell to the side of the ribs, elbow close to the body.',
+      'Keep the torso still: no twisting to lift it higher.',
+      'Lower all the way back to a full stretch.',
+    ],
+    avoid: [
+      'Rotating the torso to help the arm.',
+      'Pulling the elbow out wide toward the shoulder.',
+      'Rounding the lower back.',
+    ],
+    tempo: [
+      'Pull for 1-2 seconds.',
+      'Pause at the ribs.',
+      'Lower for 3 seconds.',
+    ],
+  ),
+
+  'farmer carry': _ExerciseTechnique(
+    photoTitle: 'Farmer carry',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Pick up a heavy dumbbell in each hand, stand tall, and walk. The load tries to pull you out of position, and holding position is the whole exercise.',
+    hold: [
+      'Full grip, arms hanging straight and relaxed.',
+      'Shoulders pulled down and back, chest tall.',
+      'Ribs down, core braced as if for a punch.',
+      'Weights hang clear of the thighs rather than resting on them.',
+    ],
+    steps: [
+      'Hinge down and pick both weights up with a flat back.',
+      'Stand tall and set the shoulders before the first step.',
+      'Walk short controlled steps for 20-40 metres or 30-45 seconds.',
+      'Set the weights down with a hinge, not a drop.',
+    ],
+    avoid: [
+      'Leaning to one side under an uneven load.',
+      'Shrugging the shoulders up toward the ears.',
+      'Rounding the back picking the weights up or putting them down.',
+    ],
+    tempo: [
+      'Steady, even steps.',
+      'Breathe shallow, but never hold your breath.',
+      'End the set when the posture breaks or the grip is genuinely going.',
+    ],
+  ),
+
+  // --- Pull: biceps --------------------------------------------------------
+  'incline dumbbell curls': _ExerciseTechnique(
+    photoTitle: 'Incline dumbbell curls',
+    photoCredit: 'RoutineSync coaching notes',
+    benchAngle:
+        '45-60 degrees. The lower the bench, the bigger the stretch and the harder the set.',
+    setup:
+        'Set a bench to about 45-60 degrees, sit back against it, and let the dumbbells hang behind the line of the body.',
+    hold: [
+      'Back flat on the pad, shoulders down.',
+      'Arms hanging straight down, palms forward.',
+      'Upper arms stay behind the torso: that is the point of the incline.',
+      'Go lighter than a standing curl.',
+    ],
+    steps: [
+      'Start with the arms fully long and the biceps stretched.',
+      'Curl without letting the elbows travel forward.',
+      'Stop when the forearm is just past vertical.',
+      'Lower all the way back to a full stretch.',
+    ],
+    avoid: [
+      'Letting the elbows swing forward to finish the rep.',
+      'Shrugging the shoulders off the pad.',
+      'Cutting the bottom of the range short.',
+    ],
+    tempo: [
+      'Curl for 1-2 seconds.',
+      'Squeeze at the top.',
+      'Lower for 3 seconds to a full stretch.',
+    ],
+  ),
+  'hammer curls': _ExerciseTechnique(
+    photoTitle: 'Hammer curls',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Stand with the dumbbells at your sides, palms facing in toward the thighs. That neutral wrist stays for the whole rep.',
+    hold: [
+      'Palms face each other the whole set.',
+      'Elbows pinned at your sides.',
+      'Ribs down, knees soft.',
+      'Shoulders relaxed and down.',
+    ],
+    steps: [
+      'Curl the dumbbell straight up toward the shoulder.',
+      'Keep the thumb on top the whole way.',
+      'Stop before the elbow drifts forward.',
+      'Lower under control to a straight arm.',
+    ],
+    avoid: [
+      'Swinging the body to start the rep.',
+      'Rotating the wrist, which turns it into a normal curl.',
+      'Bouncing at the bottom.',
+    ],
+    tempo: [
+      'Curl for 1-2 seconds.',
+      'Pause at the top.',
+      'Lower for 2-3 seconds.',
+    ],
+  ),
+  'preacher curls': _ExerciseTechnique(
+    photoTitle: 'Preacher curls',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Set the pad so its top edge sits under the armpits. The upper arms stay flat on the pad for the whole set.',
+    hold: [
+      'Chest against the top of the pad.',
+      'Upper arms flat, armpits at the top edge.',
+      'Wrists straight, full grip on the bar.',
+      'Feet planted for a stable base.',
+    ],
+    steps: [
+      'Start with the arms almost straight, never locked hard.',
+      'Curl until the forearms are just past vertical.',
+      'Keep the upper arms glued to the pad.',
+      'Lower slowly and stop just short of a locked elbow.',
+    ],
+    avoid: [
+      'Dropping fast into a locked elbow: that is where this lift strains.',
+      'Lifting the elbows off the pad.',
+      'Letting the wrists bend back under a heavy bar.',
+    ],
+    tempo: [
+      'Curl for 1-2 seconds.',
+      'Squeeze at the top.',
+      'Lower for 3 seconds.',
+    ],
+  ),
+
+  // --- Legs ----------------------------------------------------------------
+  'front squat': _ExerciseTechnique(
+    photoTitle: 'Front squat',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Rack the bar across the front of the shoulders, not in the hands. The elbows stay high so the bar cannot roll forward.',
+    hold: [
+      'Bar resting on the front delts, fingers only guiding it.',
+      'Elbows high and pointing forward all set.',
+      'Feet shoulder width, toes turned slightly out.',
+      'Ribs down and braced before you unrack.',
+    ],
+    steps: [
+      'Unrack, take two steps back, set the stance.',
+      'Sit straight down with the torso as upright as you can hold.',
+      'Go to the depth where the back still stays flat.',
+      'Drive up while keeping the elbows high.',
+    ],
+    avoid: [
+      'Dropping the elbows, which tips the bar forward.',
+      'Letting the chest fall out of the bottom.',
+      'Chasing depth your ankles and hips do not have yet.',
+    ],
+    tempo: [
+      'Lower for 2-3 seconds.',
+      'No bounce at the bottom.',
+      'Stand up strongly.',
+    ],
+  ),
+  'bulgarian split squat': _ExerciseTechnique(
+    photoTitle: 'Bulgarian split squat',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Stand about one long stride in front of a bench, rest the top of the back foot on it, and keep the weight through the front heel.',
+    hold: [
+      'Front foot far enough forward that the knee stays over the mid-foot.',
+      'Back foot resting on the bench, not pushing.',
+      'Chest tall, ribs down, a slight forward lean from the hips.',
+      'Dumbbells at your sides until the balance is solid.',
+    ],
+    steps: [
+      'Lower straight down by bending the front knee and hip.',
+      'Stop when the front thigh is about parallel, or the back knee is just off the floor.',
+      'Keep the front heel flat on the floor the whole time.',
+      'Drive up through the front foot without pushing off the back leg.',
+    ],
+    avoid: [
+      'Standing too close to the bench, which crushes the front knee.',
+      'Letting the front heel lift.',
+      'Rushing: the balance fails before the muscle does.',
+    ],
+    tempo: [
+      'Lower for 2-3 seconds.',
+      'Pause just above the floor.',
+      'Drive up for 1-2 seconds.',
+    ],
+  ),
+  'walking lunges': _ExerciseTechnique(
+    photoTitle: 'Walking lunges',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Take a long step forward, drop straight down, then step through into the next lunge. The torso stays tall throughout.',
+    hold: [
+      'Steps long enough that the front knee stays over the mid-foot.',
+      'Chest tall, ribs down, eyes forward.',
+      'Feet on two separate lines, not on a tightrope.',
+      'Dumbbells at your sides or hands on the hips.',
+    ],
+    steps: [
+      'Step forward and lower straight down.',
+      'Stop when the back knee is just above the floor.',
+      'Drive through the front heel to stand.',
+      'Step straight through into the next rep.',
+    ],
+    avoid: [
+      'Short steps that push the front knee far past the toes.',
+      'Letting the front knee collapse inward.',
+      'Leaning the torso over the front leg.',
+    ],
+    tempo: [
+      'Lower for 2 seconds.',
+      'Touch lightly at the bottom.',
+      'Drive up for 1-2 seconds.',
+    ],
+  ),
+  'dumbbell step-ups': _ExerciseTechnique(
+    photoTitle: 'Dumbbell step-ups',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Use a box that puts the thigh roughly parallel to the floor. Place the whole foot on it and drive up through that heel.',
+    hold: [
+      'Whole foot on the box, not just the toes.',
+      'Dumbbells at your sides, arms relaxed.',
+      'Chest tall, ribs down.',
+      'A box low enough to keep control of every rep.',
+    ],
+    steps: [
+      'Place one foot fully on the box.',
+      'Drive through that heel and stand up tall.',
+      'Do not push off the floor with the trailing foot.',
+      'Lower slowly with the same leg and touch the floor lightly.',
+    ],
+    avoid: [
+      'Bouncing off the trailing foot.',
+      'Pushing through the toes of the working leg.',
+      'Dropping down instead of lowering.',
+    ],
+    tempo: [
+      'Step up for 1-2 seconds.',
+      'Stand tall for a second.',
+      'Lower for 2-3 seconds.',
+    ],
+  ),
+  'single-leg romanian deadlift': _ExerciseTechnique(
+    photoTitle: 'Single-leg Romanian deadlift',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Stand on one leg with a soft knee, dumbbell in the opposite hand, and hinge at the hip while the free leg travels back as a counterweight.',
+    hold: [
+      'Standing knee soft, never locked.',
+      'Hips square to the floor: do not let the free hip open up.',
+      'Back flat, shoulders pulled down.',
+      'Hold a rack or wall with one hand while learning.',
+    ],
+    steps: [
+      'Hinge at the hip and push the free leg straight back.',
+      'Let the dumbbell travel close to the standing leg.',
+      'Stop around hip height, before the back would round.',
+      'Squeeze the standing glute to stand back tall.',
+    ],
+    avoid: [
+      'Rotating the hips open at the bottom.',
+      'Rounding the back to reach the floor.',
+      'Going heavy before the balance is there.',
+    ],
+    tempo: [
+      'Lower for 3 seconds.',
+      'Pause at the bottom.',
+      'Stand for 1-2 seconds.',
+    ],
+  ),
+  'glute bridge': _ExerciseTechnique(
+    photoTitle: 'Glute bridge',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Lie on your back with the knees bent and the heels about a hand-length from the hips, then push through the heels and lift the hips.',
+    hold: [
+      'Heels close enough that you feel the glutes, not the hamstrings.',
+      'Ribs down and lower back flat before you lift.',
+      'Chin tucked slightly, arms at your sides.',
+      'Weight through the heels.',
+    ],
+    steps: [
+      'Squeeze the glutes first, then lift the hips.',
+      'Rise until the hips are level between the knees and shoulders.',
+      'Hold and squeeze for a second at the top.',
+      'Lower under control without dropping onto the floor.',
+    ],
+    avoid: [
+      'Arching the lower back to go higher.',
+      'Pushing through the toes.',
+      'Letting the knees fall in or out.',
+    ],
+    tempo: [
+      'Lift for 1-2 seconds.',
+      'Hold 1-2 seconds at the top.',
+      'Lower for 2-3 seconds.',
+    ],
+  ),
+  'good mornings': _ExerciseTechnique(
+    photoTitle: 'Good mornings',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Light bar high on the back, feet hip width, knees softly bent. This is a hip hinge, not a squat, and it stays light.',
+    hold: [
+      'Bar settled on the upper back, never on the neck.',
+      'Knees soft and fixed at that angle.',
+      'Ribs down, lats tight, back flat.',
+      'Start far lighter than your squat.',
+    ],
+    steps: [
+      'Push the hips straight back and let the chest travel forward.',
+      'Stop at a strong hamstring stretch, before the back rounds.',
+      'Keep the shins close to vertical.',
+      'Drive the hips forward to stand tall and squeeze the glutes.',
+    ],
+    avoid: [
+      'Rounding the lower back to go lower.',
+      'Bending the knees and turning it into a squat.',
+      'Adding weight instead of adding control.',
+    ],
+    tempo: [
+      'Lower for 3 seconds.',
+      'Pause in the stretch.',
+      'Stand up for 1-2 seconds.',
+    ],
+  ),
+
+  'goblet squat': _ExerciseTechnique(
+    photoTitle: 'Goblet squat',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Hold one dumbbell or kettlebell vertically against the chest with the elbows tucked under it. The weight at the front is what keeps the chest up.',
+    hold: [
+      'Weight held high against the chest, elbows underneath it.',
+      'Feet shoulder width, toes turned slightly out.',
+      'Ribs down and braced before the first rep.',
+      'Whole foot flat on the floor.',
+    ],
+    steps: [
+      'Sit straight down between the hips.',
+      'Let the elbows travel inside the knees at the bottom.',
+      'Go to the depth where the back stays flat and the heels stay down.',
+      'Drive up through the mid-foot and squeeze the glutes at the top.',
+    ],
+    avoid: [
+      'Letting the weight drift away from the chest.',
+      'Heels lifting off the floor.',
+      'Knees collapsing inward on the way up.',
+    ],
+    tempo: [
+      'Lower for 2-3 seconds.',
+      'Pause a beat at the bottom.',
+      'Stand up for 1-2 seconds.',
+    ],
+  ),
+  'cable pull-through': _ExerciseTechnique(
+    photoTitle: 'Cable pull-through',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Face away from a low cable with the rope between your legs. This is a hip hinge: the arms only hold the rope, they never pull it.',
+    hold: [
+      'Rope held in both hands, arms straight and relaxed.',
+      'Feet a little wider than the hips, knees soft.',
+      'Far enough from the stack that there is tension at the top.',
+      'Back flat, ribs down.',
+    ],
+    steps: [
+      'Push the hips straight back and let the rope travel between the legs.',
+      'Stop when you feel a strong hamstring stretch.',
+      'Keep the shins near vertical and the back flat.',
+      'Drive the hips forward and finish standing tall, glutes squeezed.',
+    ],
+    avoid: [
+      'Pulling the rope with the arms.',
+      'Bending the knees and turning it into a squat.',
+      'Leaning back at the top and arching the lower back.',
+    ],
+    tempo: [
+      'Hinge back for 2-3 seconds.',
+      'Pause in the stretch.',
+      'Drive the hips forward for 1 second and squeeze.',
+    ],
+  ),
+
+  // --- Core ----------------------------------------------------------------
+  'plank': _ExerciseTechnique(
+    photoTitle: 'Plank',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Elbows under the shoulders, body in one line from ears to heels. Squeeze the glutes and pull the ribs down before the clock starts.',
+    hold: [
+      'Elbows directly under the shoulders.',
+      'Forearms flat, hands relaxed.',
+      'Glutes tight, ribs down, hips level with the shoulders.',
+      'Neck neutral: look at the floor just past your hands.',
+    ],
+    steps: [
+      'Set the position and brace before you start timing.',
+      'Push the floor away so the upper back does not sag.',
+      'Breathe normally through the hold.',
+      'End the set when the hips start to drop, not at a number.',
+    ],
+    avoid: [
+      'Letting the hips sag toward the floor.',
+      'Piking the hips up to rest.',
+      'Holding your breath.',
+    ],
+    tempo: [
+      'Hold 20-60 seconds per set.',
+      'Stop when the position breaks.',
+      'Rest a full minute between holds.',
+    ],
+  ),
+  'hanging knee raises': _ExerciseTechnique(
+    photoTitle: 'Hanging knee raises',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Hang from the bar with straight arms and the shoulders pulled down. Curl the pelvis up rather than only lifting the knees.',
+    hold: [
+      'Full grip, or use straps or elbow supports.',
+      'Shoulders pulled down away from the ears.',
+      'Legs together, ribs down.',
+      'Stop any swing before the first rep.',
+    ],
+    steps: [
+      'Start hanging still with the legs long.',
+      'Lift the knees toward the chest.',
+      'At the top, curl the pelvis up so the lower back rounds slightly.',
+      'Lower slowly until the body is still again.',
+    ],
+    avoid: [
+      'Swinging and using momentum.',
+      'Lifting only the knees with no pelvic tilt.',
+      'Dropping fast and jerking the shoulders.',
+    ],
+    tempo: [
+      'Lift for 1-2 seconds.',
+      'Pause at the top.',
+      'Lower for 3 seconds.',
+    ],
+  ),
+  'cable crunches': _ExerciseTechnique(
+    photoTitle: 'Cable crunches',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Kneel below a high cable, hold the rope beside your head, and crunch by rounding the spine. The hips stay still.',
+    hold: [
+      'Rope held at the sides of the head or on the forehead.',
+      'Hips fixed at the same angle the whole set.',
+      'Elbows stay in the same place relative to the head.',
+      'Knees far enough back that the cable pulls you forward.',
+    ],
+    steps: [
+      'Start tall with tension already on the cable.',
+      'Crunch down by pulling the ribs toward the pelvis.',
+      'Round the back on purpose: this is a spinal flexion exercise.',
+      'Return under control until the abs stretch.',
+    ],
+    avoid: [
+      'Hinging at the hips instead of crunching the ribs down.',
+      'Pulling with the arms.',
+      'Yanking on the neck.',
+    ],
+    tempo: [
+      'Crunch for 1-2 seconds.',
+      'Squeeze hard at the bottom.',
+      'Return for 3 seconds.',
+    ],
+  ),
+  'russian twists': _ExerciseTechnique(
+    photoTitle: 'Russian twists',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Sit with the knees bent and the heels light on the floor, lean back to about 45 degrees, and rotate the ribs rather than only the arms.',
+    hold: [
+      'Lean back only as far as the back stays flat.',
+      'Chest up, ribs down.',
+      'A light plate or dumbbell held at chest height.',
+      'Feet down while learning, lifted once it is easy.',
+    ],
+    steps: [
+      'Brace the core in the lean-back position.',
+      'Rotate the shoulders and ribs to one side.',
+      'Touch the weight down near the hip.',
+      'Rotate to the other side while the hips and knees stay forward.',
+    ],
+    avoid: [
+      'Rounding the lower back as you lean.',
+      'Swinging the arms while the torso stays still.',
+      'Going fast enough to lose the brace.',
+    ],
+    tempo: [
+      'About 1 second to each side.',
+      'Pause briefly at each side.',
+      'Keep breathing throughout.',
+    ],
+  ),
+  'dead bug': _ExerciseTechnique(
+    photoTitle: 'Dead bug',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Lie on your back with the arms straight up and the knees over the hips at 90 degrees. Flatten the lower back into the floor and keep it there.',
+    hold: [
+      'Lower back pressed flat to the floor: that is the whole exercise.',
+      'Ribs down, not flared.',
+      'Knees stacked over the hips.',
+      'Breathe out slowly as you extend.',
+    ],
+    steps: [
+      'Extend the opposite arm and leg away from each other.',
+      'Reach only as far as the lower back stays flat.',
+      'Return to the start under control.',
+      'Swap sides and repeat.',
+    ],
+    avoid: [
+      'Letting the lower back arch off the floor.',
+      'Holding your breath.',
+      'Moving quickly: slow reps are what make this work.',
+    ],
+    tempo: [
+      'Extend for 2-3 seconds.',
+      'Pause at full reach.',
+      'Return for 2-3 seconds.',
+    ],
+  ),
+
+  // --- Cardio --------------------------------------------------------------
+  'incline treadmill walk': _ExerciseTechnique(
+    photoTitle: 'Incline treadmill walk',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Pick a walking speed you can hold for the whole session, then raise the incline until it is hard but you can still talk.',
+    hold: [
+      'Hands off the rails, light fingertips only for balance.',
+      'Stand tall, do not lean back away from the belt.',
+      'Full foot strike, heel through to toe.',
+      'Around 4.5-6 km/h at 8-15 percent incline is a starting range.',
+    ],
+    steps: [
+      'Warm up 3 minutes flat and easy.',
+      'Raise the incline to your working level.',
+      'Hold one steady pace for 20-40 minutes.',
+      'Drop the incline for the last 3 minutes to cool down.',
+    ],
+    avoid: [
+      'Gripping the rails, which removes most of the work.',
+      'Running when the session calls for a walk.',
+      'An incline so steep that the posture collapses.',
+    ],
+    tempo: [
+      'Keep the effort conversational.',
+      'One steady pace, no surges.',
+      'Breathe through the nose where you can.',
+    ],
+  ),
+  'rowing machine intervals': _ExerciseTechnique(
+    photoTitle: 'Rowing machine intervals',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Strap the feet so the strap crosses the ball of the foot. Every stroke is legs, then body, then arms, and the exact reverse coming back.',
+    hold: [
+      'Damper around 4-6 for most people.',
+      'Shins vertical at the catch, shoulders in front of the hips.',
+      'Light grip on the handle, wrists flat.',
+      'Back flat and chest up through the whole stroke.',
+    ],
+    steps: [
+      'Drive with the legs first while the arms stay straight.',
+      'Once the legs are nearly down, swing the torso back slightly.',
+      'Finish by pulling the handle to the bottom of the ribs.',
+      'Come forward in reverse: arms, then body, then legs.',
+    ],
+    avoid: [
+      'Pulling with the arms before the legs have driven.',
+      'Rounding the back at the catch.',
+      'Rushing the recovery, which should be slower than the drive.',
+    ],
+    tempo: [
+      'Drive fast, recover slow, about one to two.',
+      'Intervals of 30-60 seconds hard and 60-90 seconds easy.',
+      'End the set when the stroke gets sloppy.',
+    ],
+  ),
+  'cycling intervals': _ExerciseTechnique(
+    photoTitle: 'Cycling intervals',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Set the saddle so the knee stays slightly bent at the bottom of the stroke. Make the intervals hard with resistance, not only speed.',
+    hold: [
+      'Saddle height: a slight knee bend at the bottom.',
+      'Relaxed grip, soft elbows, shoulders down.',
+      'Knees tracking straight over the feet.',
+      'Smooth pressure all the way around the circle.',
+    ],
+    steps: [
+      'Spin easy for 5 minutes to warm up.',
+      'Raise the resistance and work hard for 30-60 seconds.',
+      'Drop back to easy spinning for 60-120 seconds.',
+      'Repeat 6-10 rounds, then spin easy for 5 minutes.',
+    ],
+    avoid: [
+      'A saddle so low that the knees ache.',
+      'Bouncing in the seat at high cadence.',
+      'Making every interval a maximum effort.',
+    ],
+    tempo: [
+      'Hard efforts stay strong but controlled.',
+      'Recoveries stay genuinely easy.',
+      'Keep the cadence smooth, around 80-100 rpm.',
+    ],
+  ),
+  'stair climber': _ExerciseTechnique(
+    photoTitle: 'Stair climber',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Stand tall, take full steps, and let go of the rails. Fingertip contact only, and only if you need the balance.',
+    hold: [
+      'Upright posture, ribs stacked over the hips.',
+      'Whole foot on each step, not just the toes.',
+      'Fingertips on the rail at most.',
+      'A pace you can hold for the whole session.',
+    ],
+    steps: [
+      'Start at an easy level for 3 minutes.',
+      'Raise the level until talking is difficult but possible.',
+      'Take full steps and drive through the heel.',
+      'Ease back down for the last 3 minutes.',
+    ],
+    avoid: [
+      'Leaning your body weight on the handrails.',
+      'Taking tiny half steps.',
+      'Letting the hips sag back and the back round.',
+    ],
+    tempo: [
+      'Keep an even step rate.',
+      'Drive through the heel each step.',
+      'Breathe in rhythm with the steps.',
+    ],
+  ),
+
+  // --- Recovery ------------------------------------------------------------
+  'foam rolling': _ExerciseTechnique(
+    photoTitle: 'Foam rolling',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'Roll slowly over muscle, never over a joint or the lower back. On a tender spot, stop and breathe until it eases.',
+    hold: [
+      'Support your weight with the hands and the free leg.',
+      'Muscle only: quads, hamstrings, calves, glutes, upper back.',
+      'Keep the breathing slow and steady.',
+      'Pressure should be uncomfortable, never sharp.',
+    ],
+    steps: [
+      'Pick one muscle and roll slowly along its length.',
+      'Spend 30-60 seconds on each area.',
+      'Stop on a tender point and breathe for 20-30 seconds.',
+      'Gently move the nearby joint while holding that spot.',
+    ],
+    avoid: [
+      'Rolling directly over the lower back or any joint.',
+      'Rolling fast back and forth.',
+      'Pushing into sharp or nerve-like pain.',
+    ],
+    tempo: [
+      'Move about one inch per second.',
+      'Pause on the tender spots.',
+      'Keep the breathing slow.',
+    ],
+  ),
+  'hip and shoulder mobility flow': _ExerciseTechnique(
+    photoTitle: 'Hip and shoulder mobility flow',
+    photoCredit: 'RoutineSync coaching notes',
+    setup:
+        'A short easy sequence for the two joints that limit most lifts. Work the range you already own and repeat it rather than forcing it.',
+    hold: [
+      'Warm first: walk or cycle for a few minutes.',
+      'Move slowly into each position.',
+      'Stop at the first firm resistance, not at pain.',
+      'Keep breathing in every position.',
+    ],
+    steps: [
+      'Hips: 5 slow 90/90 rotations each side, then 5 deep squat holds.',
+      'Hips: 8 half-kneeling lunge stretches each side, squeezing the back glute.',
+      'Shoulders: 10 slow arm circles, then 10 wall slides.',
+      'Shoulders: 8 thread-the-needle rotations each side.',
+    ],
+    avoid: [
+      'Bouncing into a stretch.',
+      'Holding your breath.',
+      'Chasing range on a cold joint.',
+    ],
+    tempo: [
+      'Take 2-3 seconds into each position.',
+      'Hold 2-3 breaths where it is tightest.',
+      'Run the whole round through twice.',
+    ],
+  ),
+};
