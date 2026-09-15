@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
+import '../screens/gym_technique_history_screen.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 import '../utils/number_format.dart';
@@ -689,6 +690,19 @@ class _TechniqueDetailSheetState extends State<_TechniqueDetailSheet> {
                             fontWeight: FontWeight.w800,
                           ),
                     ),
+                  ),
+                  IconButton(
+                    tooltip: 'View history',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => GymTechniqueHistoryScreen(
+                            exercise: widget.exercise,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.history_rounded),
                   ),
                   IconButton(
                     tooltip: 'Close',

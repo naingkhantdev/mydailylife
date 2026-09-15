@@ -340,7 +340,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ? await auth.signUpWithEmail(email: email, password: password)
           : await auth.signInWithEmail(email: email, password: password);
 
-      await _openWorkspace(credential.user);
+      await _openWorkspace(
+        credential.user,
+        isNewUser: credential.additionalUserInfo?.isNewUser ?? _isSignUp,
+      );
     } on FirebaseAuthException catch (error) {
       _showAuthError(error);
     } finally {
@@ -361,7 +364,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     try {
       final credential = await ref.read(authServiceProvider).signInWithGoogle();
-      await _openWorkspace(credential.user);
+      await _openWorkspace(
+        credential.user,
+        isNewUser: credential.additionalUserInfo?.isNewUser ?? false,
+      );
     } on FirebaseAuthException catch (error) {
       _showAuthError(error);
     } catch (error) {
@@ -379,7 +385,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   /// Creates the account's profile document — and, for the seed account, pulls
   /// in the pre-multi-user data — before any screen reads Firestore.
-  Future<void> _openWorkspace(User? user) async {
+  Future<void> _openWorkspace(User? user, {required bool isNewUser}) async {
     if (user == null) return;
     final error = await syncUserWorkspace(
       ref.read(firestoreServiceProvider),
@@ -393,7 +399,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
 
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+      // A brand-new account picks which features it wants before seeing the
+      // full app; returning users go straight to their day.
+      Navigator.of(context).pushReplacementNamed(
+        isNewUser ? AppRoutes.moduleSetup : AppRoutes.home,
+      );
     }
   }
 

@@ -1,11 +1,28 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mdr/providers/gym_session_provider.dart';
+import 'package:mdr/providers/sync_status_provider.dart';
+import 'package:mdr/services/firestore_service.dart';
+
+/// An empty userId makes every [FirestoreService] call a no-op (see
+/// `_isSignedOut`), so these tests exercise the controller purely in memory
+/// without needing a Firebase app.
+GymSessionController _buildController() {
+  return GymSessionController(
+    firestoreService: FirestoreService(),
+    userId: '',
+    syncStatus: SyncStatusController(),
+  );
+}
 
 void main() {
+  // GymSessionController creates an AppLifecycleListener, which reaches for
+  // WidgetsBinding.instance — absent unless a test binding is up first.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('GymSessionController', () {
     test('uses default targets and toggles completed sets', () {
-      final controller = GymSessionController();
+      final controller = _buildController();
 
       expect(controller.sessionFor('Bench').targetSets, 3);
       // Nothing started yet, so there is no session to count sets out of.
@@ -22,7 +39,7 @@ void main() {
     });
 
     test('updates targets and removes completed sets outside the new target', () {
-      final controller = GymSessionController();
+      final controller = _buildController();
       controller.markExerciseDone('Squat');
 
       controller.setTarget(exercise: 'Squat', sets: 2, reps: 8);
@@ -35,7 +52,7 @@ void main() {
     });
 
     test('completes on the exercises actually started', () {
-      final controller = GymSessionController();
+      final controller = _buildController();
 
       // A day seeds a menu, so an untouched one is not a finished one.
       expect(controller.isWorkoutComplete([]), isFalse);
@@ -52,7 +69,7 @@ void main() {
     });
 
     test('ignores invalid targets and set numbers', () {
-      final controller = GymSessionController();
+      final controller = _buildController();
       controller.setTarget(exercise: 'Row', sets: 0, reps: 10);
       controller.toggleSet('Row', 4);
 

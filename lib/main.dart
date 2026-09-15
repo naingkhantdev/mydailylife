@@ -8,11 +8,13 @@ import 'providers/reminder_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/diet_screen.dart';
+import 'screens/gym_history_screen.dart';
 import 'screens/gym_plan_screen.dart';
 import 'screens/gym_technique_manager_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/module_setup_screen.dart';
 import 'screens/night_split_screen.dart';
 import 'screens/routine_manager_screen.dart';
 import 'screens/settings_screen.dart';
@@ -59,10 +61,12 @@ Route<void>? _buildAppRoute(RouteSettings settings) {
     AppRoutes.nightSplit => const NightSplitScreen(),
     AppRoutes.gym => const GymPlanScreen(),
     AppRoutes.gymTechniques => const GymTechniqueManagerScreen(),
+    AppRoutes.gymHistory => const GymHistoryScreen(),
     AppRoutes.history => const HistoryScreen(),
     AppRoutes.routines => const RoutineManagerScreen(),
     AppRoutes.settings => const SettingsScreen(),
     AppRoutes.login => const LoginScreen(),
+    AppRoutes.moduleSetup => const ModuleSetupScreen(),
     _ => null,
   };
 

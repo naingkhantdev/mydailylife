@@ -6,11 +6,12 @@ import '../models/gym_session_model.dart';
 import '../models/gym_technique_model.dart';
 import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
+import '../models/user_modules_model.dart';
 import '../models/weight_entry_model.dart';
 
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestoreOverride = firestore;
 
   /// Firestore rejects an empty document id, and a widget can rebuild for a
   /// frame while signing out. Every call is a no-op in that window.
@@ -26,7 +27,12 @@ class FirestoreService {
   /// hundreds of documents fetched to draw a seven-day strip.
   static const historyWindowDays = 90;
 
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _firestoreOverride;
+
+  /// Resolved lazily, not in the initializer list: every call site checks
+  /// [_isSignedOut] first and returns before reaching this, so a signed-out
+  /// caller (including a unit test with no Firebase app) never touches it.
+  FirebaseFirestore get _firestore => _firestoreOverride ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _dailyLogs(String userId) {
     return _firestore.collection('users').doc(userId).collection('daily_logs');
@@ -403,6 +409,31 @@ class FirestoreService {
     await _firestore.collection('users').doc(userId).set({
       'email': email ?? '',
       'display_name': displayName ?? '',
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Null means the account has never chosen — either it predates this
+  /// setting, or the onboarding screen has not been completed yet. Either way
+  /// the caller falls back to every module on.
+  Future<UserModulesModel?> getUserModules({required String userId}) async {
+    if (_isSignedOut(userId)) return null;
+
+    final snapshot = await _firestore.collection('users').doc(userId).get();
+    final data = snapshot.data();
+    final modules = data?['modules'];
+    if (modules is! Map) return null;
+    return UserModulesModel.fromMap(Map<String, dynamic>.from(modules));
+  }
+
+  Future<void> saveUserModules({
+    required String userId,
+    required UserModulesModel modules,
+  }) async {
+    if (_isSignedOut(userId)) return;
+
+    await _firestore.collection('users').doc(userId).set({
+      'modules': modules.toMap(),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

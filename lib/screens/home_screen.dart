@@ -8,6 +8,7 @@ import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
+import '../providers/user_modules_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_palette.dart';
 import '../widgets/app_drawer.dart';
@@ -21,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final modules = ref.watch(userModulesProvider);
     final historyMap = ref.watch(historyProvider);
     final historyController = ref.read(historyProvider.notifier);
     final tasks = ref.watch(routineProvider);
@@ -29,7 +31,9 @@ class HomeScreen extends ConsumerWidget {
     final gymController = ref.read(gymSessionProvider.notifier);
     final today = DateTime.now();
     final todayId = _dateId(today);
-    final todayTasks = tasks.where((task) => task.runsOn(today)).toList();
+    final todayTasks = modules.timeEnabled
+        ? tasks.where((task) => task.runsOn(today)).toList()
+        : const <TaskModel>[];
     final entries = {
       for (final task in todayTasks) task.id: historyMap['$todayId:${task.id}'],
     };
@@ -44,87 +48,99 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('RoutineSync'),
         actions: [
-          IconButton(
-            tooltip: 'Manage routines',
-            onPressed: () => _openRoute(context, AppRoutes.routines),
-            icon: const Icon(Icons.edit_calendar_outlined),
-          ),
-          const SizedBox(width: 4),
+          if (modules.timeEnabled) ...[
+            IconButton(
+              tooltip: 'Manage routines',
+              onPressed: () => _openRoute(context, AppRoutes.routines),
+              icon: const Icon(Icons.edit_calendar_outlined),
+            ),
+            const SizedBox(width: 4),
+          ],
         ],
       ),
       drawer: const AppDrawer(currentRoute: AppRoutes.home),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-        children: [
-          _TodayHeader(
-            date: today,
-            done: doneCount,
-            total: todayTasks.length,
-          ),
-          const SizedBox(height: 14),
-          _GymFocusCard(
-            title: todayGym.title,
-            focus: todayGym.focus,
-            isRestDay: todayGym.isRestDay,
-            completedSets: completedSets,
-            targetSets: targetSets,
-            exerciseCount: todayGym.exercises.length,
-            onOpen: () => _openRoute(context, AppRoutes.gym),
-          ),
-          const SizedBox(height: 26),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Daily routine',
-                  style: Theme.of(context).textTheme.titleLarge,
+      body: !modules.hasAnyEnabled
+          ? const _NothingEnabled()
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+              children: [
+                _TodayHeader(
+                  date: today,
+                  done: doneCount,
+                  total: todayTasks.length,
                 ),
-              ),
-              TextButton.icon(
-                onPressed: () => _openRoute(context, AppRoutes.routines),
-                icon: const Icon(Icons.tune_rounded, size: 17),
-                label: const Text('Edit'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          if (todayTasks.isEmpty)
-            const _EmptyToday()
-          else
-            Container(
-              decoration: BoxDecoration(
-                color: context.palette.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: context.palette.border),
-              ),
-              child: Column(
-                children: [
-                  for (var index = 0; index < todayTasks.length; index++) ...[
-                    _RoutineRow(
-                      task: todayTasks[index],
-                      entry: entries[todayTasks[index].id],
-                      isCurrent: todayTasks[index].id == currentTaskId,
-                      onTap: () => _showTaskActions(
-                        context,
-                        historyController,
-                        todayTasks[index],
-                        entries[todayTasks[index].id],
+                if (modules.gymEnabled) ...[
+                  const SizedBox(height: 14),
+                  _GymFocusCard(
+                    title: todayGym.title,
+                    focus: todayGym.focus,
+                    isRestDay: todayGym.isRestDay,
+                    completedSets: completedSets,
+                    targetSets: targetSets,
+                    exerciseCount: todayGym.exercises.length,
+                    onOpen: () => _openRoute(context, AppRoutes.gym),
+                  ),
+                ],
+                if (modules.timeEnabled) ...[
+                  const SizedBox(height: 26),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Daily routine',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _openRoute(context, AppRoutes.routines),
+                        icon: const Icon(Icons.tune_rounded, size: 17),
+                        label: const Text('Edit'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  if (todayTasks.isEmpty)
+                    const _EmptyToday()
+                  else
+                    Container(
+                      decoration: BoxDecoration(
+                        color: context.palette.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.palette.border),
+                      ),
+                      child: Column(
+                        children: [
+                          for (var index = 0;
+                              index < todayTasks.length;
+                              index++) ...[
+                            _RoutineRow(
+                              task: todayTasks[index],
+                              entry: entries[todayTasks[index].id],
+                              isCurrent: todayTasks[index].id == currentTaskId,
+                              onTap: () => _showTaskActions(
+                                context,
+                                historyController,
+                                todayTasks[index],
+                                entries[todayTasks[index].id],
+                                allowMealEntry: modules.dietEnabled,
+                              ),
+                            ),
+                            if (index != todayTasks.length - 1)
+                              Divider(
+                                height: 1,
+                                // 14 padding + 54 time + 34 icon + 11 gap: the
+                                // rule has to start where the text column
+                                // starts.
+                                indent: 113,
+                                color: context.palette.border,
+                              ),
+                          ],
+                        ],
                       ),
                     ),
-                    if (index != todayTasks.length - 1)
-                      Divider(
-                        height: 1,
-                        // 14 padding + 54 time + 34 icon + 11 gap: the rule
-                        // has to start where the text column starts.
-                        indent: 113,
-                        color: context.palette.border,
-                      ),
-                  ],
                 ],
-              ),
+              ],
             ),
-        ],
-      ),
     );
   }
 
@@ -136,8 +152,9 @@ class HomeScreen extends ConsumerWidget {
     BuildContext context,
     HistoryController controller,
     TaskModel task,
-    RoutineHistoryEntry? entry,
-  ) async {
+    RoutineHistoryEntry? entry, {
+    required bool allowMealEntry,
+  }) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -146,7 +163,7 @@ class HomeScreen extends ConsumerWidget {
       builder: (sheetContext) => _TaskActionSheet(
         task: task,
         entry: entry,
-        mealSlot: _mealSlotFor(task),
+        mealSlot: allowMealEntry ? _mealSlotFor(task) : null,
         onDone: () {
           Navigator.of(sheetContext).pop();
           _markDone(context, controller, task);
@@ -674,6 +691,33 @@ class _TaskActionSheet extends StatelessWidget {
             QuickMealEntryCard(slot: mealSlot!),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Shown only if every module has been turned off — a state the setup screen
+/// and Settings both refuse to save, but which a stale local cache or a
+/// direct Firestore edit could still produce.
+class _NothingEnabled extends StatelessWidget {
+  const _NothingEnabled();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: EmptyState(
+          icon: Icons.toggle_off_outlined,
+          title: 'Nothing turned on',
+          message:
+              'Turn on Daily Food Management, Time Management, or Gym '
+              'Management in Settings to start using RoutineSync.',
+          actionLabel: 'Open Settings',
+          actionIcon: Icons.settings_rounded,
+          onAction: () =>
+              Navigator.of(context).pushReplacementNamed(AppRoutes.settings),
+        ),
       ),
     );
   }

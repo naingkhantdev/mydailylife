@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../providers/reminder_provider.dart';
 import '../providers/sync_status_provider.dart';
+import '../providers/user_modules_provider.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 import '../widgets/app_drawer.dart';
@@ -23,6 +24,7 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final displayId = user?.email ?? user?.displayName ?? 'Signed out';
     final sync = ref.watch(syncStatusProvider);
+    final modules = ref.watch(userModulesProvider);
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.settings),
@@ -50,34 +52,72 @@ class SettingsScreen extends ConsumerWidget {
           const _ReminderSwitch(),
           const SizedBox(height: 26),
           const SectionHeading(
-            eyebrow: 'MORE SCREENS',
-            title: 'Logs & planning',
+            eyebrow: 'FEATURES',
+            title: 'Manage features',
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Turn off what you do not use — the drawer and Home screen stay '
+            'simple around only what is on.',
+            style: TextStyle(color: context.palette.mutedText, height: 1.4),
           ),
           const SizedBox(height: 12),
-          const _SettingsLink(
-            icon: Icons.work_outline_rounded,
-            title: 'Work log',
-            subtitle: 'What you got done today',
-            route: AppRoutes.workLog,
+          _ModuleSwitch(
+            icon: Icons.restaurant_rounded,
+            title: 'Daily Food Management',
+            subtitle: 'Log meals and track calories.',
+            value: modules.dietEnabled,
+            onChanged: (value) => ref.read(userModulesProvider.notifier)
+                .setModules(modules.copyWith(dietEnabled: value)),
           ),
-          const _SettingsLink(
-            icon: Icons.nightlight_round,
-            title: 'Evening split',
-            subtitle: 'Study and gaming notes',
-            route: AppRoutes.nightSplit,
+          _ModuleSwitch(
+            icon: Icons.schedule_rounded,
+            title: 'Time Management',
+            subtitle: 'Plan your day and track routines.',
+            value: modules.timeEnabled,
+            onChanged: (value) => ref.read(userModulesProvider.notifier)
+                .setModules(modules.copyWith(timeEnabled: value)),
           ),
-          const _SettingsLink(
-            icon: Icons.history_rounded,
-            title: 'History',
-            subtitle: 'Past days, routines and meals',
-            route: AppRoutes.history,
+          _ModuleSwitch(
+            icon: Icons.fitness_center_rounded,
+            title: 'Gym Management',
+            subtitle: 'Plan workouts and log gym sets.',
+            value: modules.gymEnabled,
+            onChanged: (value) => ref.read(userModulesProvider.notifier)
+                .setModules(modules.copyWith(gymEnabled: value)),
           ),
-          const _SettingsLink(
-            icon: Icons.edit_calendar_rounded,
-            title: 'Routines',
-            subtitle: 'Edit the recurring day plan',
-            route: AppRoutes.routines,
-          ),
+          if (modules.timeEnabled) ...[
+            const SizedBox(height: 26),
+            const SectionHeading(
+              eyebrow: 'MORE SCREENS',
+              title: 'Logs & planning',
+            ),
+            const SizedBox(height: 12),
+            const _SettingsLink(
+              icon: Icons.work_outline_rounded,
+              title: 'Work log',
+              subtitle: 'What you got done today',
+              route: AppRoutes.workLog,
+            ),
+            const _SettingsLink(
+              icon: Icons.nightlight_round,
+              title: 'Evening split',
+              subtitle: 'Study and gaming notes',
+              route: AppRoutes.nightSplit,
+            ),
+            const _SettingsLink(
+              icon: Icons.history_rounded,
+              title: 'History',
+              subtitle: 'Past days, routines and meals',
+              route: AppRoutes.history,
+            ),
+            const _SettingsLink(
+              icon: Icons.edit_calendar_rounded,
+              title: 'Routines',
+              subtitle: 'Edit the recurring day plan',
+              route: AppRoutes.routines,
+            ),
+          ],
           const SizedBox(height: 26),
           const SectionHeading(
             eyebrow: 'ACCOUNT',
@@ -253,6 +293,69 @@ class _ReminderSwitch extends ConsumerWidget {
     return count == 1
         ? '1 weekly reminder scheduled.'
         : '$count weekly reminders scheduled.';
+  }
+}
+
+/// One feature toggle. Unlike the onboarding screen's checkboxes, this saves
+/// on every flip rather than behind a "Continue" button — there is no set-up
+/// flow left to finish here, just a preference to change.
+class _ModuleSwitch extends StatelessWidget {
+  const _ModuleSwitch({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+        decoration: BoxDecoration(
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          border: Border.all(color: context.palette.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: context.palette.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: context.palette.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: context.palette.mutedText,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(value: value, onChanged: onChanged),
+          ],
+        ),
+      ),
+    );
   }
 }
 

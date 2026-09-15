@@ -151,10 +151,10 @@ function App() {
           <div className="hero-actions hero-enter enter-four">
             <a className="download-button magnetic" href={apkPath} download>
               <DownloadIcon />
-              <span><small>Download for Android</small>RoutineSync v1.0.0</span>
+              <span><small>Download for Android</small>RoutineSync v1.1.0</span>
               <i className="button-shine" />
             </a>
-            <div className="build-meta"><strong>50.1 MB</strong><span>Android 6.0+</span></div>
+            <div className="build-meta"><strong>55.0 MB</strong><span>Android 6.0+</span></div>
           </div>
           <p className="trust-line hero-enter enter-five">
             <span>✓</span> Direct APK&nbsp;&nbsp; <span>✓</span> No account required&nbsp;&nbsp;
@@ -236,7 +236,7 @@ function App() {
 
       <footer className="shell">
         <span>RoutineSync © 2026</span>
-        <span>Version 1.0.0 · Build 1</span>
+        <span>Version 1.1.0 · Build 2</span>
       </footer>
     </main>
   )

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/user_modules_provider.dart';
 import '../theme/app_palette.dart';
 
 class AppRoutes {
@@ -14,10 +15,12 @@ class AppRoutes {
   static const nightSplit = '/night-split';
   static const gym = '/gym';
   static const gymTechniques = '/gym-techniques';
+  static const gymHistory = '/gym-history';
   static const history = '/history';
   static const routines = '/routines';
   static const settings = '/settings';
   static const login = '/login';
+  static const moduleSetup = '/module-setup';
 }
 
 class AppDrawer extends ConsumerWidget {
@@ -29,6 +32,7 @@ class AppDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final displayId = user?.email ?? user?.displayName ?? 'Signed out';
+    final modules = ref.watch(userModulesProvider);
 
     return Drawer(
       width: 312,
@@ -136,24 +140,33 @@ class AppDrawer extends ConsumerWidget {
                       route: AppRoutes.dashboard,
                       currentRoute: currentRoute,
                     ),
-                    _DrawerItem(
-                      icon: Icons.fitness_center_rounded,
-                      title: 'Gym plan',
-                      route: AppRoutes.gym,
-                      currentRoute: currentRoute,
-                    ),
-                    _DrawerItem(
-                      icon: Icons.edit_note_rounded,
-                      title: 'Gym techniques',
-                      route: AppRoutes.gymTechniques,
-                      currentRoute: currentRoute,
-                    ),
-                    _DrawerItem(
-                      icon: Icons.restaurant_rounded,
-                      title: 'Diet & calories',
-                      route: AppRoutes.diet,
-                      currentRoute: currentRoute,
-                    ),
+                    if (modules.gymEnabled) ...[
+                      _DrawerItem(
+                        icon: Icons.fitness_center_rounded,
+                        title: 'Gym plan',
+                        route: AppRoutes.gym,
+                        currentRoute: currentRoute,
+                      ),
+                      _DrawerItem(
+                        icon: Icons.edit_note_rounded,
+                        title: 'Gym techniques',
+                        route: AppRoutes.gymTechniques,
+                        currentRoute: currentRoute,
+                      ),
+                      _DrawerItem(
+                        icon: Icons.history_rounded,
+                        title: 'Gym history',
+                        route: AppRoutes.gymHistory,
+                        currentRoute: currentRoute,
+                      ),
+                    ],
+                    if (modules.dietEnabled)
+                      _DrawerItem(
+                        icon: Icons.restaurant_rounded,
+                        title: 'Diet & calories',
+                        route: AppRoutes.diet,
+                        currentRoute: currentRoute,
+                      ),
                   ],
                 ),
               ),

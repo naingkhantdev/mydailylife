@@ -9,6 +9,7 @@ import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/routine_provider.dart';
+import '../providers/user_modules_provider.dart';
 import '../providers/weight_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_palette.dart';
@@ -32,8 +33,12 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final historyMap = ref.watch(historyProvider);
-    final tasks = ref.watch(routineProvider);
+    final modules = ref.watch(userModulesProvider);
+    final historyMap = modules.timeEnabled
+        ? ref.watch(historyProvider)
+        : const <String, RoutineHistoryEntry>{};
+    final tasks =
+        modules.timeEnabled ? ref.watch(routineProvider) : const <TaskModel>[];
     final log = ref.watch(dailyLogProvider);
     final todayGym = ref.watch(todayGymProvider);
     ref.watch(gymSessionProvider);
@@ -43,8 +48,10 @@ class DashboardScreen extends ConsumerWidget {
     final targetGymSets = gymController.targetSetCount(todayGym.exercises);
     ref.watch(weightProvider);
     final weightController = ref.read(weightProvider.notifier);
-    final dailyLogs = ref.watch(dailyLogHistoryProvider).asData?.value ??
-        const <DailyLogModel>[];
+    final dailyLogs = modules.dietEnabled
+        ? ref.watch(dailyLogHistoryProvider).asData?.value ??
+            const <DailyLogModel>[]
+        : const <DailyLogModel>[];
 
     final today = DateTime.now();
     final todayId = _dateId(today);
@@ -75,17 +82,22 @@ class DashboardScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          _TodayHero(
-            date: today,
-            completion: completion,
-            done: doneCount,
-            total: todayTasks.length,
-          ),
-          const SizedBox(height: 16),
+          if (modules.timeEnabled) ...[
+            _TodayHero(
+              date: today,
+              completion: completion,
+              done: doneCount,
+              total: todayTasks.length,
+            ),
+            const SizedBox(height: 16),
+          ],
           _FactGrid(
+            showCalories: modules.dietEnabled,
             calories: log.totalCalories,
+            showGym: modules.gymEnabled,
             gymSetsDone: completedGymSets,
             gymSetsTotal: targetGymSets,
+            showRoutines: modules.timeEnabled,
             weight: weightController.latestWeightLb,
             weightChange: weightController.changeOver(_weightTrendDays),
             weightTrend: [
@@ -100,7 +112,7 @@ class DashboardScreen extends ConsumerWidget {
               weightController.latestWeightLb,
             ),
           ),
-          if (todayTasks.isNotEmpty) ...[
+          if (modules.timeEnabled && todayTasks.isNotEmpty) ...[
             const SizedBox(height: 12),
             _NextStepRow(
               nextTask: nextTask,
@@ -108,20 +120,22 @@ class DashboardScreen extends ConsumerWidget {
               missedCount: missedCount,
             ),
           ],
-          const SizedBox(height: 28),
-          _MinimalHeading(
-            title: 'Last 7 days',
-            actionLabel: 'View all',
-            onAction: () => _openHistory(context),
-          ),
-          const SizedBox(height: 14),
-          if (pastDays.isEmpty)
-            Text(
-              'Past days appear here once you close out a day.',
-              style: TextStyle(color: context.palette.mutedText),
-            )
-          else
-            for (final day in pastDays) _HistoryRow(day: day),
+          if (modules.timeEnabled || modules.dietEnabled) ...[
+            const SizedBox(height: 28),
+            _MinimalHeading(
+              title: 'Last 7 days',
+              actionLabel: 'View all',
+              onAction: () => _openHistory(context),
+            ),
+            const SizedBox(height: 14),
+            if (pastDays.isEmpty)
+              Text(
+                'Past days appear here once you close out a day.',
+                style: TextStyle(color: context.palette.mutedText),
+              )
+            else
+              for (final day in pastDays) _HistoryRow(day: day),
+          ],
         ],
       ),
     );
@@ -358,9 +372,12 @@ class _TodayHero extends StatelessWidget {
 
 class _FactGrid extends StatelessWidget {
   const _FactGrid({
+    required this.showCalories,
     required this.calories,
+    required this.showGym,
     required this.gymSetsDone,
     required this.gymSetsTotal,
+    required this.showRoutines,
     required this.weight,
     required this.weightChange,
     required this.weightTrend,
@@ -369,9 +386,12 @@ class _FactGrid extends StatelessWidget {
     required this.onEditWeight,
   });
 
+  final bool showCalories;
   final int calories;
+  final bool showGym;
   final int gymSetsDone;
   final int gymSetsTotal;
+  final bool showRoutines;
   final double weight;
   final double? weightChange;
   final List<double> weightTrend;
@@ -391,32 +411,35 @@ class _FactGrid extends StatelessWidget {
           spacing: gap,
           runSpacing: gap,
           children: [
-            _FactTile(
-              width: itemWidth,
-              icon: Icons.local_fire_department_rounded,
-              iconColor: context.palette.coral,
-              label: 'Calories',
-              value: formatCount(calories),
-              suffix: 'kcal',
-            ),
-            _FactTile(
-              width: itemWidth,
-              icon: Icons.fitness_center_rounded,
-              iconColor: context.palette.violet,
-              label: 'Gym sets',
-              // Out of the exercises started, not the whole day's menu, so an
-              // untouched day reads as a plain zero rather than 0/48.
-              value: gymSetsTotal == 0 ? '0' : '$gymSetsDone/$gymSetsTotal',
-              suffix: '',
-            ),
-            _FactTile(
-              width: itemWidth,
-              icon: Icons.task_alt_rounded,
-              iconColor: context.palette.success,
-              label: 'Routines',
-              value: '$done/$total',
-              suffix: '',
-            ),
+            if (showCalories)
+              _FactTile(
+                width: itemWidth,
+                icon: Icons.local_fire_department_rounded,
+                iconColor: context.palette.coral,
+                label: 'Calories',
+                value: formatCount(calories),
+                suffix: 'kcal',
+              ),
+            if (showGym)
+              _FactTile(
+                width: itemWidth,
+                icon: Icons.fitness_center_rounded,
+                iconColor: context.palette.violet,
+                label: 'Gym sets',
+                // Out of the exercises started, not the whole day's menu, so
+                // an untouched day reads as a plain zero rather than 0/48.
+                value: gymSetsTotal == 0 ? '0' : '$gymSetsDone/$gymSetsTotal',
+                suffix: '',
+              ),
+            if (showRoutines)
+              _FactTile(
+                width: itemWidth,
+                icon: Icons.task_alt_rounded,
+                iconColor: context.palette.success,
+                label: 'Routines',
+                value: '$done/$total',
+                suffix: '',
+              ),
             _FactTile(
               width: itemWidth,
               icon: Icons.monitor_weight_outlined,
