@@ -15,7 +15,7 @@ const features = [
     icon: '↗',
     eyebrow: 'TRAINING',
     title: 'Clear progression',
-    copy: 'Follow the six-day gym plan with technique cues, sets, reps, and completion.',
+    copy: 'Follow the six-day gym plan with technique cues, sets, reps, and a full history of every session.',
   },
   {
     icon: '◎',
@@ -146,12 +146,13 @@ function App() {
           </h1>
           <p className="hero-lead hero-enter enter-three">
             One calm personal system for routines, workouts, meals, work,
-            study, and the small wins worth remembering.
+            study, and the small wins worth remembering. Pick only the
+            modules you need and the app stays simple around them.
           </p>
           <div className="hero-actions hero-enter enter-four">
             <a className="download-button magnetic" href={apkPath} download>
               <DownloadIcon />
-              <span><small>Download for Android</small>RoutineSync v1.1.0</span>
+              <span><small>Download for Android</small>RoutineSync v1.2.0</span>
               <i className="button-shine" />
             </a>
             <div className="build-meta"><strong>55.0 MB</strong><span>Android 6.0+</span></div>
@@ -236,7 +237,7 @@ function App() {
 
       <footer className="shell">
         <span>RoutineSync © 2026</span>
-        <span>Version 1.1.0 · Build 2</span>
+        <span>Version 1.2.0 · Build 3</span>
       </footer>
     </main>
   )
