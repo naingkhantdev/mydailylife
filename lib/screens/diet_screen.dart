@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/daily_log_model.dart';
 import '../providers/diet_provider.dart';
 import '../widgets/app_drawer.dart';
@@ -15,22 +16,24 @@ class DietScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final log = ref.watch(dailyLogProvider);
     final controller = ref.read(dailyLogProvider.notifier);
+    final strings = context.strings;
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.diet),
-      appBar: AppBar(title: const Text('Diet & Calories')),
+      appBar: AppBar(title: Text(strings.dietAndCalories)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           CalorieSummary(totalCalories: log.totalCalories),
           const SizedBox(height: 26),
-          const SectionHeading(
-            eyebrow: 'TODAY\'S MEALS',
-            title: 'What you\'ve logged',
+          SectionHeading(
+            eyebrow: strings.todaysMealsEyebrow,
+            title: strings.whatYouLogged,
           ),
           const SizedBox(height: 14),
           MealInputCard(
-            title: 'Breakfast',
+            title: strings.mealSlot(MealSlot.breakfast),
+            icon: Icons.free_breakfast_rounded,
             items: log.breakfast,
             onAdd: (item) => controller.addMealItem(MealSlot.breakfast, item),
             onRemove: (index) =>
@@ -38,7 +41,8 @@ class DietScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           MealInputCard(
-            title: 'Lunch',
+            title: strings.mealSlot(MealSlot.lunch),
+            icon: Icons.lunch_dining_rounded,
             items: log.lunch,
             onAdd: (item) => controller.addMealItem(MealSlot.lunch, item),
             onRemove: (index) =>
@@ -46,7 +50,8 @@ class DietScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           MealInputCard(
-            title: 'Dinner',
+            title: strings.mealSlot(MealSlot.dinner),
+            icon: Icons.dinner_dining_rounded,
             items: log.dinner,
             onAdd: (item) => controller.addMealItem(MealSlot.dinner, item),
             onRemove: (index) =>

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/diet_provider.dart';
 import '../theme/app_palette.dart';
 import '../widgets/app_drawer.dart';
@@ -34,19 +35,21 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = context.strings;
+
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.nightSplit),
-      appBar: AppBar(title: const Text('Night Split')),
+      appBar: AppBar(title: Text(strings.eveningSplit)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          const SectionHeading(
-            eyebrow: 'EVENING WIND-DOWN',
-            title: 'Study & gaming notes',
+          SectionHeading(
+            eyebrow: strings.eveningEyebrow,
+            title: strings.studyGamingNotes,
           ),
           const SizedBox(height: 6),
           Text(
-            'A short note is enough — just what you focused on and how it went.',
+            strings.eveningPrompt,
             style: TextStyle(color: context.palette.mutedText, height: 1.4),
           ),
           const SizedBox(height: 22),
@@ -54,8 +57,8 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
             controller: _studyController,
             minLines: 5,
             maxLines: 8,
-            decoration: const InputDecoration(
-              labelText: 'Study notes',
+            decoration: InputDecoration(
+              labelText: strings.studyNotes,
               alignLabelWithHint: true,
             ),
           ),
@@ -64,8 +67,8 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
             controller: _gamingController,
             minLines: 5,
             maxLines: 8,
-            decoration: const InputDecoration(
-              labelText: 'Gaming notes',
+            decoration: InputDecoration(
+              labelText: strings.gamingNotes,
               alignLabelWithHint: true,
             ),
           ),
@@ -79,9 +82,9 @@ class _NightSplitScreenState extends ConsumerState<NightSplitScreen> {
               Navigator.of(context).pop();
             },
             icon: const Icon(Icons.save_outlined),
-            label: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 2),
-              child: Text('Save'),
+            label: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(strings.save),
             ),
           ),
         ],

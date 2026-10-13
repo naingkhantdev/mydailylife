@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
+import '../providers/language_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_palette.dart';
 
@@ -15,6 +17,7 @@ class ThemeModeSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
+    final strings = context.strings;
     final mode = ref.watch(themeModeProvider);
 
     return Container(
@@ -26,10 +29,10 @@ class ThemeModeSelector extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          for (final option in const [
-            (ThemeMode.system, Icons.brightness_auto_rounded, 'Auto'),
-            (ThemeMode.light, Icons.light_mode_rounded, 'Light'),
-            (ThemeMode.dark, Icons.dark_mode_rounded, 'Dark'),
+          for (final option in [
+            (ThemeMode.system, Icons.brightness_auto_rounded, strings.themeAuto),
+            (ThemeMode.light, Icons.light_mode_rounded, strings.themeLight),
+            (ThemeMode.dark, Icons.dark_mode_rounded, strings.themeDark),
           ])
             Expanded(
               child: _ThemeOption(
@@ -39,6 +42,46 @@ class ThemeModeSelector extends ConsumerWidget {
                 onTap: () => ref
                     .read(themeModeProvider.notifier)
                     .setThemeMode(option.$1),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// English / Myanmar switch, styled as the same segmented control as the
+/// theme picker. Each label is written in its own script, so someone who
+/// cannot read the current language can still find their own.
+class LanguageSelector extends ConsumerWidget {
+  const LanguageSelector({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
+    final language = ref.watch(languageProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: palette.background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: palette.border),
+      ),
+      child: Row(
+        children: [
+          for (final option in const [
+            (AppLanguage.english, Icons.language_rounded, 'English'),
+            (AppLanguage.myanmar, Icons.translate_rounded, 'မြန်မာ'),
+          ])
+            Expanded(
+              child: _ThemeOption(
+                icon: option.$2,
+                label: option.$3,
+                isSelected: language == option.$1,
+                onTap: () => ref
+                    .read(languageProvider.notifier)
+                    .setLanguage(option.$1),
               ),
             ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/diet_provider.dart';
 import '../theme/app_palette.dart';
 import '../widgets/app_drawer.dart';
@@ -32,21 +33,23 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = context.strings;
+
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.workLog),
-      appBar: AppBar(title: const Text('Work Log')),
+      appBar: AppBar(title: Text(strings.workLog)),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SectionHeading(
-              eyebrow: 'END OF DAY',
-              title: 'Accomplishments & notes',
+            SectionHeading(
+              eyebrow: strings.endOfDayEyebrow,
+              title: strings.accomplishmentsTitle,
             ),
             const SizedBox(height: 6),
             Text(
-              'What did you get done today? Future you will thank you for the detail.',
+              strings.workLogPrompt,
               style: TextStyle(color: context.palette.mutedText, height: 1.4),
             ),
             const SizedBox(height: 18),
@@ -56,8 +59,8 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                 maxLines: null,
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
-                decoration: const InputDecoration(
-                  labelText: 'Accomplishments and notes',
+                decoration: InputDecoration(
+                  labelText: strings.accomplishmentsField,
                   alignLabelWithHint: true,
                 ),
               ),
@@ -71,9 +74,9 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                 Navigator.of(context).pop();
               },
               icon: const Icon(Icons.save_outlined),
-              label: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 2),
-                child: Text('Save'),
+              label: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(strings.save),
               ),
             ),
           ],

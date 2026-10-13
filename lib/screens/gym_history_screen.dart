@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
@@ -22,14 +23,12 @@ class GymHistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.gymHistory),
-      appBar: AppBar(title: const Text('Gym history')),
+      appBar: AppBar(title: Text(context.strings.gymHistory)),
       body: history.isEmpty
           ? EmptyState(
               icon: Icons.history_rounded,
-              title: 'No workouts logged yet',
-              message:
-                  'Tick a set or record a weight on a training day and it '
-                  'will show up here.',
+              title: context.strings.noWorkoutsYet,
+              message: context.strings.noWorkoutsYetHint,
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -74,7 +73,7 @@ class _GymDayCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      gymWeekdayNames[log.date.weekday - 1],
+                      context.strings.weekday(log.date.weekday),
                       style: TextStyle(
                         color: palette.ink,
                         fontWeight: FontWeight.w800,
@@ -82,9 +81,8 @@ class _GymDayCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${exercises.length} '
-                      '${exercises.length == 1 ? 'exercise' : 'exercises'} · '
-                      '${log.totalVolumeKg} kg lifted',
+                      '${context.strings.exercisesCount(exercises.length)} · '
+                      '${context.strings.kgLifted('${log.totalVolumeKg}')}',
                       style: TextStyle(color: palette.mutedText, fontSize: 12),
                     ),
                   ],
@@ -187,7 +185,7 @@ class _DateBadge extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            gymMonthAbbreviations[date.month - 1],
+            context.strings.monthShort(date.month).toUpperCase(),
             style: TextStyle(
               color: palette.primary,
               fontSize: 9,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
@@ -74,7 +75,7 @@ class _GymTechniqueCardState extends ConsumerState<GymTechniqueCard> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${widget.gymDay.title} technique',
+                  context.strings.dayTechnique(widget.gymDay.title),
                   style: TextStyle(
                     color: context.palette.ink,
                     fontWeight: FontWeight.w800,
@@ -190,7 +191,7 @@ class _VolumeSummary extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Text(
-                        'kg lifted today',
+                        context.strings.kgLiftedToday,
                         style: TextStyle(
                           color: palette.bodyText,
                           fontSize: 12,
@@ -248,14 +249,17 @@ class _TechniqueRow extends StatelessWidget {
   final VoidCallback onMarkDone;
   final VoidCallback onClearDone;
 
-  /// "Last: 40 kg x 3x10", or null before this exercise has ever been loaded.
-  String? get _lastLoadLabel {
+  /// "Last 40 kg · 3 x 10", or null before this exercise has ever been loaded.
+  String? _lastLoadLabel(AppStrings strings) {
     final previous = lastSession;
     if (previous == null || !previous.hasWeight) {
       return null;
     }
-    return 'Last ${_formatKg(previous.weightKg)} kg · '
-        '${previous.targetSets} x ${previous.targetReps}';
+    return strings.lastLoad(
+      _formatKg(previous.weightKg),
+      previous.targetSets,
+      previous.targetReps,
+    );
   }
 
   @override
@@ -341,7 +345,7 @@ class _TechniqueRow extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
-                if (_lastLoadLabel != null) ...[
+                if (_lastLoadLabel(context.strings) != null) ...[
                   const SizedBox(height: 3),
                   Row(
                     children: [
@@ -352,7 +356,7 @@ class _TechniqueRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _lastLoadLabel!,
+                        _lastLoadLabel(context.strings)!,
                         style: TextStyle(
                           color: context.palette.mutedText,
                           fontSize: 11,
@@ -405,7 +409,11 @@ class _TechniqueRow extends StatelessWidget {
                     // not a dead end.
                     TextButton(
                       onPressed: isDone ? onClearDone : onMarkDone,
-                      child: Text(isDone ? 'Clear' : 'All done'),
+                      child: Text(
+                        isDone
+                            ? context.strings.clear
+                            : context.strings.allDone,
+                      ),
                     ),
                   ],
                 ),
@@ -467,7 +475,7 @@ class _TechniqueRow extends StatelessWidget {
             : (lastSession?.hasWeight ?? false)
                 ? lastSession!.weightKg
                 : null,
-        lastLoadLabel: _lastLoadLabel,
+        lastLoadLabel: _lastLoadLabel(context.strings),
       ),
     );
 
@@ -590,7 +598,7 @@ class _TargetDialogState extends State<_TargetDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Set target'),
+      title: Text(context.strings.setTarget),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -600,8 +608,8 @@ class _TargetDialogState extends State<_TargetDialog> {
                 child: TextField(
                   controller: _setsController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Sets',
+                  decoration: InputDecoration(
+                    labelText: context.strings.sets,
                   ),
                 ),
               ),
@@ -610,8 +618,8 @@ class _TargetDialogState extends State<_TargetDialog> {
                 child: TextField(
                   controller: _repsController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Reps',
+                  decoration: InputDecoration(
+                    labelText: context.strings.reps,
                   ),
                 ),
               ),
@@ -623,8 +631,9 @@ class _TargetDialogState extends State<_TargetDialog> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onSubmitted: (_) => _save(),
             decoration: InputDecoration(
-              labelText: 'Weight (kg)',
-              helperText: widget.lastLoadLabel ?? 'Leave empty for bodyweight',
+              labelText: context.strings.weightKgLabel,
+              helperText:
+                  widget.lastLoadLabel ?? context.strings.leaveEmptyBodyweight,
               prefixIcon: const Icon(Icons.fitness_center_rounded),
             ),
           ),
@@ -633,11 +642,11 @@ class _TargetDialogState extends State<_TargetDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(context.strings.cancel),
         ),
         FilledButton(
           onPressed: _save,
-          child: const Text('Save'),
+          child: Text(context.strings.save),
         ),
       ],
     );
@@ -692,7 +701,7 @@ class _TechniqueDetailSheetState extends State<_TechniqueDetailSheet> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'View history',
+                    tooltip: context.strings.viewHistory,
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -705,7 +714,7 @@ class _TechniqueDetailSheetState extends State<_TechniqueDetailSheet> {
                     icon: const Icon(Icons.history_rounded),
                   ),
                   IconButton(
-                    tooltip: 'Close',
+                    tooltip: context.strings.close,
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
                   ),
@@ -717,13 +726,19 @@ class _TechniqueDetailSheetState extends State<_TechniqueDetailSheet> {
                 const SizedBox(height: 12),
               ],
               const SizedBox(height: 16),
-              _DetailBlock(title: 'How to do it', items: type.steps),
+              _DetailBlock(
+                title: context.strings.howToDoIt,
+                items: type.steps,
+              ),
               const SizedBox(height: 14),
-              _DetailBlock(title: 'Hold / setup', items: type.hold),
+              _DetailBlock(
+                title: context.strings.holdSetup,
+                items: type.hold,
+              ),
               const SizedBox(height: 14),
-              _DetailBlock(title: 'Avoid', items: type.avoid),
+              _DetailBlock(title: context.strings.avoid, items: type.avoid),
               const SizedBox(height: 14),
-              _DetailBlock(title: 'Tempo', items: type.tempo),
+              _DetailBlock(title: context.strings.tempo, items: type.tempo),
               const SizedBox(height: 14),
               const _SafetyNote(),
             ],
@@ -864,7 +879,7 @@ class _PhotoGuide extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Bench angle: ${technique.benchAngle}',
+                    context.strings.benchAngle(technique.benchAngle),
                     style: TextStyle(
                       color: context.palette.ink,
                       fontWeight: FontWeight.w700,
@@ -910,10 +925,7 @@ class _SafetyNote extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Use a weight you can control for your chosen sets and reps. '
-              'Stop if pain, dizziness, numbness, or joint pinching happens. '
-              'For heavy bench, squat, or overhead work, use safety pins or a '
-              'spotter.',
+              context.strings.safetyNote,
               style: TextStyle(
                 color: context.palette.bodyText,
                 height: 1.5,

@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_modules_provider.dart';
 import '../theme/app_palette.dart';
@@ -73,7 +74,8 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final displayId = user?.email ?? user?.displayName ?? 'Signed out';
+    final strings = context.strings;
+    final displayId = user?.email ?? user?.displayName ?? strings.signedOut;
     final modules = ref.watch(userModulesProvider);
 
     return Drawer(
@@ -143,7 +145,7 @@ class AppDrawer extends ConsumerWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Close menu',
+                      tooltip: strings.closeMenu,
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close_rounded, size: 20),
                       color: context.palette.mutedText,
@@ -158,32 +160,32 @@ class AppDrawer extends ConsumerWidget {
                   children: [
                     _DrawerItem(
                       icon: Icons.today_rounded,
-                      title: 'Today',
+                      title: strings.today,
                       route: AppRoutes.home,
                       currentRoute: currentRoute,
                     ),
                     _DrawerItem(
                       icon: Icons.dashboard_rounded,
-                      title: 'Dashboard',
+                      title: strings.dashboard,
                       route: AppRoutes.dashboard,
                       currentRoute: currentRoute,
                     ),
                     if (modules.gymEnabled) ...[
                       _DrawerItem(
                         icon: Icons.fitness_center_rounded,
-                        title: 'Gym plan',
+                        title: strings.gymPlan,
                         route: AppRoutes.gym,
                         currentRoute: currentRoute,
                       ),
                       _DrawerItem(
                         icon: Icons.edit_note_rounded,
-                        title: 'Gym techniques',
+                        title: strings.gymTechniques,
                         route: AppRoutes.gymTechniques,
                         currentRoute: currentRoute,
                       ),
                       _DrawerItem(
                         icon: Icons.history_rounded,
-                        title: 'Gym history',
+                        title: strings.gymHistory,
                         route: AppRoutes.gymHistory,
                         currentRoute: currentRoute,
                       ),
@@ -191,7 +193,7 @@ class AppDrawer extends ConsumerWidget {
                     if (modules.dietEnabled)
                       _DrawerItem(
                         icon: Icons.restaurant_rounded,
-                        title: 'Diet & calories',
+                        title: strings.dietAndCalories,
                         route: AppRoutes.diet,
                         currentRoute: currentRoute,
                       ),
@@ -203,7 +205,7 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
                 child: _DrawerItem(
                   icon: Icons.settings_rounded,
-                  title: 'Settings',
+                  title: strings.settings,
                   route: AppRoutes.settings,
                   currentRoute: currentRoute,
                 ),

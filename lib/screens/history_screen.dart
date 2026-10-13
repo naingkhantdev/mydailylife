@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/daily_log_model.dart';
 import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
@@ -54,16 +55,15 @@ class HistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.history),
-      appBar: AppBar(title: const Text('History')),
+      appBar: AppBar(title: Text(context.strings.history)),
       body: dateIds.isEmpty && dailyLogHistory.isLoading
           ? const Center(child: CircularProgressIndicator())
           : dateIds.isEmpty
               ? EmptyState(
                   icon: Icons.history_toggle_off_rounded,
-                  title: 'No past days yet',
-                  message:
-                      'Complete routines and add short remarks today. Past daily facts will appear here clearly by date.',
-                  actionLabel: 'Go to today',
+                  title: context.strings.noPastDaysYet,
+                  message: context.strings.noPastDaysYetHint,
+                  actionLabel: context.strings.goToToday,
                   actionIcon: Icons.today_rounded,
                   onAction: () => Navigator.of(context)
                       .pushReplacementNamed(AppRoutes.home),
@@ -77,13 +77,13 @@ class HistoryScreen extends ConsumerWidget {
                   completionRate: completionRate,
                 ),
                 const SizedBox(height: 26),
-                const SectionHeading(
-                  eyebrow: 'PAST DAILY FACTS',
-                  title: 'Your days, clearly remembered',
+                SectionHeading(
+                  eyebrow: context.strings.pastDailyFactsEyebrow,
+                  title: context.strings.yourDaysRemembered,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Open a date to see what happened and the remarks you saved.',
+                  context.strings.openDateHint,
                   style: TextStyle(color: context.palette.mutedText, height: 1.4),
                 ),
                 const SizedBox(height: 14),
@@ -158,9 +158,9 @@ class _HistoryHero extends StatelessWidget {
         children: [
           const Icon(Icons.insights_rounded, color: AppColors.gold, size: 28),
           const SizedBox(height: 14),
-          const Text(
-            'Patterns become visible\nwhen days are remembered.',
-            style: TextStyle(
+          Text(
+            context.strings.historyHeroTitle,
+            style: const TextStyle(
               color: AppColors.onInk,
               fontSize: 22,
               height: 1.2,
@@ -170,11 +170,17 @@ class _HistoryHero extends StatelessWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              _HeroFact(value: '$trackedDays', label: 'TRACKED DAYS'),
+              _HeroFact(
+                value: '$trackedDays',
+                label: context.strings.trackedDays,
+              ),
               const _HeroDivider(),
-              _HeroFact(value: '$completedFacts', label: 'WINS'),
+              _HeroFact(value: '$completedFacts', label: context.strings.wins),
               const _HeroDivider(),
-              _HeroFact(value: '$completionRate%', label: 'COMPLETION'),
+              _HeroFact(
+                value: '$completionRate%',
+                label: context.strings.completion,
+              ),
             ],
           ),
         ],
@@ -279,7 +285,7 @@ class _DayHistoryCard extends StatelessWidget {
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
           leading: _DateBadge(date: date, color: color),
           title: Text(
-            _weekdayLabel(date),
+            context.strings.weekday(date.weekday),
             style: TextStyle(
               color: context.palette.ink,
               fontSize: 15,
@@ -292,11 +298,20 @@ class _DayHistoryCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                AppStatusChip(label: '$done done', color: context.palette.success),
+                AppStatusChip(
+                  label: context.strings.doneCountChip(done),
+                  color: context.palette.success,
+                ),
                 if (missed > 0)
-                  AppStatusChip(label: '$missed missed', color: context.palette.coral),
+                  AppStatusChip(
+                    label: context.strings.missedCount(missed),
+                    color: context.palette.coral,
+                  ),
                 if (pending > 0)
-                  AppStatusChip(label: '$pending untracked', color: context.palette.mutedText),
+                  AppStatusChip(
+                    label: context.strings.untrackedCount(pending),
+                    color: context.palette.mutedText,
+                  ),
               ],
             ),
           ),
@@ -336,14 +351,6 @@ class _DayHistoryCard extends StatelessWidget {
     if (progress >= 0.4) return context.palette.warning;
     return context.palette.coral;
   }
-
-  String _weekdayLabel(DateTime date) {
-    const weekdays = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
-    ];
-    return weekdays[date.weekday - 1];
-  }
 }
 
 class _DailyLogFacts extends StatelessWidget {
@@ -354,13 +361,22 @@ class _DailyLogFacts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mealCount = log.breakfast.length + log.lunch.length + log.dinner.length;
+    final strings = context.strings;
     final notes = <({IconData icon, String label, String value})>[
       if (log.workNotes.trim().isNotEmpty)
-        (icon: Icons.work_outline_rounded, label: 'Work', value: log.workNotes),
+        (
+          icon: Icons.work_outline_rounded,
+          label: strings.work,
+          value: log.workNotes,
+        ),
       if (log.studyNotes.trim().isNotEmpty)
-        (icon: Icons.school_outlined, label: 'Study', value: log.studyNotes),
+        (icon: Icons.school_outlined, label: strings.study, value: log.studyNotes),
       if (log.gamingNotes.trim().isNotEmpty)
-        (icon: Icons.sports_esports_outlined, label: 'Gaming', value: log.gamingNotes),
+        (
+          icon: Icons.sports_esports_outlined,
+          label: strings.gaming,
+          value: log.gamingNotes,
+        ),
     ];
 
     return Container(
@@ -379,7 +395,7 @@ class _DailyLogFacts extends StatelessWidget {
                 child: _LoggedFact(
                   icon: Icons.local_fire_department_rounded,
                   value: formatCount(log.totalCalories),
-                  label: 'kcal logged',
+                  label: strings.kcalLogged,
                   color: context.palette.coral,
                 ),
               ),
@@ -388,7 +404,7 @@ class _DailyLogFacts extends StatelessWidget {
                 child: _LoggedFact(
                   icon: Icons.restaurant_rounded,
                   value: '$mealCount',
-                  label: mealCount == 1 ? 'food item' : 'food items',
+                  label: strings.foodItems(mealCount),
                   color: context.palette.blue,
                 ),
               ),
@@ -478,10 +494,6 @@ class _DateBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-    ];
     return Container(
       width: 54,
       height: 62,
@@ -493,7 +505,7 @@ class _DateBadge extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            months[date.month - 1],
+            context.strings.monthShort(date.month).toUpperCase(),
             style: TextStyle(
               color: color,
               fontSize: 9,
@@ -546,7 +558,7 @@ class _DayBrief extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _brief(),
+            _brief(context.strings),
             style: TextStyle(
               color: context.palette.bodyText,
               fontSize: 13,
@@ -571,11 +583,10 @@ class _DayBrief extends StatelessWidget {
     );
   }
 
-  String _brief() {
-    if (total == 0) return 'No routines were scheduled for this day.';
-    if (done == total) return 'A fully completed day: all $total routines were done.';
-    return '$done of $total routines were completed, with $missed missed and '
-        '$pending left untracked.';
+  String _brief(AppStrings strings) {
+    if (total == 0) return strings.noRoutinesScheduledDay;
+    if (done == total) return strings.fullyCompletedDay(total);
+    return strings.dayBrief(done, total, missed, pending);
   }
 }
 
@@ -599,9 +610,9 @@ class _HistoryRoutineRow extends StatelessWidget {
       null => Icons.remove_rounded,
     };
     final statusLabel = switch (status) {
-      RoutineStatus.done => 'DONE',
-      RoutineStatus.missed => 'MISSED',
-      null => 'NO UPDATE',
+      RoutineStatus.done => context.strings.statusDone,
+      RoutineStatus.missed => context.strings.statusMissed,
+      null => context.strings.statusNoUpdate,
     };
     final recordedTitle = entry?.taskTitle.trim();
     final title = recordedTitle == null || recordedTitle.isEmpty
@@ -645,7 +656,7 @@ class _HistoryRoutineRow extends StatelessWidget {
                 )
               else
                 Text(
-                  'Archived routine',
+                  context.strings.archivedRoutine,
                   style: TextStyle(color: context.palette.mutedText, fontSize: 11),
                 ),
               if (entry?.remark.isNotEmpty ?? false) ...[

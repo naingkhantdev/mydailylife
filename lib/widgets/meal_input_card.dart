@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/daily_log_model.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
@@ -9,12 +10,17 @@ class MealInputCard extends StatefulWidget {
   const MealInputCard({
     super.key,
     required this.title,
+    required this.icon,
     required this.items,
     required this.onAdd,
     required this.onRemove,
   });
 
   final String title;
+
+  /// Passed in rather than guessed from [title]: the title is translated, so
+  /// matching "breakfast" in it only ever worked in English.
+  final IconData icon;
   final List<MealItem> items;
   final ValueChanged<MealItem> onAdd;
   final ValueChanged<int> onRemove;
@@ -63,7 +69,7 @@ class _MealInputCardState extends State<MealInputCard> {
                   borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
                 child: Icon(
-                  _iconForMeal(widget.title),
+                  widget.icon,
                   color: context.palette.coral,
                   size: 18,
                 ),
@@ -99,8 +105,8 @@ class _MealInputCardState extends State<MealInputCard> {
                 flex: 5,
                 child: TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Food',
+                  decoration: InputDecoration(
+                    labelText: context.strings.food,
                     isDense: true,
                   ),
                 ),
@@ -123,15 +129,15 @@ class _MealInputCardState extends State<MealInputCard> {
                 child: TextField(
                   controller: _quantityController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Qty',
+                  decoration: InputDecoration(
+                    labelText: context.strings.qty,
                     isDense: true,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                tooltip: 'Add food',
+                tooltip: context.strings.addFood,
                 onPressed: _addItem,
                 icon: const Icon(Icons.add_rounded),
               ),
@@ -173,7 +179,7 @@ class _MealInputCardState extends State<MealInputCard> {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Remove food',
+                      tooltip: context.strings.removeFood,
                       onPressed: () => widget.onRemove(i),
                       icon: Icon(
                         Icons.close_rounded,
@@ -190,14 +196,6 @@ class _MealInputCardState extends State<MealInputCard> {
     );
   }
 
-  IconData _iconForMeal(String title) {
-    final name = title.toLowerCase();
-    if (name.contains('breakfast')) return Icons.free_breakfast_rounded;
-    if (name.contains('lunch')) return Icons.lunch_dining_rounded;
-    if (name.contains('dinner')) return Icons.dinner_dining_rounded;
-    return Icons.restaurant_rounded;
-  }
-
   void _addItem() {
     final name = _nameController.text.trim();
     final calories = int.tryParse(_calorieController.text.trim());
@@ -206,15 +204,15 @@ class _MealInputCardState extends State<MealInputCard> {
     // Say why nothing happened. A silent return on a tapped button reads as a
     // broken app.
     if (name.isEmpty) {
-      _showProblem('Enter a food name first');
+      _showProblem(context.strings.enterFoodNameFirst);
       return;
     }
     if (calories == null || calories <= 0) {
-      _showProblem('Enter calories as a number');
+      _showProblem(context.strings.enterCaloriesNumber);
       return;
     }
     if (quantity <= 0) {
-      _showProblem('Quantity must be at least 1');
+      _showProblem(context.strings.quantityAtLeastOne);
       return;
     }
 

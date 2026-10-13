@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
 import '../providers/auth_provider.dart';
@@ -76,7 +77,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not load your data: $error')),
+        SnackBar(content: Text(context.strings.couldNotLoadData(error))),
       );
     }
 
@@ -117,14 +118,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 animation: _controller,
                 builder: (context, child) {
                   return Semantics(
-                    label: 'RoutineSync is preparing your day',
+                    label: context.strings.preparingDaySemantics,
                     child: Column(
                       children: [
                         FadeTransition(
                           opacity: _entranceAnimation,
-                          child: const DarkHeroBadge(
+                          child: DarkHeroBadge(
                             icon: Icons.wb_twilight_rounded,
-                            label: 'A BETTER DAILY RHYTHM',
+                            label: context.strings.betterDailyRhythm,
                           ),
                         ),
                         const Spacer(),
@@ -141,9 +142,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                 const SizedBox(height: 38),
                                 const _AppTitle(),
                                 const SizedBox(height: 12),
-                                const Text(
-                                  'Your day, in rhythm.',
-                                  style: TextStyle(
+                                Text(
+                                  context.strings.yourDayInRhythm,
+                                  style: const TextStyle(
                                     color: AppColors.onInkMuted,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
@@ -256,9 +257,9 @@ class _LoadingStatus extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Preparing your day',
-                style: TextStyle(
+              Text(
+                context.strings.preparingYourDay,
+                style: const TextStyle(
                   color: AppColors.onInkFaint,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,

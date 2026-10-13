@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
+import 'l10n/app_strings.dart';
+import 'providers/language_provider.dart';
 import 'providers/reminder_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/dashboard_screen.dart';
@@ -99,6 +101,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final language = ref.watch(languageProvider);
 
     return MaterialApp(
       title: 'RoutineSync',
@@ -109,8 +112,11 @@ class MyApp extends ConsumerWidget {
       onGenerateRoute: _buildAppRoute,
       // Wrapped around the navigator rather than added per screen, so a failed
       // write is visible wherever the user happens to be.
-      builder: (context, child) => SyncBanner(
-        child: child ?? const SizedBox.shrink(),
+      builder: (context, child) => AppStringsScope(
+        strings: AppStrings(language),
+        child: SyncBanner(
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
       home: const SplashScreen(),
     );

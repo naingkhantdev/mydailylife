@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/sync_status_provider.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
@@ -80,9 +81,7 @@ class _UnsavedNotice extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    count == 1
-                        ? '1 change is not saved'
-                        : '$count changes are not saved',
+                    context.strings.changesNotSaved(count),
                     style: TextStyle(
                       color: palette.ink,
                       fontSize: 13,
@@ -92,8 +91,8 @@ class _UnsavedNotice extends ConsumerWidget {
                   const SizedBox(height: 1),
                   Text(
                     status.isSaving
-                        ? 'Retrying…'
-                        : 'They are still here — reconnect and retry.',
+                        ? context.strings.retrying
+                        : context.strings.reconnectAndRetry,
                     style: TextStyle(
                       color: palette.bodyText,
                       fontSize: 11,
@@ -104,10 +103,10 @@ class _UnsavedNotice extends ConsumerWidget {
             ),
             TextButton(
               onPressed: status.isSaving ? null : controller.retry,
-              child: const Text('Retry'),
+              child: Text(context.strings.retry),
             ),
             IconButton(
-              tooltip: 'Dismiss',
+              tooltip: context.strings.dismiss,
               onPressed: controller.dismiss,
               icon: const Icon(Icons.close_rounded, size: 18),
               color: palette.mutedText,

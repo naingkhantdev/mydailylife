@@ -139,7 +139,7 @@ function App() {
       <section className="hero shell" id="top">
         <div className="hero-copy">
           <div className="eyebrow hero-enter enter-one">
-            <span className="live-dot" /> Android release available
+            <span className="live-dot" /> v1.3 · Now in English and မြန်မာ
           </div>
           <h1 className="hero-enter enter-two">
             Your day,<br /><span>beautifully in rhythm.</span>
@@ -147,12 +147,13 @@ function App() {
           <p className="hero-lead hero-enter enter-three">
             One calm personal system for routines, workouts, meals, work,
             study, and the small wins worth remembering. Pick only the
-            modules you need and the app stays simple around them.
+            modules you need, in English or Myanmar, behind a calm new
+            glass design.
           </p>
           <div className="hero-actions hero-enter enter-four">
             <a className="download-button magnetic" href={apkPath} download>
               <DownloadIcon />
-              <span><small>Download for Android</small>RoutineSync v1.2.0</span>
+              <span><small>Download for Android</small>RoutineSync v1.3.0</span>
               <i className="button-shine" />
             </a>
             <div className="build-meta"><strong>55.0 MB</strong><span>Android 6.0+</span></div>
@@ -237,7 +238,7 @@ function App() {
 
       <footer className="shell">
         <span>RoutineSync © 2026</span>
-        <span>Version 1.2.0 · Build 3</span>
+        <span>Version 1.3.0 · Build 4</span>
       </footer>
     </main>
   )

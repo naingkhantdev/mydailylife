@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/daily_log_model.dart';
 import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
@@ -43,6 +44,7 @@ class HomeScreen extends ConsumerWidget {
     final completedSets = gymController.completedSetCount(todayGym.exercises);
     final targetSets = gymController.targetSetCount(todayGym.exercises);
     final currentTaskId = _currentTaskId(todayTasks, today);
+    final strings = context.strings;
 
     return Scaffold(
       appBar: AppBar(
@@ -50,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           if (modules.timeEnabled) ...[
             IconButton(
-              tooltip: 'Manage routines',
+              tooltip: strings.manageRoutines,
               onPressed: () => _openRoute(context, AppRoutes.routines),
               icon: const Icon(Icons.edit_calendar_outlined),
             ),
@@ -87,14 +89,14 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Daily routine',
+                          strings.dailyRoutine,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
                       TextButton.icon(
                         onPressed: () => _openRoute(context, AppRoutes.routines),
                         icon: const Icon(Icons.tune_rounded, size: 17),
-                        label: const Text('Edit'),
+                        label: Text(strings.edit),
                       ),
                     ],
                   ),
@@ -186,28 +188,29 @@ class HomeScreen extends ConsumerWidget {
     TaskModel task,
   ) async {
     var enteredRemark = '';
+    final strings = context.strings;
     final remark = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Mark as missed'),
+        title: Text(strings.markAsMissed),
         content: TextField(
           autofocus: true,
           minLines: 3,
           maxLines: 5,
           onChanged: (value) => enteredRemark = value,
-          decoration: const InputDecoration(
-            labelText: 'What got in the way?',
-            hintText: 'Optional note for your history',
+          decoration: InputDecoration(
+            labelText: strings.missedReasonLabel,
+            hintText: strings.missedReasonHint,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(enteredRemark.trim()),
-            child: const Text('Save'),
+            child: Text(strings.save),
           ),
         ],
       ),
@@ -221,28 +224,29 @@ class HomeScreen extends ConsumerWidget {
     TaskModel task,
   ) async {
     var enteredRemark = '';
+    final strings = context.strings;
     final remark = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Complete task'),
+        title: Text(strings.completeTask),
         content: TextField(
           autofocus: true,
           minLines: 3,
           maxLines: 5,
           onChanged: (value) => enteredRemark = value,
-          decoration: const InputDecoration(
-            labelText: 'Short note',
-            hintText: 'Optional: what did you accomplish?',
+          decoration: InputDecoration(
+            labelText: strings.shortNote,
+            hintText: strings.shortNoteHint,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(''),
-            child: const Text('Done only'),
+            child: Text(strings.doneOnly),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(enteredRemark.trim()),
-            child: const Text('Save note'),
+            child: Text(strings.saveNote),
           ),
         ],
       ),
@@ -317,12 +321,12 @@ class _TodayHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _weekday(date),
+            context.strings.weekday(date.weekday),
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 3),
           Text(
-            _date(date),
+            context.strings.longDate(date),
             style: TextStyle(color: context.palette.mutedText, fontSize: 13),
           ),
           const SizedBox(height: 18),
@@ -340,7 +344,7 @@ class _TodayHeader extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '$done of $total done',
+                context.strings.doneOfTotal(done, total),
                 style: TextStyle(
                   color: context.palette.bodyText,
                   fontSize: 12,
@@ -354,36 +358,6 @@ class _TodayHeader extends StatelessWidget {
     );
   }
 
-  String _weekday(DateTime date) {
-    const values = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    return values[date.weekday - 1];
-  }
-
-  String _date(DateTime date) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
 }
 
 class _GymFocusCard extends StatelessWidget {
@@ -433,9 +407,9 @@ class _GymFocusCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'TODAY\'S TRAINING',
-                  style: TextStyle(
+                Text(
+                  context.strings.todaysTraining,
+                  style: const TextStyle(
                     color: AppColors.onInkFaint,
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
@@ -464,10 +438,11 @@ class _GymFocusCard extends StatelessWidget {
                 const SizedBox(height: 7),
                 Text(
                   isRestDay
-                      ? 'Recovery day · View plan'
+                      ? context.strings.recoveryDayViewPlan
                       : targetSets == 0
-                          ? '$exerciseCount exercises · View technique'
-                          : '$completedSets/$targetSets sets · View technique',
+                          ? context.strings.exercisesViewTechnique(exerciseCount)
+                          : context.strings
+                              .setsViewTechnique(completedSets, targetSets),
                   style: const TextStyle(
                     color: AppColors.onInkAccent,
                     fontSize: 11,
@@ -571,7 +546,7 @@ class _RoutineRow extends StatelessWidget {
                         // is the same near-black navy as the title beside it,
                         // so the badge marking the live routine disappeared.
                         AppStatusChip(
-                          label: 'NOW',
+                          label: context.strings.now,
                           color: context.palette.coral,
                         ),
                       ],
@@ -579,7 +554,7 @@ class _RoutineRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Until ${task.endTime}',
+                    context.strings.until(task.endTime),
                     style: TextStyle(
                         color: context.palette.mutedText, fontSize: 12),
                   ),
@@ -670,7 +645,7 @@ class _TaskActionSheet extends StatelessWidget {
                   onPressed:
                       entry?.status == RoutineStatus.done ? null : onDone,
                   icon: const Icon(Icons.check_rounded),
-                  label: const Text('Done'),
+                  label: Text(context.strings.done),
                 ),
               ),
               const SizedBox(width: 10),
@@ -679,13 +654,16 @@ class _TaskActionSheet extends StatelessWidget {
                   onPressed:
                       entry?.status == RoutineStatus.missed ? null : onMissed,
                   icon: const Icon(Icons.close_rounded),
-                  label: const Text('Missed'),
+                  label: Text(context.strings.missed),
                 ),
               ),
             ],
           ),
           if (entry != null)
-            TextButton(onPressed: onClear, child: const Text('Clear status')),
+            TextButton(
+              onPressed: onClear,
+              child: Text(context.strings.clearStatus),
+            ),
           if (mealSlot != null) ...[
             const Divider(height: 30),
             QuickMealEntryCard(slot: mealSlot!),
@@ -709,11 +687,9 @@ class _NothingEnabled extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: EmptyState(
           icon: Icons.toggle_off_outlined,
-          title: 'Nothing turned on',
-          message:
-              'Turn on Daily Food Management, Time Management, or Gym '
-              'Management in Settings to start using RoutineSync.',
-          actionLabel: 'Open Settings',
+          title: context.strings.nothingTurnedOn,
+          message: context.strings.nothingTurnedOnHint,
+          actionLabel: context.strings.openSettings,
           actionIcon: Icons.settings_rounded,
           onAction: () =>
               Navigator.of(context).pushReplacementNamed(AppRoutes.settings),
@@ -737,12 +713,11 @@ class _EmptyToday extends StatelessWidget {
       ),
       child: EmptyState(
         icon: Icons.free_breakfast_outlined,
-        title: 'Nothing scheduled today',
-        message:
-            'Add a routine and it will show up here at the right time of day.',
+        title: context.strings.nothingScheduledToday,
+        message: context.strings.nothingScheduledTodayHint,
         iconColor: context.palette.primary,
         iconBackground: context.palette.blueSoft,
-        actionLabel: 'Add a routine',
+        actionLabel: context.strings.addRoutine,
         onAction: () =>
             Navigator.of(context).pushReplacementNamed(AppRoutes.routines),
       ),

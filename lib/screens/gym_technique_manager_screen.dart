@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/gym_day_model.dart';
 import '../models/gym_technique_model.dart';
 import '../providers/gym_provider.dart';
@@ -16,14 +17,15 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final techniques = ref.watch(gymTechniqueProvider);
     final days = ref.watch(gymDayPlanProvider);
+    final strings = context.strings;
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.gymTechniques),
       appBar: AppBar(
-        title: const Text('Manage gym techniques'),
+        title: Text(strings.manageGymTechniques),
         actions: [
           IconButton(
-            tooltip: 'Add built-in exercises',
+            tooltip: strings.addBuiltInExercises,
             onPressed: () => _addBuiltInExercises(context, ref),
             icon: const Icon(Icons.library_add_outlined),
           ),
@@ -32,20 +34,18 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context, ref),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add technique'),
+        label: Text(strings.addTechnique),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const SectionHeading(
-            eyebrow: 'EXERCISE LIBRARY',
-            title: 'Build your own training plan',
+          SectionHeading(
+            eyebrow: strings.exerciseLibraryEyebrow,
+            title: strings.buildYourPlan,
           ),
           const SizedBox(height: 7),
           Text(
-            'Rename any training day or swap two days around, move an '
-            'exercise to a different day, update its coaching cues, or remove '
-            'what you no longer use.',
+            strings.techniqueManagerIntro,
             style: TextStyle(color: context.palette.mutedText, height: 1.45),
           ),
           const SizedBox(height: 22),
@@ -112,7 +112,9 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          technique == null ? 'Technique added' : 'Technique updated',
+          technique == null
+              ? context.strings.techniqueAdded
+              : context.strings.techniqueUpdated,
         ),
       ),
     );
@@ -126,13 +128,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          switch (added) {
-            0 => 'Your plan already has every built-in exercise',
-            1 => 'Added 1 built-in exercise',
-            _ => 'Added $added built-in exercises',
-          },
-        ),
+        content: Text(context.strings.builtInAdded(added)),
       ),
     );
   }
@@ -167,17 +163,10 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
             .read(gymTechniqueProvider.notifier)
             .addPresetExercises(seed, result.day.weekday);
     if (!context.mounted) return;
-    final dayName = weekdayName(result.day.weekday);
+    final strings = context.strings;
+    final dayName = strings.weekday(result.day.weekday);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          switch (added) {
-            0 => '$dayName updated',
-            1 => '$dayName updated · 1 exercise added',
-            _ => '$dayName updated · $added exercises added',
-          },
-        ),
-      ),
+      SnackBar(content: Text(strings.dayUpdated(dayName, added))),
     );
   }
 
@@ -189,11 +178,12 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     WidgetRef ref,
     GymDayModel day,
   ) async {
+    final strings = context.strings;
     final target = await _pickDay(
       context,
       ref,
-      title: 'Swap ${weekdayName(day.weekday)} with',
-      subtitle: 'Both days trade names and every exercise on them.',
+      title: strings.swapDayWith(strings.weekday(day.weekday)),
+      subtitle: strings.swapDayHint,
       excludedWeekday: day.weekday,
     );
     if (target == null) return;
@@ -206,7 +196,10 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${weekdayName(day.weekday)} and ${weekdayName(target)} swapped',
+          strings.daysSwapped(
+            strings.weekday(day.weekday),
+            strings.weekday(target),
+          ),
         ),
       ),
     );
@@ -219,11 +212,12 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     WidgetRef ref,
     GymTechniqueModel technique,
   ) async {
+    final strings = context.strings;
     final target = await _pickDay(
       context,
       ref,
-      title: 'Move ${technique.name} to',
-      subtitle: 'Its cue, steps and image move with it.',
+      title: strings.moveTo(technique.name),
+      subtitle: strings.moveHint,
       excludedWeekday: technique.weekday,
     );
     if (target == null) return;
@@ -238,7 +232,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${technique.name} is already on ${weekdayName(target)}',
+            strings.alreadyOnDay(technique.name, strings.weekday(target)),
           ),
         ),
       );
@@ -249,7 +243,9 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${technique.name} moved to ${weekdayName(target)}'),
+        content: Text(
+          strings.movedTo(technique.name, strings.weekday(target)),
+        ),
       ),
     );
   }
@@ -281,23 +277,30 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     WidgetRef ref,
     GymTechniqueModel technique,
   ) async {
+    final strings = context.strings;
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete technique?'),
+        title: Text(strings.deleteTechniqueTitle),
         content: Text(
-          '${technique.name} will be removed from '
-          '${gymDayLabel(technique.weekday, ref.read(gymDayPlanProvider))}.',
+          strings.deleteTechniqueBody(
+            technique.name,
+            gymDayLabel(
+              strings,
+              technique.weekday,
+              ref.read(gymDayPlanProvider),
+            ),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: context.palette.danger),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(strings.delete),
           ),
         ],
       ),
@@ -307,7 +310,7 @@ class GymTechniqueManagerScreen extends ConsumerWidget {
     await ref.read(gymTechniqueProvider.notifier).deleteTechnique(technique.id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Technique deleted')),
+      SnackBar(content: Text(strings.techniqueDeleted)),
     );
   }
 }
@@ -345,7 +348,7 @@ class _DaySection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    gymDayLabel(day.weekday, [day]),
+                    gymDayLabel(context.strings, day.weekday, [day]),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   if (day.focus.trim().isNotEmpty) ...[
@@ -370,7 +373,7 @@ class _DaySection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(
-                  'REST',
+                  context.strings.restBadge,
                   style: TextStyle(
                     color: context.palette.mutedText,
                     fontSize: 10,
@@ -397,25 +400,25 @@ class _DaySection extends StatelessWidget {
               ),
             ),
             PopupMenuButton<String>(
-              tooltip: 'Day actions',
+              tooltip: context.strings.dayActions,
               icon: const Icon(Icons.more_horiz_rounded, size: 21),
               onSelected: (value) {
                 if (value == 'edit') onEditDay();
                 if (value == 'swap') onSwapDay();
               },
-              itemBuilder: (context) => const [
+              itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'edit',
                   child: MenuRow(
                     icon: Icons.edit_outlined,
-                    label: 'Rename this day',
+                    label: context.strings.renameDay,
                   ),
                 ),
                 PopupMenuItem(
                   value: 'swap',
                   child: MenuRow(
                     icon: Icons.swap_vert_rounded,
-                    label: 'Swap with another day',
+                    label: context.strings.swapWithAnotherDay,
                   ),
                 ),
               ],
@@ -438,7 +441,7 @@ class _DaySection extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'No exercises on this day yet.',
+                          context.strings.noExercisesOnDay,
                           style: TextStyle(color: context.palette.mutedText),
                         ),
                       ),
@@ -446,7 +449,7 @@ class _DaySection extends StatelessWidget {
                       TextButton.icon(
                         onPressed: onAdd,
                         icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('Add'),
+                        label: Text(context.strings.add),
                       ),
                     ],
                   ),
@@ -532,7 +535,7 @@ class _TechniqueRow extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   technique.cue.isEmpty
-                      ? 'Uses the built-in technique guide'
+                      ? context.strings.usesBuiltInGuide
                       : technique.cue,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -545,29 +548,32 @@ class _TechniqueRow extends StatelessWidget {
             ),
           ),
           PopupMenuButton<String>(
-            tooltip: 'Technique actions',
+            tooltip: context.strings.techniqueActions,
             onSelected: (value) {
               if (value == 'edit') onEdit();
               if (value == 'move') onMove();
               if (value == 'delete') onDelete();
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit',
-                child: MenuRow(icon: Icons.edit_outlined, label: 'Edit'),
+                child: MenuRow(
+                  icon: Icons.edit_outlined,
+                  label: context.strings.edit,
+                ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'move',
                 child: MenuRow(
                   icon: Icons.swap_horiz_rounded,
-                  label: 'Move to another day',
+                  label: context.strings.moveToAnotherDay,
                 ),
               ),
               PopupMenuItem(
                 value: 'delete',
                 child: MenuRow(
                   icon: Icons.delete_outline_rounded,
-                  label: 'Delete',
+                  label: context.strings.delete,
                   color: context.palette.danger,
                 ),
               ),
@@ -649,17 +655,19 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Edit ${weekdayName(widget.day.weekday)}',
+              context.strings.editDay(
+                context.strings.weekday(widget.day.weekday),
+              ),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 6),
             Text(
-              'The exercises already on this day stay where they are.',
+              context.strings.editDayHint,
               style: TextStyle(color: context.palette.mutedText),
             ),
             const SizedBox(height: 18),
             Text(
-              'QUICK PICK',
+              context.strings.quickPick,
               style: TextStyle(
                 color: context.palette.primary,
                 fontSize: 10,
@@ -704,10 +712,10 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: const EdgeInsets.fromLTRB(6, 4, 14, 8),
                   title: Text(
-                    seed.missing.length == 1
-                        ? 'Also add 1 exercise for ${seed.preset.title}'
-                        : 'Also add ${seed.missing.length} exercises for '
-                            '${seed.preset.title}',
+                    context.strings.alsoAddExercises(
+                      seed.missing.length,
+                      seed.preset.title,
+                    ),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   subtitle: Text(
@@ -725,12 +733,14 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
             TextFormField(
               controller: _titleController,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Day name',
-                hintText: 'Example: Leg day',
+              decoration: InputDecoration(
+                labelText: context.strings.dayName,
+                hintText: context.strings.dayNameHint,
               ),
               validator: (value) {
-                if ((value ?? '').trim().isEmpty) return 'Enter a day name.';
+                if ((value ?? '').trim().isEmpty) {
+                  return context.strings.enterDayName;
+                }
                 return null;
               },
             ),
@@ -738,9 +748,9 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
             TextFormField(
               controller: _focusController,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Focus',
-                hintText: 'Example: Quads, hamstrings, calves',
+              decoration: InputDecoration(
+                labelText: context.strings.focus,
+                hintText: context.strings.focusHint,
               ),
             ),
             const SizedBox(height: 6),
@@ -748,9 +758,9 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
               contentPadding: EdgeInsets.zero,
               value: _isRestDay,
               onChanged: (value) => setState(() => _isRestDay = value),
-              title: const Text('Rest day'),
+              title: Text(context.strings.restDay),
               subtitle: Text(
-                'Hides the set progress bar on this day.',
+                context.strings.restDayHint,
                 style: TextStyle(color: context.palette.mutedText),
               ),
             ),
@@ -758,12 +768,12 @@ class _DayEditorSheetState extends State<_DayEditorSheet> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save_outlined),
-              label: const Text('Save changes'),
+              label: Text(context.strings.saveChanges),
             ),
             const SizedBox(height: 4),
             TextButton(
               onPressed: _restoreDefault,
-              child: const Text('Reset to the built-in split'),
+              child: Text(context.strings.resetBuiltInSplit),
             ),
           ],
         ),
@@ -915,14 +925,15 @@ class _DayPickerRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        weekdayName(day.weekday),
+                        context.strings.weekday(day.weekday),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         day.title.trim().isEmpty
-                            ? '$exerciseCount exercises'
-                            : '${day.title} · $exerciseCount exercises',
+                            ? context.strings.exercisesCount(exerciseCount)
+                            : '${day.title} · '
+                                '${context.strings.exercisesCount(exerciseCount)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -1016,20 +1027,24 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              widget.technique == null ? 'Add gym technique' : 'Edit technique',
+              widget.technique == null
+                  ? context.strings.addGymTechnique
+                  : context.strings.editTechnique,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 18),
             DropdownButtonFormField<int>(
               value: _weekday,
-              decoration: const InputDecoration(
-                labelText: 'Training day',
+              decoration: InputDecoration(
+                labelText: context.strings.trainingDay,
               ),
               items: [
                 for (var weekday = 1; weekday <= 7; weekday++)
                   DropdownMenuItem(
                     value: weekday,
-                    child: Text(gymDayLabel(weekday, widget.days)),
+                    child: Text(
+                      gymDayLabel(context.strings, weekday, widget.days),
+                    ),
                   ),
               ],
               onChanged: (value) {
@@ -1041,9 +1056,9 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               controller: _nameController,
               autofocus: widget.technique == null,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Exercise name',
-                hintText: 'Example: Dumbbell pullover',
+              decoration: InputDecoration(
+                labelText: context.strings.exerciseName,
+                hintText: context.strings.exerciseNameHint,
               ),
               validator: _validateName,
             ),
@@ -1052,9 +1067,9 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               controller: _cueController,
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Quick coaching cue',
-                hintText: 'Example: Keep ribs down and move slowly.',
+              decoration: InputDecoration(
+                labelText: context.strings.coachingCue,
+                hintText: context.strings.coachingCueHint,
               ),
             ),
             const SizedBox(height: 14),
@@ -1063,9 +1078,9 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               textCapitalization: TextCapitalization.sentences,
               minLines: 4,
               maxLines: 7,
-              decoration: const InputDecoration(
-                labelText: 'Technique steps',
-                hintText: 'Enter one step per line',
+              decoration: InputDecoration(
+                labelText: context.strings.techniqueSteps,
+                hintText: context.strings.oneStepPerLine,
                 alignLabelWithHint: true,
               ),
             ),
@@ -1073,9 +1088,9 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
             TextFormField(
               controller: _imageUrlController,
               keyboardType: TextInputType.url,
-              decoration: const InputDecoration(
-                labelText: 'Image URL (optional)',
-                prefixIcon: Icon(Icons.link_rounded),
+              decoration: InputDecoration(
+                labelText: context.strings.imageUrlOptional,
+                prefixIcon: const Icon(Icons.link_rounded),
               ),
               validator: _validateImageUrl,
             ),
@@ -1084,7 +1099,9 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
               onPressed: _save,
               icon: const Icon(Icons.save_outlined),
               label: Text(
-                widget.technique == null ? 'Add technique' : 'Save changes',
+                widget.technique == null
+                    ? context.strings.addTechnique
+                    : context.strings.saveChanges,
               ),
             ),
           ],
@@ -1095,14 +1112,14 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
 
   String? _validateName(String? value) {
     final name = value?.trim() ?? '';
-    if (name.isEmpty) return 'Enter an exercise name.';
+    if (name.isEmpty) return context.strings.enterExerciseName;
     final duplicate = widget.existingTechniques.any(
       (technique) =>
           technique.id != widget.technique?.id &&
           technique.weekday == _weekday &&
           technique.name.toLowerCase() == name.toLowerCase(),
     );
-    if (duplicate) return 'This exercise already exists on this day.';
+    if (duplicate) return context.strings.exerciseExistsOnDay;
     return null;
   }
 
@@ -1111,10 +1128,10 @@ class _TechniqueEditorSheetState extends State<_TechniqueEditorSheet> {
     if (text.isEmpty) return null;
     final uri = Uri.tryParse(text);
     if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
-      return 'Enter a complete image URL.';
+      return context.strings.enterCompleteUrl;
     }
     if (uri.scheme != 'http' && uri.scheme != 'https') {
-      return 'Use an http or https image URL.';
+      return context.strings.useHttpUrl;
     }
     return null;
   }

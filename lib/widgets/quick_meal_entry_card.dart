@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/daily_log_model.dart';
 import '../providers/diet_provider.dart';
 import '../theme/app_palette.dart';
@@ -40,7 +41,7 @@ class QuickMealEntryCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${_slotLabel(slot)} food',
+                  context.strings.slotFood(slot),
                   style: TextStyle(
                     color: palette.ink,
                     fontWeight: FontWeight.w800,
@@ -61,7 +62,7 @@ class QuickMealEntryCard extends ConsumerWidget {
           OutlinedButton.icon(
             onPressed: () => _openFoodModal(context, ref),
             icon: const Icon(Icons.add_rounded),
-            label: const Text('Add food'),
+            label: Text(context.strings.addFood),
           ),
           if (mealItems.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -89,7 +90,7 @@ class QuickMealEntryCard extends ConsumerWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Remove food',
+                      tooltip: context.strings.removeFood,
                       onPressed: () {
                         ref.read(dailyLogProvider.notifier).removeMealItem(
                               slot,
@@ -136,16 +137,5 @@ class QuickMealEntryCard extends ConsumerWidget {
         );
       },
     );
-  }
-
-  String _slotLabel(MealSlot slot) {
-    switch (slot) {
-      case MealSlot.breakfast:
-        return 'Breakfast';
-      case MealSlot.lunch:
-        return 'Lunch';
-      case MealSlot.dinner:
-        return 'Dinner';
-    }
   }
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/user_modules_provider.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/theme_mode_selector.dart';
 
 /// Shown once, right after a brand-new account is created.
 ///
@@ -48,48 +50,49 @@ class _ModuleSetupScreenState extends ConsumerState<ModuleSetupScreen> {
                       color: palette.primary,
                     ),
                     const SizedBox(height: 16),
+                    // First-run: offer the language before any reading is
+                    // needed, so a Myanmar reader is not stuck in English.
+                    const LanguageSelector(),
+                    const SizedBox(height: 24),
                     Text(
-                      'What do you want to track?',
+                      context.strings.whatToTrack,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Pick what matters to you. You can change this anytime '
-                      'in Settings, and the app stays simple around only what '
-                      "you've turned on.",
+                      context.strings.whatToTrackHint,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: palette.bodyText, height: 1.4),
                     ),
                     const SizedBox(height: 24),
                     _ModuleTile(
                       icon: Icons.restaurant_rounded,
-                      title: 'Daily Food Management',
-                      subtitle: 'Log meals and track calories.',
+                      title: context.strings.moduleDiet,
+                      subtitle: context.strings.moduleDietHint,
                       value: _diet,
                       onChanged: (value) => setState(() => _diet = value),
                     ),
                     const SizedBox(height: 10),
                     _ModuleTile(
                       icon: Icons.schedule_rounded,
-                      title: 'Time Management',
-                      subtitle: 'Plan your day and track routines.',
+                      title: context.strings.moduleTime,
+                      subtitle: context.strings.moduleTimeHint,
                       value: _time,
                       onChanged: (value) => setState(() => _time = value),
                     ),
                     const SizedBox(height: 10),
                     _ModuleTile(
                       icon: Icons.fitness_center_rounded,
-                      title: 'Gym Management',
-                      subtitle: 'Plan workouts and log gym sets.',
+                      title: context.strings.moduleGym,
+                      subtitle: context.strings.moduleGymHint,
                       value: _gym,
                       onChanged: (value) => setState(() => _gym = value),
                     ),
                     if (!_hasAnySelected) ...[
                       const SizedBox(height: 14),
                       Text(
-                        'Keep at least one on — the app needs something to '
-                        'show you.',
+                        context.strings.keepOneOn,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: palette.danger,
@@ -110,7 +113,11 @@ class _ModuleSetupScreenState extends ConsumerState<ModuleSetupScreen> {
                               ),
                             )
                           : const Icon(Icons.arrow_forward_rounded),
-                      label: Text(_isSaving ? 'Setting up...' : 'Continue'),
+                      label: Text(
+                        _isSaving
+                            ? context.strings.settingUp
+                            : context.strings.continueLabel,
+                      ),
                     ),
                   ],
                 ),

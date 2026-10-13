@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/task_model.dart';
 import '../providers/routine_provider.dart';
 import '../theme/app_palette.dart';
@@ -15,37 +16,37 @@ class RoutineManagerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tasks = ref.watch(routineProvider);
+    final strings = context.strings;
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.routines),
-      appBar: AppBar(title: const Text('Manage routines')),
+      appBar: AppBar(title: Text(strings.manageRoutines)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add task'),
+        label: Text(strings.addTask),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
-          const SectionHeading(
-            eyebrow: 'YOUR SCHEDULE',
-            title: 'Keep the day realistic',
+          SectionHeading(
+            eyebrow: strings.yourScheduleEyebrow,
+            title: strings.keepDayRealistic,
           ),
           const SizedBox(height: 7),
           Text(
-            'Your original tasks are preserved. Edit their time, days, title, '
-            'or category—or add a routine that fits your life.',
+            strings.routinesIntro,
             style: TextStyle(color: context.palette.mutedText, height: 1.45),
           ),
           const SizedBox(height: 22),
           if (tasks.isEmpty)
             EmptyState(
               icon: Icons.event_note_outlined,
-              title: 'No tasks yet',
-              message: 'Add the first part of your day to get started.',
+              title: strings.noTasksYet,
+              message: strings.noTasksYetHint,
               iconColor: context.palette.primary,
               iconBackground: context.palette.blueSoft,
-              actionLabel: 'Add your first task',
+              actionLabel: strings.addFirstTask,
               onAction: () => _openEditor(context),
             )
           else
@@ -93,23 +94,21 @@ class RoutineManagerScreen extends ConsumerWidget {
     WidgetRef ref,
     TaskModel task,
   ) async {
+    final strings = context.strings;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete this task?'),
-        content: Text(
-          '“${task.title}” will be removed from your future schedule. '
-          'Past history remains available.',
-        ),
+        title: Text(strings.deleteTaskTitle),
+        content: Text(strings.deleteTaskBody(task.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: context.palette.danger),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(strings.delete),
           ),
         ],
       ),
@@ -175,7 +174,7 @@ class _TaskRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    daySummary(task.recurringDays),
+                    daySummary(context.strings, task.recurringDays),
                     style: TextStyle(
                       color: context.palette.bodyText,
                       fontSize: 11,
@@ -186,21 +185,24 @@ class _TaskRow extends StatelessWidget {
               ),
             ),
             PopupMenuButton<String>(
-              tooltip: 'Task options',
+              tooltip: context.strings.taskOptions,
               onSelected: (value) {
                 if (value == 'edit') onEdit();
                 if (value == 'delete') onDelete();
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'edit',
-                  child: MenuRow(icon: Icons.edit_outlined, label: 'Edit'),
+                  child: MenuRow(
+                    icon: Icons.edit_outlined,
+                    label: context.strings.edit,
+                  ),
                 ),
                 PopupMenuItem(
                   value: 'delete',
                   child: MenuRow(
                     icon: Icons.delete_outline_rounded,
-                    label: 'Delete',
+                    label: context.strings.delete,
                     color: context.palette.danger,
                   ),
                 ),
@@ -251,9 +253,12 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.task != null;
+    final strings = context.strings;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? 'Edit task' : 'New task')),
+      appBar: AppBar(
+        title: Text(isEditing ? strings.editTask : strings.newTask),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -262,22 +267,22 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
             TextFormField(
               controller: _titleController,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Task name',
-                prefixIcon: Icon(Icons.edit_outlined),
+              decoration: InputDecoration(
+                labelText: strings.taskName,
+                prefixIcon: const Icon(Icons.edit_outlined),
               ),
               validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Enter a task name'
+                  ? strings.enterTaskName
                   : null,
             ),
             const SizedBox(height: 18),
-            const _FieldLabel('TIME'),
+            _FieldLabel(strings.timeLabel),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: _TimeField(
-                    label: 'Starts',
+                    label: strings.starts,
                     value: formatTime(_startTime),
                     onTap: () => _pickTime(isStart: true),
                   ),
@@ -285,7 +290,7 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _TimeField(
-                    label: 'Ends',
+                    label: strings.ends,
                     value: formatTime(_endTime),
                     onTap: () => _pickTime(isStart: false),
                   ),
@@ -293,7 +298,7 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            const _FieldLabel('REPEATS ON'),
+            _FieldLabel(strings.repeatsOn),
             const SizedBox(height: 8),
             Wrap(
               spacing: 7,
@@ -302,7 +307,7 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
                 for (var day = 1; day <= 7; day++)
                   FilterChip(
                     label: Text(
-                      shortDay(day),
+                      strings.weekdayShort(day),
                       style: TextStyle(
                         color: _days.contains(day)
                             ? context.palette.onPrimary
@@ -326,12 +331,12 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
             if (_days.isEmpty) ...[
               const SizedBox(height: 7),
               Text(
-                'Select at least one day.',
+                strings.selectOneDay,
                 style: TextStyle(color: context.palette.danger, fontSize: 12),
               ),
             ],
             const SizedBox(height: 20),
-            const _FieldLabel('CATEGORY'),
+            _FieldLabel(strings.categoryEyebrow),
             const SizedBox(height: 8),
             DropdownButtonFormField<RoutineCategory>(
               value: _category,
@@ -342,7 +347,7 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
                 for (final category in RoutineCategory.values)
                   DropdownMenuItem(
                     value: category,
-                    child: Text(categoryLabel(category)),
+                    child: Text(strings.category(category)),
                   ),
               ],
               onChanged: (category) {
@@ -354,7 +359,9 @@ class _TaskEditorScreenState extends ConsumerState<TaskEditorScreen> {
               onPressed: _save,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 13),
-                child: Text(isEditing ? 'Save changes' : 'Add to routine'),
+                child: Text(
+                  isEditing ? strings.saveChanges : strings.addToRoutine,
+                ),
               ),
             ),
           ],
@@ -460,31 +467,14 @@ IconData categoryIcon(RoutineCategory category) {
   };
 }
 
-String categoryLabel(RoutineCategory category) {
-  return switch (category) {
-    RoutineCategory.meal => 'Meal',
-    RoutineCategory.work => 'Work',
-    RoutineCategory.rest => 'Rest',
-    RoutineCategory.gym => 'Gym',
-    RoutineCategory.study => 'Study',
-    RoutineCategory.gaming => 'Gaming',
-    RoutineCategory.routine => 'Routine',
-  };
-}
-
-String daySummary(List<int> days) {
-  if (days.length == 7) return 'Every day';
+String daySummary(AppStrings strings, List<int> days) {
+  if (days.length == 7) return strings.everyDay;
   if (days.length == 5 &&
       const {1, 2, 3, 4, 5}.every(days.contains)) {
-    return 'Weekdays';
+    return strings.weekdaysOnly;
   }
   final sorted = [...days]..sort();
-  return sorted.map(shortDay).join(', ');
-}
-
-String shortDay(int day) {
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return labels[day - 1];
+  return sorted.map(strings.weekdayShort).join(strings.listSeparator);
 }
 
 TimeOfDay? parseTime(String? label) {

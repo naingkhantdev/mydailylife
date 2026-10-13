@@ -2,11 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/auth_provider.dart';
 import '../providers/firestore_provider.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/theme_mode_selector.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -84,18 +86,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     const SizedBox(height: 22),
                     Text(
                       _isSignUp
-                          ? 'Create your account'
-                          : 'Welcome to RoutineSync',
+                          ? context.strings.createYourAccount
+                          : context.strings.welcome,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _isSignUp
-                          ? 'Your routines, meals, and gym plan stay private to '
-                              'your account.'
-                          : 'Sign in to load your daily routine, meals, and gym '
-                              'plan.',
+                          ? context.strings.signUpIntro
+                          : context.strings.signInIntro,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: context.palette.bodyText,
@@ -120,7 +120,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
-                              labelText: 'Email',
+                              labelText: context.strings.email,
                               hintText: 'you@example.com',
                               errorText: _emailErrorText,
                               prefixIcon:
@@ -128,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Enter your email';
+                                return context.strings.enterYourEmail;
                               }
                               return null;
                             },
@@ -144,17 +144,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ? TextInputAction.next
                                 : TextInputAction.done,
                             decoration: InputDecoration(
-                              labelText: 'Password',
+                              labelText: context.strings.password,
                               helperText: _isSignUp
-                                  ? 'At least 6 characters'
+                                  ? context.strings.atLeast6Chars
                                   : null,
                               errorText: _passwordErrorText,
                               prefixIcon:
                                   const Icon(Icons.lock_outline_rounded),
                               suffixIcon: IconButton(
                                 tooltip: _obscurePassword
-                                    ? 'Show password'
-                                    : 'Hide password',
+                                    ? context.strings.showPassword
+                                    : context.strings.hidePassword,
                                 onPressed: () {
                                   setState(() {
                                     _obscurePassword = !_obscurePassword;
@@ -181,9 +181,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               controller: _confirmPasswordController,
                               obscureText: _obscurePassword,
                               textInputAction: TextInputAction.done,
-                              decoration: const InputDecoration(
-                                labelText: 'Confirm password',
-                                prefixIcon: Icon(Icons.lock_reset_rounded),
+                              decoration: InputDecoration(
+                                labelText: context.strings.confirmPassword,
+                                prefixIcon:
+                                    const Icon(Icons.lock_reset_rounded),
                               ),
                               onFieldSubmitted: (_) => _submit(),
                             ),
@@ -203,7 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ),
                                 Expanded(
                                   child: Text(
-                                    'Remember me',
+                                    context.strings.rememberMe,
                                     style: TextStyle(
                                       color: context.palette.bodyText,
                                       fontSize: 13,
@@ -213,7 +214,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 TextButton(
                                   onPressed:
                                       _isLoading ? null : _forgotPassword,
-                                  child: const Text('Forgot?'),
+                                  child: Text(context.strings.forgot),
                                 ),
                               ],
                             ),
@@ -244,8 +245,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             icon: const _GoogleMark(),
                             label: Text(
                               _isSignUp
-                                  ? 'Sign up with Google'
-                                  : 'Continue with Google',
+                                  ? context.strings.signUpWithGoogle
+                                  : context.strings.continueWithGoogle,
                             ),
                           ),
                         ],
@@ -256,10 +257,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       onPressed: _isLoading ? null : _toggleMode,
                       child: Text(
                         _isSignUp
-                            ? 'Already have an account? Sign in'
-                            : "New here? Create an account",
+                            ? context.strings.haveAccountSignIn
+                            : context.strings.newHereCreate,
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    // The first screen anyone sees, so the language switch
+                    // has to be reachable before signing in.
+                    const LanguageSelector(),
                         ],
                       ),
                     ),
@@ -274,10 +279,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   String get _submitLabel {
+    final strings = context.strings;
     if (_isLoading) {
-      return _isSignUp ? 'Creating account...' : 'Signing in...';
+      return _isSignUp ? strings.creatingAccount : strings.signingIn;
     }
-    return _isSignUp ? 'Create account' : 'Continue';
+    return _isSignUp ? strings.createAccount : strings.continueLabel;
   }
 
   void _toggleMode() {
@@ -297,14 +303,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     if (password.isEmpty) {
       setState(() {
-        _passwordErrorText = 'Enter a password';
+        _passwordErrorText = context.strings.enterPassword;
       });
       return;
     }
 
     if (_isSignUp && password != _confirmPasswordController.text) {
       setState(() {
-        _passwordErrorText = 'Passwords do not match';
+        _passwordErrorText = context.strings.passwordsDontMatch;
       });
       return;
     }
@@ -337,6 +343,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Future<void> _continueWithGoogle() async {
+    final strings = context.strings;
     setState(() {
       _isLoading = true;
       _passwordErrorText = null;
@@ -354,7 +361,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     } catch (error) {
       // The plugin throws PlatformException for setup problems — a missing
       // SHA-1 fingerprint surfaces here as ApiException: 10.
-      _showMessage('Google sign-in failed: $error');
+      _showMessage(strings.googleSignInFailed(error));
     } finally {
       if (mounted) {
         setState(() {
@@ -368,6 +375,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   /// in the pre-multi-user data — before any screen reads Firestore.
   Future<void> _openWorkspace(User? user, {required bool isNewUser}) async {
     if (user == null) return;
+    final strings = context.strings;
     final error = await syncUserWorkspace(
       ref.read(firestoreServiceProvider),
       user,
@@ -376,7 +384,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     // Shown before navigating: the message belongs to the app-level
     // ScaffoldMessenger, but this screen is disposed by pushReplacement.
     if (error != null) {
-      _showMessage('Signed in, but your data could not be loaded: $error');
+      _showMessage(strings.dataNotLoaded(error));
     }
 
     if (mounted) {
@@ -391,49 +399,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   void _showAuthError(FirebaseAuthException error) {
     if (!mounted) return;
 
+    final strings = context.strings;
     setState(() {
       switch (error.code) {
         case 'invalid-email':
-          _emailErrorText = 'Enter a valid email';
+          _emailErrorText = strings.enterValidEmail;
         case 'email-already-in-use':
-          _emailErrorText = 'That email already has an account. Sign in.';
+          _emailErrorText = strings.emailInUse;
         case 'user-not-found':
         case 'user-disabled':
-          _emailErrorText = 'No account found for this email';
+          _emailErrorText = strings.noAccountForEmail;
         case 'weak-password':
-          _passwordErrorText = 'Use at least 6 characters';
+          _passwordErrorText = strings.useAtLeast6Chars;
         case 'wrong-password':
         case 'invalid-credential':
-          _passwordErrorText = 'Incorrect password';
+          _passwordErrorText = strings.incorrectPassword;
         case 'too-many-requests':
-          _passwordErrorText = 'Too many attempts. Try again later';
+          _passwordErrorText = strings.tooManyAttempts;
         case 'account-exists-with-different-credential':
-          _emailErrorText = 'Sign in with your password, then link Google';
+          _emailErrorText = strings.linkGoogleHint;
         case 'operation-not-allowed':
-          _emailErrorText = 'This sign-in method is disabled in Firebase';
+          _emailErrorText = strings.signInMethodDisabled;
         case 'web-context-canceled':
         case 'canceled':
           break;
         default:
-          _passwordErrorText = 'Sign in failed: ${error.message}';
+          _passwordErrorText = strings.signInFailed(error.message);
       }
     });
   }
 
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
+    final strings = context.strings;
     if (email.isEmpty) {
       setState(() {
-        _emailErrorText = 'Enter your email to reset the password';
+        _emailErrorText = strings.enterEmailToReset;
       });
       return;
     }
 
     try {
       await ref.read(authServiceProvider).sendPasswordResetEmail(email);
-      _showMessage('Password reset email sent to $email');
+      _showMessage(strings.resetEmailSent(email));
     } on FirebaseAuthException catch (error) {
-      _showMessage('Could not send reset email: ${error.message}');
+      _showMessage(strings.resetEmailFailed(error.message));
     }
   }
 
@@ -458,7 +468,7 @@ class _OrDivider extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'or',
+            context.strings.or,
             style: TextStyle(
               color: palette.mutedText,
               fontSize: 12,

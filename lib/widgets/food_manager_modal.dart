@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/daily_log_model.dart';
 import '../providers/food_dictionary_provider.dart';
 import '../theme/app_palette.dart';
@@ -64,14 +65,14 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
                 children: [
                   Expanded(
                     child: Text(
-                      '${_slotLabel(widget.mealSlot)} food',
+                      context.strings.slotFood(widget.mealSlot),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Close',
+                    tooltip: context.strings.close,
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
                   ),
@@ -81,9 +82,9 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
               TextField(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _query = value),
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search_rounded),
-                  labelText: 'Search existing food',
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  labelText: context.strings.searchExistingFood,
                 ),
               ),
               const SizedBox(height: 14),
@@ -97,16 +98,16 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Existing foods',
+                context.strings.existingFoods,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 8),
               if (filteredFoods.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text('No foods found. Create one above.'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(context.strings.noFoodsFound),
                 )
               else
                 for (final food in filteredFoods) _FoodRow(
@@ -136,11 +137,11 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
 
     // Explain the rejection rather than ignoring the tap.
     if (name.isEmpty) {
-      _showProblem('Enter a food name first');
+      _showProblem(context.strings.enterFoodNameFirst);
       return;
     }
     if (calories == null || calories <= 0) {
-      _showProblem('Enter calories as a number');
+      _showProblem(context.strings.enterCaloriesNumber);
       return;
     }
 
@@ -159,23 +160,24 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
 
   Future<void> _showQuantityDialog(MealItem food) async {
     _quantityController.text = '1';
+    final strings = context.strings;
     final quantity = await showDialog<int>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add ${food.name}'),
+          title: Text(strings.addNamed(food.name)),
           content: TextField(
             controller: _quantityController,
             autofocus: true,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Quantity',
+            decoration: InputDecoration(
+              labelText: strings.quantity,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(strings.cancel),
             ),
             FilledButton(
               onPressed: () {
@@ -183,7 +185,7 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
                   int.tryParse(_quantityController.text.trim()),
                 );
               },
-              child: const Text('Add'),
+              child: Text(strings.add),
             ),
           ],
         );
@@ -198,20 +200,21 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
   /// Confirmed, like the routine and technique managers. This was the only
   /// delete in the app that removed data on a single tap with no undo.
   Future<void> _deleteFood(MealItem food) async {
+    final strings = context.strings;
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete food?'),
-        content: Text('"${food.name}" will be removed from your food list.'),
+        title: Text(strings.deleteFoodTitle),
+        content: Text(strings.deleteFoodBody(food.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(
-              'Delete',
+              strings.delete,
               style: TextStyle(color: context.palette.danger),
             ),
           ),
@@ -233,17 +236,6 @@ class _FoodManagerModalState extends ConsumerState<FoodManagerModal> {
       _nameController.clear();
       _calorieController.clear();
     });
-  }
-
-  String _slotLabel(MealSlot slot) {
-    switch (slot) {
-      case MealSlot.breakfast:
-        return 'Breakfast';
-      case MealSlot.lunch:
-        return 'Lunch';
-      case MealSlot.dinner:
-        return 'Dinner';
-    }
   }
 }
 
@@ -279,7 +271,9 @@ class _FoodEditor extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            editingFood == null ? 'Create food' : 'Edit food',
+            editingFood == null
+                ? context.strings.createFood
+                : context.strings.editFood,
             style: TextStyle(
               color: palette.ink,
               fontWeight: FontWeight.w800,
@@ -293,8 +287,8 @@ class _FoodEditor extends StatelessWidget {
                 child: TextField(
                   controller: nameController,
                   onChanged: _fillCaloriesFromSavedFood,
-                  decoration: const InputDecoration(
-                    labelText: 'Food',
+                  decoration: InputDecoration(
+                    labelText: context.strings.food,
                     isDense: true,
                   ),
                 ),
@@ -305,9 +299,9 @@ class _FoodEditor extends StatelessWidget {
                 child: TextField(
                   controller: calorieController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'kcal',
-                    helperText: 'Auto-filled',
+                    helperText: context.strings.autoFilled,
                     isDense: true,
                   ),
                 ),
@@ -320,13 +314,17 @@ class _FoodEditor extends StatelessWidget {
               if (editingFood != null)
                 TextButton(
                   onPressed: onCancel,
-                  child: const Text('Cancel'),
+                  child: Text(context.strings.cancel),
                 ),
               const Spacer(),
               FilledButton.icon(
                 onPressed: onSave,
                 icon: Icon(editingFood == null ? Icons.add : Icons.save),
-                label: Text(editingFood == null ? 'Save food' : 'Save'),
+                label: Text(
+                  editingFood == null
+                      ? context.strings.saveFood
+                      : context.strings.save,
+                ),
               ),
             ],
           ),
@@ -376,7 +374,7 @@ class _FoodRow extends StatelessWidget {
       title: Text(food.name),
       subtitle: Text('${food.calories} kcal'),
       leading: IconButton.filled(
-        tooltip: 'Add to meal',
+        tooltip: context.strings.addToMeal,
         onPressed: onAdd,
         icon: const Icon(Icons.add),
       ),
@@ -384,7 +382,7 @@ class _FoodRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            tooltip: 'Edit food',
+            tooltip: context.strings.editFood,
             onPressed: onEdit,
             icon: const Icon(Icons.edit),
           ),
@@ -392,7 +390,7 @@ class _FoodRow extends StatelessWidget {
           // 48px targets from reading as one control.
           const SizedBox(width: 8),
           IconButton(
-            tooltip: 'Delete food',
+            tooltip: context.strings.deleteFood,
             onPressed: onDelete,
             icon: Icon(
               Icons.delete_outline,

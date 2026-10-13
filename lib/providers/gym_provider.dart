@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/gym_day_model.dart';
 import '../models/gym_technique_model.dart';
 import '../services/firestore_service.dart';
@@ -43,24 +44,13 @@ final gymPlanProvider = Provider<List<GymDay>>((ref) {
   ];
 });
 
-const _weekdayNames = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-
-String weekdayName(int weekday) => _weekdayNames[weekday - 1];
-
 /// Weekday label for the technique manager, e.g. `Monday · Leg day`. The title
-/// comes from the user's own plan, so it changes as soon as the day is renamed.
-String gymDayLabel(int weekday, List<GymDayModel> days) {
+/// comes from the user's own plan, so it changes as soon as the day is renamed;
+/// only the weekday half is translated.
+String gymDayLabel(AppStrings strings, int weekday, List<GymDayModel> days) {
   final title = gymDayFor(weekday, days).title.trim();
-  if (title.isEmpty) return weekdayName(weekday);
-  return '${weekdayName(weekday)} · $title';
+  if (title.isEmpty) return strings.weekday(weekday);
+  return '${strings.weekday(weekday)} · $title';
 }
 
 /// Falls back to the built-in split so a half-written plan never throws.

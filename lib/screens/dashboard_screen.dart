@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/daily_log_model.dart';
 import '../models/routine_history_model.dart';
 import '../models/task_model.dart';
@@ -76,9 +77,11 @@ class DashboardScreen extends ConsumerWidget {
       todayId: todayId,
     );
 
+    final strings = context.strings;
+
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.dashboard),
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(title: Text(strings.dashboard)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
@@ -123,14 +126,14 @@ class DashboardScreen extends ConsumerWidget {
           if (modules.timeEnabled || modules.dietEnabled) ...[
             const SizedBox(height: 28),
             _MinimalHeading(
-              title: 'Last 7 days',
-              actionLabel: 'View all',
+              title: strings.last7Days,
+              actionLabel: strings.viewAll,
               onAction: () => _openHistory(context),
             ),
             const SizedBox(height: 14),
             if (pastDays.isEmpty)
               Text(
-                'Past days appear here once you close out a day.',
+                strings.pastDaysEmpty,
                 style: TextStyle(color: context.palette.mutedText),
               )
             else
@@ -222,30 +225,31 @@ class DashboardScreen extends ConsumerWidget {
     double currentWeight,
   ) async {
     var enteredWeight = currentWeight.toStringAsFixed(1);
+    final strings = context.strings;
     final value = await showDialog<double>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Update current weight'),
+        title: Text(strings.updateCurrentWeight),
         content: TextFormField(
           initialValue: enteredWeight,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           onChanged: (value) => enteredWeight = value,
-          decoration: const InputDecoration(
-            labelText: 'Weight in lb',
-            prefixIcon: Icon(Icons.monitor_weight_outlined),
+          decoration: InputDecoration(
+            labelText: strings.weightInLb,
+            prefixIcon: const Icon(Icons.monitor_weight_outlined),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(
               double.tryParse(enteredWeight.trim()),
             ),
-            child: const Text('Save'),
+            child: Text(strings.save),
           ),
         ],
       ),
@@ -296,7 +300,7 @@ class _TodayHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _dateLabel(date).toUpperCase(),
+                  context.strings.weekdayDate(date).toUpperCase(),
                   style: const TextStyle(
                     color: AppColors.onInkFaint,
                     fontSize: 11,
@@ -306,7 +310,9 @@ class _TodayHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  total == 0 ? 'Rest day' : '$done of $total',
+                  total == 0
+                      ? context.strings.restDay
+                      : context.strings.doneOf(done, total),
                   style: const TextStyle(
                     color: AppColors.onInk,
                     fontSize: 30,
@@ -316,7 +322,9 @@ class _TodayHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  total == 0 ? 'nothing scheduled' : 'routines done',
+                  total == 0
+                      ? context.strings.nothingScheduledLower
+                      : context.strings.routinesDone,
                   style: const TextStyle(
                     color: AppColors.onInkMuted,
                     fontSize: 13,
@@ -357,16 +365,6 @@ class _TodayHero extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _dateLabel(DateTime date) {
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${weekdays[date.weekday - 1]}, '
-        '${months[date.month - 1]} ${date.day}';
   }
 }
 
@@ -416,7 +414,7 @@ class _FactGrid extends StatelessWidget {
                 width: itemWidth,
                 icon: Icons.local_fire_department_rounded,
                 iconColor: context.palette.coral,
-                label: 'Calories',
+                label: context.strings.calories,
                 value: formatCount(calories),
                 suffix: 'kcal',
               ),
@@ -425,7 +423,7 @@ class _FactGrid extends StatelessWidget {
                 width: itemWidth,
                 icon: Icons.fitness_center_rounded,
                 iconColor: context.palette.violet,
-                label: 'Gym sets',
+                label: context.strings.gymSets,
                 // Out of the exercises started, not the whole day's menu, so
                 // an untouched day reads as a plain zero rather than 0/48.
                 value: gymSetsTotal == 0 ? '0' : '$gymSetsDone/$gymSetsTotal',
@@ -436,7 +434,7 @@ class _FactGrid extends StatelessWidget {
                 width: itemWidth,
                 icon: Icons.task_alt_rounded,
                 iconColor: context.palette.success,
-                label: 'Routines',
+                label: context.strings.routines,
                 value: '$done/$total',
                 suffix: '',
               ),
@@ -444,7 +442,7 @@ class _FactGrid extends StatelessWidget {
               width: itemWidth,
               icon: Icons.monitor_weight_outlined,
               iconColor: context.palette.blue,
-              label: 'Weight',
+              label: context.strings.weight,
               value: weight.toStringAsFixed(1),
               suffix: 'lb',
               note: _changeLabel(weightChange),
@@ -663,7 +661,9 @@ class _NextStepRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              task == null ? 'Every routine has a status' : task.title,
+              task == null
+                  ? context.strings.everyRoutineHasStatus
+                  : task.title,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: context.palette.ink,
@@ -673,7 +673,7 @@ class _NextStepRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            _trailing(task),
+            _trailing(context.strings, task),
             style: TextStyle(
               color: context.palette.mutedText,
               fontSize: 12,
@@ -685,14 +685,14 @@ class _NextStepRow extends StatelessWidget {
     );
   }
 
-  String _trailing(TaskModel? task) {
+  String _trailing(AppStrings strings, TaskModel? task) {
     if (task != null && task.startTime.isNotEmpty) {
       return task.startTime;
     }
     if (missedCount > 0) {
-      return '$missedCount missed';
+      return strings.missedCount(missedCount);
     }
-    return '$pendingCount open';
+    return strings.openCount(pendingCount);
   }
 }
 
@@ -746,7 +746,7 @@ class _HistoryRow extends StatelessWidget {
           SizedBox(
             width: 56,
             child: Text(
-              _label(day.date),
+              context.strings.weekdayDay(day.date),
               style: TextStyle(
                 color: palette.bodyText,
                 fontSize: 13,
@@ -795,10 +795,5 @@ class _HistoryRow extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _label(DateTime date) {
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return '${weekdays[date.weekday - 1]} ${date.day}';
   }
 }

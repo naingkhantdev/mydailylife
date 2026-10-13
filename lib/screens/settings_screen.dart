@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/auth_provider.dart';
 import '../providers/reminder_provider.dart';
 import '../providers/sync_status_provider.dart';
@@ -21,107 +22,114 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final strings = context.strings;
     final user = ref.watch(currentUserProvider);
-    final displayId = user?.email ?? user?.displayName ?? 'Signed out';
+    final displayId = user?.email ?? user?.displayName ?? strings.signedOut;
     final sync = ref.watch(syncStatusProvider);
     final modules = ref.watch(userModulesProvider);
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.settings),
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(strings.settings)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          const SectionHeading(
-            eyebrow: 'APPEARANCE',
-            title: 'Theme',
+          SectionHeading(
+            eyebrow: strings.languageEyebrow,
+            title: strings.appLanguage,
+          ),
+          const SizedBox(height: 14),
+          const LanguageSelector(),
+          const SizedBox(height: 26),
+          SectionHeading(
+            eyebrow: strings.appearanceEyebrow,
+            title: strings.theme,
           ),
           const SizedBox(height: 6),
           Text(
-            'Auto follows your phone, so the app switches with it at night.',
+            strings.themeHint,
             style: TextStyle(color: context.palette.mutedText, height: 1.4),
           ),
           const SizedBox(height: 14),
           const ThemeModeSelector(),
           const SizedBox(height: 26),
-          const SectionHeading(
-            eyebrow: 'REMINDERS',
-            title: 'Routine alerts',
+          SectionHeading(
+            eyebrow: strings.remindersEyebrow,
+            title: strings.routineAlerts,
           ),
           const SizedBox(height: 12),
           const _ReminderSwitch(),
           const SizedBox(height: 26),
-          const SectionHeading(
-            eyebrow: 'FEATURES',
-            title: 'Manage features',
+          SectionHeading(
+            eyebrow: strings.featuresEyebrow,
+            title: strings.manageFeatures,
           ),
           const SizedBox(height: 6),
           Text(
-            'Turn off what you do not use — the drawer and Home screen stay '
-            'simple around only what is on.',
+            strings.manageFeaturesHint,
             style: TextStyle(color: context.palette.mutedText, height: 1.4),
           ),
           const SizedBox(height: 12),
           _ModuleSwitch(
             icon: Icons.restaurant_rounded,
-            title: 'Daily Food Management',
-            subtitle: 'Log meals and track calories.',
+            title: strings.moduleDiet,
+            subtitle: strings.moduleDietHint,
             value: modules.dietEnabled,
             onChanged: (value) => ref.read(userModulesProvider.notifier)
                 .setModules(modules.copyWith(dietEnabled: value)),
           ),
           _ModuleSwitch(
             icon: Icons.schedule_rounded,
-            title: 'Time Management',
-            subtitle: 'Plan your day and track routines.',
+            title: strings.moduleTime,
+            subtitle: strings.moduleTimeHint,
             value: modules.timeEnabled,
             onChanged: (value) => ref.read(userModulesProvider.notifier)
                 .setModules(modules.copyWith(timeEnabled: value)),
           ),
           _ModuleSwitch(
             icon: Icons.fitness_center_rounded,
-            title: 'Gym Management',
-            subtitle: 'Plan workouts and log gym sets.',
+            title: strings.moduleGym,
+            subtitle: strings.moduleGymHint,
             value: modules.gymEnabled,
             onChanged: (value) => ref.read(userModulesProvider.notifier)
                 .setModules(modules.copyWith(gymEnabled: value)),
           ),
           if (modules.timeEnabled) ...[
             const SizedBox(height: 26),
-            const SectionHeading(
-              eyebrow: 'MORE SCREENS',
-              title: 'Logs & planning',
+            SectionHeading(
+              eyebrow: strings.moreScreensEyebrow,
+              title: strings.logsAndPlanning,
             ),
             const SizedBox(height: 12),
-            const _SettingsLink(
+            _SettingsLink(
               icon: Icons.work_outline_rounded,
-              title: 'Work log',
-              subtitle: 'What you got done today',
+              title: strings.workLog,
+              subtitle: strings.workLogHint,
               route: AppRoutes.workLog,
             ),
-            const _SettingsLink(
+            _SettingsLink(
               icon: Icons.nightlight_round,
-              title: 'Evening split',
-              subtitle: 'Study and gaming notes',
+              title: strings.eveningSplit,
+              subtitle: strings.eveningSplitHint,
               route: AppRoutes.nightSplit,
             ),
-            const _SettingsLink(
+            _SettingsLink(
               icon: Icons.history_rounded,
-              title: 'History',
-              subtitle: 'Past days, routines and meals',
+              title: strings.history,
+              subtitle: strings.historyHint,
               route: AppRoutes.history,
             ),
-            const _SettingsLink(
+            _SettingsLink(
               icon: Icons.edit_calendar_rounded,
-              title: 'Routines',
-              subtitle: 'Edit the recurring day plan',
+              title: strings.routines,
+              subtitle: strings.routinesHint,
               route: AppRoutes.routines,
             ),
           ],
           const SizedBox(height: 26),
-          const SectionHeading(
-            eyebrow: 'ACCOUNT',
-            title: 'Your data',
+          SectionHeading(
+            eyebrow: strings.accountEyebrow,
+            title: strings.yourData,
           ),
           const SizedBox(height: 12),
           Container(
@@ -162,11 +170,10 @@ class SettingsScreen extends ConsumerWidget {
                       // was saved whether or not any write had succeeded.
                       Text(
                         sync.hasUnsaved
-                            ? '${sync.unsaved} change'
-                                '${sync.unsaved == 1 ? '' : 's'} not saved yet'
+                            ? strings.unsavedChanges(sync.unsaved)
                             : sync.isSaving
-                                ? 'Saving…'
-                                : 'All changes saved. Only you can see them.',
+                                ? strings.saving
+                                : strings.allSaved,
                         style: TextStyle(
                           color: sync.hasUnsaved
                               ? context.palette.warning
@@ -187,14 +194,14 @@ class SettingsScreen extends ConsumerWidget {
                   ? null
                   : ref.read(syncStatusProvider.notifier).retry,
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Retry now'),
+              label: Text(strings.retryNow),
             ),
           ],
           const SizedBox(height: 14),
           OutlinedButton.icon(
             onPressed: () => _signOut(context, ref),
             icon: const Icon(Icons.logout_rounded, size: 18),
-            label: const Text('Sign out'),
+            label: Text(strings.signOut),
           ),
         ],
       ),
@@ -222,6 +229,7 @@ class _ReminderSwitch extends ConsumerWidget {
     final controller = ref.read(reminderProvider.notifier);
     final isSupported = controller.isSupported;
     final count = controller.scheduledCount;
+    final strings = context.strings;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 8, 6),
@@ -247,7 +255,7 @@ class _ReminderSwitch extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Remind me when a routine starts',
+                  strings.remindRoutineStart,
                   style: TextStyle(
                     color: context.palette.ink,
                     fontWeight: FontWeight.w700,
@@ -255,7 +263,7 @@ class _ReminderSwitch extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _subtitle(settings, isSupported, count),
+                  _subtitle(strings, settings, isSupported, count),
                   style: TextStyle(
                     color: settings.permissionDenied || !isSupported
                         ? context.palette.warning
@@ -277,22 +285,25 @@ class _ReminderSwitch extends ConsumerWidget {
     );
   }
 
-  String _subtitle(ReminderSettings settings, bool isSupported, int count) {
+  String _subtitle(
+    AppStrings strings,
+    ReminderSettings settings,
+    bool isSupported,
+    int count,
+  ) {
     if (!isSupported) {
-      return 'Not available on this device.';
+      return strings.remindersUnavailable;
     }
     if (settings.permissionDenied) {
-      return 'Blocked in system settings — allow notifications first.';
+      return strings.remindersBlocked;
     }
     if (settings.isBusy) {
-      return 'Updating…';
+      return strings.updating;
     }
     if (!settings.isEnabled) {
-      return 'Uses the start times already on your routines.';
+      return strings.remindersOffHint;
     }
-    return count == 1
-        ? '1 weekly reminder scheduled.'
-        : '$count weekly reminders scheduled.';
+    return strings.remindersScheduled(count);
   }
 }
 

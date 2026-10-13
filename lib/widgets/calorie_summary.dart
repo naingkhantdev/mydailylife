@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_colors.dart';
 import '../utils/number_format.dart';
 import 'dark_hero_card.dart';
@@ -18,9 +19,10 @@ class CalorieSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = (totalCalories / goalCalories).clamp(0.0, 1.0);
     final remaining = goalCalories - totalCalories;
+    final strings = context.strings;
     final brief = remaining >= 0
-        ? '$remaining kcal left in today\'s goal.'
-        : '${-remaining} kcal over today\'s goal.';
+        ? strings.kcalLeftInGoal(remaining)
+        : strings.kcalOverGoal(-remaining);
 
     return DarkHeroCard(
       child: Row(
@@ -30,8 +32,8 @@ class CalorieSummary extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const DarkHeroBadge(
-                  label: 'TODAY\'S INTAKE',
+                DarkHeroBadge(
+                  label: strings.todaysIntake,
                   icon: Icons.local_fire_department_rounded,
                 ),
                 const SizedBox(height: 14),

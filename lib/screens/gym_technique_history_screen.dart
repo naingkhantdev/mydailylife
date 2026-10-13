@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_radii.dart';
@@ -37,9 +38,8 @@ class GymTechniqueHistoryScreen extends ConsumerWidget {
       body: entries.isEmpty
           ? EmptyState(
               icon: Icons.history_rounded,
-              title: 'No history yet',
-              message:
-                  'Log a set or a weight for $exercise and it will show up here.',
+              title: context.strings.noHistoryYet,
+              message: context.strings.noHistoryYetHint(exercise),
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -82,7 +82,7 @@ class _HistorySummary extends StatelessWidget {
           Expanded(
             child: _SummaryStat(
               value: '$sessionCount',
-              label: sessionCount == 1 ? 'SESSION' : 'SESSIONS',
+              label: context.strings.sessionsLabel(sessionCount),
             ),
           ),
           Container(width: 1, height: 30, color: palette.divider),
@@ -90,7 +90,7 @@ class _HistorySummary extends StatelessWidget {
             child: _SummaryStat(
               value:
                   bestWeightKg > 0 ? '${formatGymWeightKg(bestWeightKg)} kg' : '—',
-              label: 'BEST LIFT',
+              label: context.strings.bestLift,
             ),
           ),
         ],
@@ -159,7 +159,7 @@ class _HistoryEntryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  gymWeekdayNames[date.weekday - 1],
+                  context.strings.weekday(date.weekday),
                   style: TextStyle(
                     color: palette.ink,
                     fontWeight: FontWeight.w800,
@@ -167,12 +167,15 @@ class _HistoryEntryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  session.hasWeight
-                      ? '${session.completedSets.length}/${session.targetSets} sets · '
-                          '${session.targetReps} reps · '
-                          '${formatGymWeightKg(session.weightKg)} kg'
-                      : '${session.completedSets.length}/${session.targetSets} sets · '
-                          '${session.targetReps} reps',
+                  [
+                    context.strings.setsReps(
+                      session.completedSets.length,
+                      session.targetSets,
+                      session.targetReps,
+                    ),
+                    if (session.hasWeight)
+                      '${formatGymWeightKg(session.weightKg)} kg',
+                  ].join(' · '),
                   style: TextStyle(color: palette.mutedText, fontSize: 12),
                 ),
               ],
@@ -210,7 +213,7 @@ class _DateBadge extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            gymMonthAbbreviations[date.month - 1],
+            context.strings.monthShort(date.month).toUpperCase(),
             style: TextStyle(
               color: palette.primary,
               fontSize: 9,

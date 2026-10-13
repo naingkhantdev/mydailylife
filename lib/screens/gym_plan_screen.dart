@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/gym_provider.dart';
 import '../providers/gym_session_provider.dart';
 import '../theme/app_colors.dart';
@@ -25,14 +26,15 @@ class GymPlanScreen extends ConsumerWidget {
     final started =
         sessionController.startedExercises(todayGym.exercises).length;
     final volumeKg = sessionController.todayVolumeKg;
+    final strings = context.strings;
 
     return Scaffold(
       drawer: const AppDrawer(currentRoute: AppRoutes.gym),
       appBar: AppBar(
-        title: const Text('Gym technique'),
+        title: Text(strings.gymTechnique),
         actions: [
           IconButton(
-            tooltip: 'Manage techniques',
+            tooltip: strings.manageTechniques,
             onPressed: () => Navigator.of(context)
                 .pushReplacementNamed(AppRoutes.gymTechniques),
             icon: const Icon(Icons.edit_note_rounded),
@@ -64,9 +66,9 @@ class GymPlanScreen extends ConsumerWidget {
                 // A rest day has nothing to count, so an empty progress bar
                 // would only read as an unfinished workout.
                 if (todayGym.isRestDay)
-                  const Text(
-                    'Recovery day — no sets to log.',
-                    style: TextStyle(color: AppColors.onInkMuted),
+                  Text(
+                    strings.recoveryNoSets,
+                    style: const TextStyle(color: AppColors.onInkMuted),
                   )
                 else ...[
                   LinearProgressIndicator(
@@ -84,12 +86,15 @@ class GymPlanScreen extends ConsumerWidget {
                     // Volume joins the line once a weight has been recorded;
                     // an exercise without one contributes nothing to it.
                     started == 0
-                        ? '${todayGym.exercises.length} exercises · '
-                            'tick a set to start the day'
+                        ? strings.exercisesTickToStart(todayGym.exercises.length)
                         : volumeKg > 0
-                            ? '$completed / $target sets · $started exercises · '
-                                '${formatCount(volumeKg)} kg moved'
-                            : '$completed / $target sets · $started exercises',
+                            ? '${strings.setsExercisesProgress(completed, target, started)}'
+                                ' · ${strings.kgMoved(formatCount(volumeKg))}'
+                            : strings.setsExercisesProgress(
+                                completed,
+                                target,
+                                started,
+                              ),
                     style: const TextStyle(color: AppColors.onInkMuted),
                   ),
                 ],
@@ -100,7 +105,7 @@ class GymPlanScreen extends ConsumerWidget {
           GymTechniqueCard(gymDay: todayGym),
           const SizedBox(height: 20),
           Text(
-            'Weekly plan',
+            strings.weeklyPlan,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -162,7 +167,7 @@ class _GymDaySummary extends StatelessWidget {
           ),
           if (isToday)
             Text(
-              'Today',
+              context.strings.today,
               style: TextStyle(
                 color: context.palette.primary,
                 fontWeight: FontWeight.w700,
@@ -170,7 +175,7 @@ class _GymDaySummary extends StatelessWidget {
             )
           else if (day.isRestDay)
             Text(
-              'Rest',
+              context.strings.rest,
               style: TextStyle(
                 color: context.palette.mutedText,
                 fontWeight: FontWeight.w700,
