@@ -464,7 +464,7 @@ class _DaySection extends StatelessWidget {
                         Divider(
                           height: 1,
                           indent: 68,
-                          color: context.palette.border,
+                          color: context.palette.divider,
                         ),
                     ],
                   ],

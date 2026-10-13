@@ -32,7 +32,6 @@ class _ModuleSetupScreenState extends ConsumerState<ModuleSetupScreen> {
     final palette = context.palette;
 
     return Scaffold(
-      backgroundColor: palette.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),

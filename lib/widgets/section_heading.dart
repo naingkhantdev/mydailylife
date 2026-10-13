@@ -30,11 +30,13 @@ class SectionHeading extends StatelessWidget {
             children: [
               Text(
                 eyebrow,
+                // Muted rather than brand-coloured: the eyebrow is a quiet
+                // label, and colour is kept for things that are interactive.
                 style: TextStyle(
-                  color: context.palette.primary,
+                  color: context.palette.mutedText,
                   fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.6,
                 ),
               ),
               const SizedBox(height: 3),

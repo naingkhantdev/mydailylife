@@ -23,15 +23,54 @@ class DarkHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final radius = BorderRadius.circular(AppRadii.xl);
     final content = Padding(padding: padding, child: child);
 
-    return Material(
-      color: context.palette.heroSurface,
-      borderRadius: BorderRadius.circular(AppRadii.lg),
-      clipBehavior: Clip.antiAlias,
-      child: onTap == null
-          ? content
-          : InkWell(onTap: onTap, child: content),
+    // A deep tinted glass slab: the ink base drifts toward the ocean-blue
+    // accent, and a faint cyan sheen in the top corner plus a hairline edge
+    // give it the lit-from-above look without any heavy shadow.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            palette.heroSurface,
+            Color.lerp(palette.heroSurface, AppColors.violet, 0.45)!,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.violet.withOpacity(palette.isDark ? 0.25 : 0.18),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(color: AppColors.onInkBorder),
+            gradient: RadialGradient(
+              center: const Alignment(-1, -1),
+              radius: 1.2,
+              colors: [
+                AppColors.secondary.withOpacity(0.14),
+                AppColors.secondary.withOpacity(0),
+              ],
+            ),
+          ),
+          child: onTap == null
+              ? content
+              : InkWell(onTap: onTap, child: content),
+        ),
+      ),
     );
   }
 }

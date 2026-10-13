@@ -22,6 +22,7 @@ import 'screens/splash_screen.dart';
 import 'screens/work_log_screen.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/ambient_backdrop.dart';
 import 'widgets/app_drawer.dart';
 import 'widgets/sync_banner.dart';
 
@@ -78,7 +79,10 @@ Route<void>? _buildAppRoute(RouteSettings settings) {
     settings: settings,
     transitionDuration: const Duration(milliseconds: 220),
     reverseTransitionDuration: const Duration(milliseconds: 180),
-    pageBuilder: (_, animation, secondaryAnimation) => page,
+    // PageRouteBuilder bypasses pageTransitionsTheme, so the backdrop the
+    // transparent scaffolds rely on has to be attached here explicitly.
+    pageBuilder: (_, animation, secondaryAnimation) =>
+        AmbientBackdrop(child: page),
     transitionsBuilder: (_, animation, secondaryAnimation, child) {
       final curvedAnimation = CurvedAnimation(
         parent: animation,

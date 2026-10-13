@@ -10,6 +10,7 @@ import 'login_screen.dart';
 import '../providers/auth_provider.dart';
 import '../providers/firestore_provider.dart';
 import '../theme/app_colors.dart';
+import '../widgets/ambient_backdrop.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dark_hero_card.dart';
 
@@ -85,8 +86,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       PageRouteBuilder<void>(
         settings: RouteSettings(name: destinationRoute),
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, animation, secondaryAnimation) =>
-            isSignedIn ? const HomeScreen() : const LoginScreen(),
+        pageBuilder: (_, animation, secondaryAnimation) => AmbientBackdrop(
+          child: isSignedIn ? const HomeScreen() : const LoginScreen(),
+        ),
         transitionsBuilder: (_, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

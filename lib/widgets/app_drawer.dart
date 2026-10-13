@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +25,46 @@ class AppRoutes {
   static const moduleSetup = '/module-setup';
 }
 
+/// The drawer's floating glass card.
+///
+/// This is the one surface that floats over live page content rather than
+/// over the ambient backdrop, so it gets a real blur: translucent glass with
+/// no blur would leave the page's text legible through the menu.
+class _GlassPanel extends StatelessWidget {
+  const _GlassPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final radius = BorderRadius.circular(28);
+    // The blur samples the page *after* the drawer's black scrim, so the
+    // light-mode glass is thickened or it turns a dull grey.
+    final fill = palette.isDark
+        ? palette.surface
+        : palette.surfaceElevated.withOpacity(0.82);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: radius,
+              border: Border.all(color: palette.border),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({required this.currentRoute, super.key});
 
@@ -39,21 +81,7 @@ class AppDrawer extends ConsumerWidget {
       elevation: 0,
       backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(10, 12, 10, 12),
-        decoration: BoxDecoration(
-          color: context.palette.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: context.palette.border),
-          boxShadow: [
-            BoxShadow(
-              color: context.palette.shadow,
-              blurRadius: 28,
-              offset: const Offset(8, 8),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
+      child: _GlassPanel(
         child: SafeArea(
           child: Column(
             children: [
@@ -123,7 +151,7 @@ class AppDrawer extends ConsumerWidget {
                   ],
                 ),
               ),
-              Divider(height: 1, color: context.palette.border),
+              Divider(height: 1, color: context.palette.divider),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
@@ -170,7 +198,7 @@ class AppDrawer extends ConsumerWidget {
                   ],
                 ),
               ),
-              Divider(height: 1, color: context.palette.border),
+              Divider(height: 1, color: context.palette.divider),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
                 child: _DrawerItem(
@@ -204,6 +232,7 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = route == currentRoute;
+    final palette = context.palette;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -216,17 +245,17 @@ class _DrawerItem extends StatelessWidget {
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            // A neutral frosted wash rather than a brand-coloured fill, so
+            // the selection reads as quiet glass. [ink] inverts between
+            // themes, so the same expression is a soft grey in light mode
+            // and a soft white in dark.
             decoration: BoxDecoration(
-              gradient: isSelected
-                  ? LinearGradient(
-                      colors: [context.palette.blueSoft, context.palette.surface],
-                    )
-                  : null,
+              color: isSelected
+                  ? palette.ink.withOpacity(palette.isDark ? 0.08 : 0.05)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isSelected
-                    ? context.palette.blue.withOpacity(0.35)
-                    : Colors.transparent,
+                color: isSelected ? palette.border : Colors.transparent,
               ),
             ),
             child: Row(
@@ -237,18 +266,14 @@ class _DrawerItem extends StatelessWidget {
                   height: 34,
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? context.palette.primary
-                        : context.palette.background,
+                        ? palette.primary.withOpacity(0.12)
+                        : palette.background,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
                     size: 18,
-                    // onPrimary, not white: in dark mode the selected chip is
-                    // bright cyan and white on cyan is unreadable.
-                    color: isSelected
-                        ? context.palette.onPrimary
-                        : context.palette.bodyText,
+                    color: isSelected ? palette.primary : palette.bodyText,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -256,7 +281,7 @@ class _DrawerItem extends StatelessWidget {
                   child: Text(
                     title,
                     style: TextStyle(
-                      color: isSelected ? context.palette.primary : context.palette.ink,
+                      color: palette.ink,
                       fontSize: 14,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w600,
@@ -266,10 +291,13 @@ class _DrawerItem extends StatelessWidget {
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 180),
                   opacity: isSelected ? 1 : 0,
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: context.palette.primary,
-                    size: 13,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: palette.primary,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
               ],

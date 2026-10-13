@@ -71,7 +71,7 @@ class RoutineManagerScreen extends ConsumerWidget {
                       Divider(
                         height: 1,
                         indent: 70,
-                        color: context.palette.border,
+                        color: context.palette.divider,
                       ),
                   ],
                 ],

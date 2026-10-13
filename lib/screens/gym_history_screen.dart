@@ -93,7 +93,7 @@ class _GymDayCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Divider(height: 1, color: palette.border),
+          Divider(height: 1, color: palette.divider),
           for (final entry in exercises)
             _ExerciseRow(exercise: entry.key, session: entry.value),
         ],

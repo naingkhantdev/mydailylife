@@ -85,7 +85,7 @@ class _HistorySummary extends StatelessWidget {
               label: sessionCount == 1 ? 'SESSION' : 'SESSIONS',
             ),
           ),
-          Container(width: 1, height: 30, color: palette.border),
+          Container(width: 1, height: 30, color: palette.divider),
           Expanded(
             child: _SummaryStat(
               value:

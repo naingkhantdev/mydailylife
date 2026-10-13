@@ -267,14 +267,9 @@ class _DayHistoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.palette.surface,
         borderRadius: BorderRadius.circular(22),
+        // No drop shadow: under a translucent card it shows through as a
+        // grey smudge rather than reading as depth.
         border: Border.all(color: context.palette.border),
-        boxShadow: [
-          BoxShadow(
-            color: context.palette.shadow,
-            blurRadius: 18,
-            offset: const Offset(0, 7),
-          ),
-        ],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -325,7 +320,7 @@ class _DayHistoryCard extends StatelessWidget {
                 entry: historyMap['$dateId:${tasks[index].id}'],
               ),
               if (index != tasks.length - 1)
-                Divider(height: 20, color: context.palette.border),
+                Divider(height: 20, color: context.palette.divider),
             ],
           ],
         ),
@@ -388,7 +383,7 @@ class _DailyLogFacts extends StatelessWidget {
                   color: context.palette.coral,
                 ),
               ),
-              Container(width: 1, height: 38, color: context.palette.border),
+              Container(width: 1, height: 38, color: context.palette.divider),
               Expanded(
                 child: _LoggedFact(
                   icon: Icons.restaurant_rounded,

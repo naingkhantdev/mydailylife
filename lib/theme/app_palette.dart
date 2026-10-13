@@ -32,6 +32,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.tertiary,
     required this.background,
     required this.surface,
+    required this.surfaceElevated,
     required this.border,
     required this.divider,
     required this.ink,
@@ -60,6 +61,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.onInkBorder,
     required this.onInkSurface,
     required this.onInkAccent,
+    required this.glowPrimary,
+    required this.glowSecondary,
+    required this.glowTertiary,
   });
 
   final Brightness brightness;
@@ -71,7 +75,17 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color tertiary;
 
   final Color background;
+  /// Translucent glass fill for cards sitting on the ambient backdrop.
   final Color surface;
+
+  /// Near-opaque fill for anything floating over *content* rather than over
+  /// the backdrop — dialogs, sheets, menus, pickers. Glass there would let
+  /// the page underneath bleed through the text.
+  final Color surfaceElevated;
+
+  /// The glass edge highlight around cards. Lines *inside* a card (dividers,
+  /// progress tracks) use [divider] instead — a white hairline on a white
+  /// card disappears.
   final Color border;
   final Color divider;
 
@@ -109,6 +123,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color onInkSurface;
   final Color onInkAccent;
 
+  // The soft colour glows painted by `AmbientBackdrop`. They are what the
+  // translucent [surface] is frosting; without them glass reads as grey.
+  final Color glowPrimary;
+  final Color glowSecondary;
+  final Color glowTertiary;
+
   bool get isDark => brightness == Brightness.dark;
 
   static const light = AppPalette(
@@ -118,15 +138,19 @@ class AppPalette extends ThemeExtension<AppPalette> {
     secondary: AppColors.secondary,
     onSecondary: AppColors.primary,
     tertiary: AppColors.tertiary,
-    background: AppColors.background,
-    surface: AppColors.surface,
-    border: AppColors.border,
-    divider: AppColors.divider,
+    // A cool grey a step darker than the old #F8FAFC, so a 65% white glass
+    // card visibly lifts off the page instead of merging into it.
+    background: Color(0xFFEDF0F5),
+    surface: Color(0xA6FFFFFF),
+    surfaceElevated: Color(0xF5FFFFFF),
+    border: Color(0xB3FFFFFF),
+    divider: Color(0x1A0F172A),
     ink: AppColors.ink,
     bodyText: AppColors.bodyText,
-    mutedText: AppColors.mutedText,
+    // Darkened from #64748B to hold 4.5:1 on the darker page grey.
+    mutedText: Color(0xFF5A6A80),
     heroSurface: AppColors.ink,
-    shadow: Color(0x1A0F172A),
+    shadow: Color(0x140F172A),
     blue: AppColors.blue,
     blueSoft: AppColors.blueSoft,
     violet: AppColors.violet,
@@ -148,6 +172,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     onInkBorder: AppColors.onInkBorder,
     onInkSurface: AppColors.onInkSurface,
     onInkAccent: AppColors.onInkAccent,
+    glowPrimary: Color(0x4D2FE8FF),
+    glowSecondary: Color(0x4060A5FA),
+    glowTertiary: Color(0x33818CF8),
   );
 
   /// Dark appearance.
@@ -165,16 +192,17 @@ class AppPalette extends ThemeExtension<AppPalette> {
     secondary: Color(0xFFA5F3FC),
     onSecondary: AppColors.primary,
     tertiary: Color(0xFF67E8F9),
-    background: Color(0xFF0B1220),
-    surface: Color(0xFF111C2E),
-    border: Color(0xFF1E2D45),
-    divider: Color(0xFF26374F),
+    background: Color(0xFF060A13),
+    surface: Color(0x14FFFFFF),
+    surfaceElevated: Color(0xF5111A2B),
+    border: Color(0x1FFFFFFF),
+    divider: Color(0x1AFFFFFF),
     ink: Color(0xFFF1F5F9),
     bodyText: Color(0xFFCBD5E1),
     mutedText: Color(0xFF94A3B8),
     // Slightly lighter than [surface] so hero cards still read as elevated
     // rather than disappearing into the page.
-    heroSurface: Color(0xFF16233A),
+    heroSurface: Color(0xFF101B2E),
     shadow: Color(0x66000000),
     blue: Color(0xFF67E8F9),
     blueSoft: Color(0xFF10303A),
@@ -197,6 +225,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     onInkBorder: AppColors.onInkBorder,
     onInkSurface: AppColors.onInkSurface,
     onInkAccent: AppColors.onInkAccent,
+    glowPrimary: Color(0x332FE8FF),
+    glowSecondary: Color(0x2E3B82F6),
+    glowTertiary: Color(0x266366F1),
   );
 
   @override
@@ -209,6 +240,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? tertiary,
     Color? background,
     Color? surface,
+    Color? surfaceElevated,
     Color? border,
     Color? divider,
     Color? ink,
@@ -237,6 +269,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? onInkBorder,
     Color? onInkSurface,
     Color? onInkAccent,
+    Color? glowPrimary,
+    Color? glowSecondary,
+    Color? glowTertiary,
   }) {
     return AppPalette(
       brightness: brightness ?? this.brightness,
@@ -247,6 +282,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       tertiary: tertiary ?? this.tertiary,
       background: background ?? this.background,
       surface: surface ?? this.surface,
+      surfaceElevated: surfaceElevated ?? this.surfaceElevated,
       border: border ?? this.border,
       divider: divider ?? this.divider,
       ink: ink ?? this.ink,
@@ -275,6 +311,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       onInkBorder: onInkBorder ?? this.onInkBorder,
       onInkSurface: onInkSurface ?? this.onInkSurface,
       onInkAccent: onInkAccent ?? this.onInkAccent,
+      glowPrimary: glowPrimary ?? this.glowPrimary,
+      glowSecondary: glowSecondary ?? this.glowSecondary,
+      glowTertiary: glowTertiary ?? this.glowTertiary,
     );
   }
 
@@ -291,6 +330,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       tertiary: mix(tertiary, other.tertiary),
       background: mix(background, other.background),
       surface: mix(surface, other.surface),
+      surfaceElevated: mix(surfaceElevated, other.surfaceElevated),
       border: mix(border, other.border),
       divider: mix(divider, other.divider),
       ink: mix(ink, other.ink),
@@ -319,6 +359,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       onInkBorder: mix(onInkBorder, other.onInkBorder),
       onInkSurface: mix(onInkSurface, other.onInkSurface),
       onInkAccent: mix(onInkAccent, other.onInkAccent),
+      glowPrimary: mix(glowPrimary, other.glowPrimary),
+      glowSecondary: mix(glowSecondary, other.glowSecondary),
+      glowTertiary: mix(glowTertiary, other.glowTertiary),
     );
   }
 }

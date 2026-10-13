@@ -31,18 +31,18 @@ class AppTextStyles {
           GoogleFonts.inter(
             color: palette.ink,
             fontSize: 26,
-              fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             height: 1.18,
-            letterSpacing: -0.5,
+            letterSpacing: -0.8,
           ),
         ),
         titleLarge: _scriptAware(
           GoogleFonts.inter(
             color: palette.ink,
             fontSize: 19,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             height: 1.2,
-            letterSpacing: -0.2,
+            letterSpacing: -0.4,
           ),
         ),
         titleMedium: _scriptAware(
@@ -95,9 +95,9 @@ class AppTextStyles {
         GoogleFonts.inter(
           color: palette.ink,
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           height: 1.2,
-          letterSpacing: -0.2,
+          letterSpacing: -0.3,
         ),
       );
 }

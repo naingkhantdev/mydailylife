@@ -760,7 +760,7 @@ class _HistoryRow extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: day.completion,
                 minHeight: 6,
-                backgroundColor: palette.border,
+                backgroundColor: palette.divider,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   day.completion >= 1 ? palette.success : palette.primary,
                 ),

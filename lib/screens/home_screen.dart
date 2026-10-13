@@ -132,7 +132,7 @@ class HomeScreen extends ConsumerWidget {
                                 // rule has to start where the text column
                                 // starts.
                                 indent: 113,
-                                color: context.palette.border,
+                                color: context.palette.divider,
                               ),
                           ],
                         ],
@@ -334,7 +334,7 @@ class _TodayHeader extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 7,
-                    backgroundColor: context.palette.border,
+                    backgroundColor: context.palette.divider,
                   ),
                 ),
               ),

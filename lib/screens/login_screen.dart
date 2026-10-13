@@ -61,20 +61,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       // The viewport must shrink for the keyboard: in sign-up mode the card is
       // tall enough that the submit button would otherwise sit under it with
       // no scrollable overflow to reach.
-      backgroundColor: context.palette.background,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [context.palette.violetSoft, context.palette.background],
-                stops: const [0, 0.55],
-              ),
-            ),
-          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
@@ -120,15 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       decoration: BoxDecoration(
                         color: context.palette.surface,
                         borderRadius: BorderRadius.circular(AppRadii.xl),
-                        boxShadow: [
-                          BoxShadow(
-                            // shadow, not ink: ink is near-white in dark mode
-                            // and would halo the card instead of shading it.
-                            color: context.palette.shadow,
-                            blurRadius: 28,
-                            offset: const Offset(0, 14),
-                          ),
-                        ],
+                        border: Border.all(color: context.palette.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -473,7 +454,7 @@ class _OrDivider extends StatelessWidget {
 
     return Row(
       children: [
-        Expanded(child: Divider(color: palette.border)),
+        Expanded(child: Divider(color: palette.divider)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
@@ -485,7 +466,7 @@ class _OrDivider extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(child: Divider(color: palette.border)),
+        Expanded(child: Divider(color: palette.divider)),
       ],
     );
   }

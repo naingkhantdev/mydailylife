@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/ambient_backdrop.dart';
 import 'app_palette.dart';
 import 'app_radii.dart';
 import 'app_text_styles.dart';
@@ -37,29 +38,56 @@ class AppTheme {
         secondary: palette.secondary,
         onSecondary: palette.onSecondary,
         tertiary: palette.tertiary,
-        surface: palette.surface,
+        // The elevated fill, not the glass one: Material falls back to
+        // colorScheme.surface for pickers, menus and sheets, and those float
+        // over content where translucency would hurt legibility.
+        surface: palette.surfaceElevated,
         onSurface: palette.ink,
         error: palette.danger,
         onError: isDark ? AppPalette.light.primary : Colors.white,
-        outline: palette.border,
+        outline: palette.divider,
       ),
-      scaffoldBackgroundColor: palette.background,
-      canvasColor: palette.surface,
+      // Transparent so each route's AmbientBackdrop shows through.
+      scaffoldBackgroundColor: Colors.transparent,
+      canvasColor: palette.surfaceElevated,
       dividerColor: palette.divider,
       shadowColor: palette.shadow,
       fontFamily: AppTextStyles.fontFamily,
       fontFamilyFallback: AppTextStyles.fontFamilyFallback,
       textTheme: AppTextStyles.textThemeFor(palette),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: AmbientPageTransitionsBuilder(
+            FadeUpwardsPageTransitionsBuilder(),
+          ),
+          TargetPlatform.iOS: AmbientPageTransitionsBuilder(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.macOS: AmbientPageTransitionsBuilder(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.windows: AmbientPageTransitionsBuilder(
+            FadeUpwardsPageTransitionsBuilder(),
+          ),
+          TargetPlatform.linux: AmbientPageTransitionsBuilder(
+            FadeUpwardsPageTransitionsBuilder(),
+          ),
+          TargetPlatform.fuchsia: AmbientPageTransitionsBuilder(
+            FadeUpwardsPageTransitionsBuilder(),
+          ),
+        },
+      ),
       appBarTheme: AppBarTheme(
-        backgroundColor: palette.background,
+        backgroundColor: Colors.transparent,
         foregroundColor: palette.ink,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: AppTextStyles.appBarTitleFor(palette),
       ),
       drawerTheme: DrawerThemeData(
-        backgroundColor: palette.surface,
+        backgroundColor: palette.surfaceElevated,
         surfaceTintColor: Colors.transparent,
       ),
       iconTheme: IconThemeData(color: palette.bodyText),
@@ -101,7 +129,7 @@ class AppTheme {
             fontWeight: FontWeight.w700,
             letterSpacing: 0,
           ),
-          side: BorderSide(color: palette.border),
+          side: BorderSide(color: palette.divider),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.md),
           ),
@@ -127,18 +155,19 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        // In light mode the field sits a shade *below* the white card it lives
-        // on; in dark mode that inverts, so the field lifts above the surface.
-        fillColor: isDark ? palette.heroSurface : palette.background,
+        // A frosted well inside the glass card: brighter than the card in
+        // light mode, a faint lift above it in dark mode. The [divider]
+        // outline below is what actually defines the field's edge.
+        fillColor: isDark ? const Color(0x0DFFFFFF) : const Color(0x8CFFFFFF),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.md),
-          borderSide: BorderSide(color: palette.border),
+          borderSide: BorderSide(color: palette.divider),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.md),
-          borderSide: BorderSide(color: palette.border),
+          borderSide: BorderSide(color: palette.divider),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.md),
@@ -156,14 +185,23 @@ class AppTheme {
         hintStyle: TextStyle(color: palette.mutedText),
       ),
       dialogTheme: DialogTheme(
-        backgroundColor: palette.surface,
+        backgroundColor: palette.surfaceElevated,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
+          borderRadius: BorderRadius.circular(AppRadii.xl),
+          side: BorderSide(color: palette.border),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: palette.surfaceElevated,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          side: BorderSide(color: palette.border),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: palette.surface,
+        backgroundColor: palette.surfaceElevated,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
@@ -180,10 +218,10 @@ class AppTheme {
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: palette.background,
+        backgroundColor: palette.surface,
         selectedColor: palette.primary,
         checkmarkColor: palette.onPrimary,
-        side: BorderSide(color: palette.border),
+        side: BorderSide(color: palette.divider),
         labelStyle: TextStyle(
           color: palette.bodyText,
           fontSize: 12,
